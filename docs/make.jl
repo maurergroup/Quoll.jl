@@ -18,6 +18,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="https://github.com/maurergroup/Quoll.jl",
+    repo="github.com/maurergroup/Quoll.jl",
     devbranch="main",
 )
