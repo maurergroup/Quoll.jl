@@ -1,8 +1,12 @@
-/*.jl.*.cov
-/*.jl.cov
-/*.jl.mem
-/Manifest*.toml
+/**/*.jl.*.cov
+/**/*.jl.cov
+/**/*.jl.mem
+
 /docs/Manifest*.toml
 /docs/build/
+
+/Manifest*.toml
+
 /dev
-/.vscode
+
+/**/.vscode
