@@ -17,7 +17,9 @@ makedocs(;
     ],
 )
 
-deploydocs(;
-    repo="github.com/maurergroup/Quoll.jl",
-    devbranch="main",
-)
+if get(ENV, "CI", nothing) == "true"
+    deploydocs(;
+        repo="github.com/maurergroup/Quoll.jl",
+        devbranch="main",
+    )
+end

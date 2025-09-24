@@ -10,5 +10,5 @@ Documentation for [Quoll](https://github.com/maurergroup/Quoll.jl).
 ```
 
 ```@autodocs
-Modules = [Quoll]
+Modules = [Quoll, Quoll.Parser]
 ```
