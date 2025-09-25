@@ -2,7 +2,7 @@ using Quoll
 using Test
 using Aqua
 
-@testset "Code Quality (Aqua.jl)" begin
+@testset "Code quality (Aqua.jl)" begin
     Aqua.test_ambiguities(Quoll)
     Aqua.test_unbound_args(Quoll)
     Aqua.test_undefined_exports(Quoll)

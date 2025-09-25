@@ -1,7 +1,6 @@
 # Files
 # - Input file paths
 # - Output file directory
-
 [input]
 format = "FHI-aims"
 # Union{Vector{String}, String}, where each String could specify
@@ -11,18 +10,27 @@ format = "FHI-aims"
 # - What about relative and absolute paths?
 directory = ["../../../example_data/SiC/complete"]
 
-
 # Convert
 # - Output format
 #   - DeepH
 #   - (Universal)
 #   - ...
+[output]
+format = "DeepH"
+directory = ["../../../example_data/SiC/complete"]
 
 # Core projection
 # - Basis functions to project
 # - Method
 #   - FC99+V
 #   - ...
+[core_projection]
+# This will depend on z, n, l, m, extras
+core_basis = [
+    "Si21*_atomic",
+    "C100_atomic",
+]
+method = "FC99+V"
 
 # Postprocessing
 # - Fermi level
@@ -30,11 +38,35 @@ directory = ["../../../example_data/SiC/complete"]
 #   - Occupation function
 #   - Discretisation
 # - Band structures
+[postprocessing]
+fermi_level = true
+    [postprocessing.fermi_level_params]
+    smearing_function = "fermi_dirac"
+
+dos = true
+    [postprocessing.dos_params]
+    smearing_function = "fermi_dirac"
+    smearing = 0.1 
+    start_energy = -10.0
+    end_energy = 10.0
+    n_points = 1000
+
+band_structure = true
+    # By default band paths would be computed using Brillouin
+    [postprocessing.band_structure_params]
+    bands = [
+        "0.0  0.0  0.0 -0.5 -0.5 -0.5 20 G X",
+        "0.5  0.0  0.0  0.0  0.0  0.0 20 Y G",
+    ]
 
 # Model validation
 # - MAE
 # - Eigenvalue error
 # - Electronic entropy error
+[error_metrics]
+MAE = false
+eigenvalue_error = false
+el_entropy_error = false
 
 # Plotting
 # (some should be plotted automatically if available)

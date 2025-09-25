@@ -4,9 +4,17 @@ authors = ["Valdas Vitartas <valdas.vitartas@warwick.ac.uk> and contributors"]
 version = "0.1.0"
 
 [deps]
+ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
+AtomsBase = "a963bdd2-2df7-4f54-a1ee-49d51e6be12a"
+Configurations = "5218b696-f38b-4ac9-8b61-a12ec717816d"
+Dictionaries = "85a47980-9c8c-11e8-2b9f-f7ca1fa99fb4"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
+ArgCheck = "2.5"
+AtomsBase = "0.5"
+Configurations = "0.17"
+Dictionaries = "0.4"
 Reexport = "1.2"
 julia = "1.9"
 
