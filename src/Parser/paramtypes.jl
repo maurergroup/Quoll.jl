@@ -9,9 +9,11 @@ end
     input::InputParams
 end
 
-Configurations.from_dict(
+function Configurations.from_dict(
     ::Type{InputParams},
     ::OptionField{:directory},
     ::Type{Vector{String}},
     s,
-) = isa(s, String) ? [s] : s
+)
+    return isa(s, String) ? [s] : s
+end
