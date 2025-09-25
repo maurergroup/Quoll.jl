@@ -1,0 +1,43 @@
+# Files
+# - Input file paths
+# - Output file directory
+
+[input]
+format = "FHI-aims"
+# Union{Vector{String}, String}, where each String could specify
+# either a single configuration, or a list of configurations.
+# - What about a path where files for conversion are present but also
+#   additional folders with other configurations?
+# - What about relative and absolute paths?
+directory = ["../../../example_data/SiC/complete"]
+
+
+# Convert
+# - Output format
+#   - DeepH
+#   - (Universal)
+#   - ...
+
+# Core projection
+# - Basis functions to project
+# - Method
+#   - FC99+V
+#   - ...
+
+# Postprocessing
+# - Fermi level
+# - DOS
+#   - Occupation function
+#   - Discretisation
+# - Band structures
+
+# Model validation
+# - MAE
+# - Eigenvalue error
+# - Electronic entropy error
+
+# Plotting
+# (some should be plotted automatically if available)
+# - DOS
+# - Band structures
+# - ...
