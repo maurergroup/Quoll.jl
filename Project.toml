@@ -11,7 +11,7 @@ Dictionaries = "85a47980-9c8c-11e8-2b9f-f7ca1fa99fb4"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
-ArgCheck = "2.5"
+ArgCheck = "2"
 AtomsBase = "0.5"
 Configurations = "0.17"
 Dictionaries = "0.4"
