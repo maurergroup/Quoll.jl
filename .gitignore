@@ -6,6 +6,7 @@
 /docs/build/
 
 /Manifest*.toml
+/LocalPreferences*.toml
 
 /dev
 

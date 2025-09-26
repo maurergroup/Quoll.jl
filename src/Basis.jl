@@ -1,6 +1,7 @@
 module Basis
 using Dictionaries
 using AtomsBase
+
 export BasisMetadata, BasisSetMetadata
 
 struct BasisMetadata

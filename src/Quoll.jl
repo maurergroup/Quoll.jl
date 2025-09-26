@@ -6,8 +6,8 @@ include("Utils.jl")
 include("Basis.jl")
 @reexport using .Basis
 
-include("CoreProjection.jl")
-@reexport using .CoreProjection
+include("BasisProjection.jl")
+@reexport using .BasisProjection
 
 include("Parser.jl")
 

@@ -24,13 +24,13 @@ directory = ["../../../example_data/SiC/complete"]
 # - Method
 #   - FC99+V
 #   - ...
-[core_projection]
+[basis_projection]
 # This will depend on z, n, l, m, extras
-core_basis = [
+projected_basis = [
     "Si21*_atomic",
     "C100_atomic",
 ]
-method = "FC99+V"
+method = "FC99V"
 
 # Postprocessing
 # - Fermi level
