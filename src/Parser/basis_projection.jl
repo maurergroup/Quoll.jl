@@ -2,8 +2,9 @@ using Configurations
 using AtomsBase
 using ..Basis
 using ..BasisProjection
+using ..Utils
 
-@option struct BasisProjectionParams{E}
+@option struct BasisProjectionParams{E} <: AbstractQuollParams
     projected_basis::Vector{BasisMetadata{E}}
     method::AbstractBasisProjection
 end
@@ -23,10 +24,6 @@ function parse_basismetadata(basisfunc::AbstractString)
 
     extras_begin = match_znlm.offsets[5] + 1
     eachmatch_extras = eachmatch(re_extras, basisfunc[extras_begin:end])
-    # extras = NamedTuple([
-    #     Symbol(match.captures[1]) => convert(String, match.captures[2])
-    #     for match in eachmatch_extras
-    # ])
     extras = Dict{String, String}(
         convert(String, match.captures[1]) => convert(String, match.captures[2])
         for match in eachmatch_extras
@@ -58,11 +55,13 @@ function Configurations.from_dict(
     ::Type{AbstractBasisProjection},
     method,
 ) where E
+    @argcheck isa(method, String)
+
     itype = findfirst(
-        x -> x == lowercase(method),
-        lowercase.(string.(nameof.(IMPLEMENTED_PROJECTIONS)))
+        x -> x == Utils.normalize_comparison(method),
+        lowercase.(string.(nameof.(PROJ_REGISTRY)))
     )
     @argcheck itype !== nothing "Core projection method $method not found"
 
-    return IMPLEMENTED_PROJECTIONS[itype]()
+    return PROJ_REGISTRY[itype]()
 end

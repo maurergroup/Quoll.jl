@@ -23,3 +23,13 @@ include("testutils.jl")
     leafdirs = Quoll.Utils.find_leafdirs(root)
     @test Set(leafdirs) == Set(paths)
 end
+
+@testset "normalize_comparison" begin
+
+    s = "FERMI_DIRAC"
+    @test Quoll.Utils.normalize_comparison(s) == "fermidirac"
+
+    replace_pairs = tuple()
+    @test Quoll.Utils.normalize_comparison(s; replace_pairs) == "fermi_dirac"
+
+end

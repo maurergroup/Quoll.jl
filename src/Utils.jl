@@ -17,4 +17,15 @@ function find_leafdirs(rootdir::T) where {T}
     return leafdirs
 end
 
+"""
+    normalize_comparison(s)
+
+Normalize a string `s` by making the string lowercase and removing certain characters
+(underscores and whitespace by default as defined in `replace_pairs`) for easier
+comparison with reference values.
+"""
+function normalize_comparison(s::AbstractString; replace_pairs = ("_" => "", r"\s*" => ""))
+    return lowercase(replace(s, replace_pairs...))
+end
+
 end

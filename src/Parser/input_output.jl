@@ -2,12 +2,12 @@ using Configurations
 using ArgCheck
 using ..Utils
 
-@option struct InputParams
+@option struct InputParams <: AbstractQuollParams
     format::String
     directory::Vector{String}
 end
 
-@option struct OutputParams
+@option struct OutputParams <: AbstractQuollParams
     format::String
     directory::String
 end

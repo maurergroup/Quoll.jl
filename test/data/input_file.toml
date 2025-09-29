@@ -27,8 +27,10 @@ directory = ["../../../example_data/SiC/complete"]
 [basis_projection]
 # This will depend on z, n, l, m, extras
 projected_basis = [
-    "Si21*_atomic",
-    "C100_atomic",
+    "C  (1, 0, 0) type = atomic",
+    "Si (1, 0, 0) type = atomic",
+    "Si (2, 0, 0) type = atomic",
+    "Si (2, 1, *) type = atomic",
 ]
 method = "FC99V"
 
@@ -39,19 +41,20 @@ method = "FC99V"
 #   - Discretisation
 # - Band structures
 [postprocessing]
-fermi_level = true
+fermi_level = false
+dos = false
+band_structure = false
+
     [postprocessing.fermi_level_params]
-    smearing_function = "fermi_dirac"
+    smearing_function = "gaussian"
 
-dos = true
     [postprocessing.dos_params]
-    smearing_function = "fermi_dirac"
-    smearing = 0.1 
-    start_energy = -10.0
-    end_energy = 10.0
-    n_points = 1000
+    smearing_function = "gaussian"
+    temperature = 1000
+    start_ergy = 10.0
+    n_poinenergy = -10.0
+    end_ents = 1000
 
-band_structure = true
     # By default band paths would be computed using Brillouin
     [postprocessing.band_structure_params]
     bands = [
@@ -63,10 +66,24 @@ band_structure = true
 # - MAE
 # - Eigenvalue error
 # - Electronic entropy error
+# For MAE, I should probably assume that both predicted and true
+# hamiltonian matrices are present in the same directory
 [error_metrics]
-MAE = false
+mae = false
 eigenvalue_error = false
 el_entropy_error = false
+
+    [error_metrics.eigenvalue_error_params]
+    smearing_function = "gaussian"
+    temperature = 1000
+
+    [error_metrics.el_entropy_error_params]
+    # Needs to check how the fermi level was evaluated
+    # and reevaluate the fermi level is required
+    # I will also need to check how to evaluate electronic
+    # entropy for different smearing functions
+    smearing_function = "fermi_dirac"
+    temperature = 1000
 
 # Plotting
 # (some should be plotted automatically if available)
