@@ -11,3 +11,7 @@ end
 @safetestset "error_metrics.jl" begin
     include("Parser/error_metrics.jl")
 end
+
+@safetestset "postprocessing.jl" begin
+    include("Parser/postprocessing.jl")
+end

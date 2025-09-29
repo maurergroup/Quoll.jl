@@ -51,9 +51,9 @@ band_structure = false
     [postprocessing.dos_params]
     smearing_function = "gaussian"
     temperature = 1000
-    start_ergy = 10.0
-    n_poinenergy = -10.0
-    end_ents = 1000
+    energy_end = 10.0
+    energy_begin = -10.0
+    n_points = 1000
 
     # By default band paths would be computed using Brillouin
     [postprocessing.band_structure_params]

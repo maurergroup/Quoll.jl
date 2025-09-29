@@ -10,6 +10,7 @@ AutoHashEquals = "15f4f7f2-30c1-5605-9d31-71845cf9641f"
 Configurations = "5218b696-f38b-4ac9-8b61-a12ec717816d"
 Dictionaries = "85a47980-9c8c-11e8-2b9f-f7ca1fa99fb4"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 ArgCheck = "2"
@@ -18,6 +19,7 @@ AutoHashEquals = "2"
 Configurations = "0.17"
 Dictionaries = "0.4"
 Reexport = "1.2"
+StaticArrays = "1.9"
 julia = "1.9"
 
 [extras]
