@@ -1,4 +1,5 @@
 module BasisProjection
+export AbstractBasisProjection, IMPLEMENTED_PROJECTIONS, FC99V
 
 abstract type AbstractBasisProjection end
 
