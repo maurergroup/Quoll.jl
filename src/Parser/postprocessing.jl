@@ -1,5 +1,6 @@
 using Configurations
 using StaticArrays
+using ArgCheck
 using ..Smearing
 
 """
@@ -34,6 +35,14 @@ end
     # so that I can use utilities like interpolate and plotting
     # once I have atoms information
     bands::Union{Vector{KPathParams}, Nothing} = nothing
+    density::Float64 = 30.0
+
+    function BandStructureParams(bands, band_density)
+        @argcheck band_density > 0
+        # TODO: should warn that the density will not be used if bands are supplied
+        # if bands !== nothing && band_density !== nothing end
+        new(bands, band_density)
+    end
 end
 
 @option struct PostprocessParams <: AbstractQuollParams

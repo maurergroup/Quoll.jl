@@ -43,6 +43,19 @@ end
 
 end
 
+@testset "BandStructureParams" begin
+    bands = [
+        "0.0  0.0  0.0 -0.5 -0.5 -0.5 20 G X",
+        "0.5  0.0  0.0  0.0  0.0  0.0 20 Y G"
+    ]
+
+    @testset "Negative density" begin
+        d = Dict("bands" => bands, "density" => -10.0)
+        @test_throws ArgumentError from_dict(Quoll.Parser.BandStructureParams, d)
+    end
+
+end
+
 @testset "PostprocessParams" begin
 
     @testset "Nominal case" begin

@@ -20,11 +20,11 @@ end
 """
     normalize_comparison(s)
 
-Normalize a string `s` by making the string lowercase and removing certain characters
-(underscores and whitespace by default as defined in `replace_pairs`) for easier
-comparison with reference values.
+Normalize a string `s` by making the string lowercase and replacing certain characters
+(underscores, hyphens and whitespace are removed by default as defined in `replace_pairs`)
+for easier comparison with reference values.
 """
-function normalize_comparison(s::AbstractString; replace_pairs = ("_" => "", r"\s*" => ""))
+function normalize_comparison(s::AbstractString; replace_pairs = (rm => "" for rm in ["_", "-", r"\s*"]))
     return lowercase(replace(s, replace_pairs...))
 end
 

@@ -45,7 +45,6 @@ function Configurations.from_dict(
         push!(projected_basis, parse_basismetadata(basisfunc)...)
     end
 
-    # Should be documented why I'm doing this
     return Vector{typeof(first(projected_basis))}(projected_basis)
 end
 

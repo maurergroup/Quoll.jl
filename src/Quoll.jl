@@ -17,6 +17,9 @@ include("BasisProjection.jl")
 include("Smearing.jl")
 @reexport using .Smearing
 
+include("OperatorIO.jl")
+@reexport using .OperatorIO
+
 include("Parser.jl")
 
 end

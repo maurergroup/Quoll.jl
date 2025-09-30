@@ -4,37 +4,72 @@ using Configurations
 
 include("../testutils.jl")
 
-function test_from_dict(paramtype, directory, reference)
-    d = Dict("format" => "foo", "directory" => directory)
-    params = from_dict(paramtype, d)
-    @test params.directory == reference
-end
-
 @testset "InputParams" begin
 
-    @testset "Single directory" begin
-        absroot, abspaths = create_tempdirs(["dir1"])
+    @testset "format" begin
+        directories, _ = create_tempdirs(["dir1"])
 
-        @testset "Absolute path" begin
-            test_from_dict(Quoll.Parser.InputParams, absroot, abspaths)
+        @testset "Correct format" begin
+            d = Dict("format" => "FHI-aims", "directories" => directories)
+            params = from_dict(Quoll.Parser.InputParams, d)
+
+            @test params.format == Quoll.OperatorIO.FHIaimsOperator
         end
 
-        @testset "Relative path" begin
-            test_from_dict(Quoll.Parser.InputParams, relpath(absroot), abspaths)
-        end
+        @testset "Incorrect format" begin
+            d = Dict("format" => "foo", "directories" => directories)
 
+            @test_throws ArgumentError from_dict(Quoll.Parser.InputParams, d)
+        end
     end
 
-    @testset "Multiple directories" begin
-        absroot, abspaths =
-            create_tempdirs([joinpath("dir", "dir1"), joinpath("dir", "dir2")])
+    @testset "directories" begin
 
-        @testset "Absolute paths" begin
-            test_from_dict(Quoll.Parser.InputParams, absroot, abspaths)
+        @testset "Single directory" begin
+            absroot, abspaths = create_tempdirs(["dir1"])
+
+            @testset "Absolute path" begin
+                directories, reference = absroot, abspaths
+
+                d = Dict("format" => "FHI-aims", "directories" => directories)
+                params = from_dict(Quoll.Parser.InputParams, d)
+
+                @test params.directories == reference
+            end
+
+            @testset "Relative path" begin
+                directories, reference = relpath(absroot), abspaths
+
+                d = Dict("format" => "FHI-aims", "directories" => directories)
+                params = from_dict(Quoll.Parser.InputParams, d)
+
+                @test params.directories == reference
+            end
+
         end
 
-        @testset "Relative paths" begin
-            test_from_dict(Quoll.Parser.InputParams, relpath(absroot), abspaths)
+        @testset "Multiple directories" begin
+            absroot, abspaths =
+                create_tempdirs([joinpath("dir", "dir1"), joinpath("dir", "dir2")])
+
+            @testset "Absolute paths" begin
+                directories, reference = absroot, abspaths
+
+                d = Dict("format" => "FHI-aims", "directories" => directories)
+                params = from_dict(Quoll.Parser.InputParams, d)
+
+                @test params.directories == reference
+            end
+
+            @testset "Relative paths" begin
+                directories, reference = relpath(absroot), abspaths
+
+                d = Dict("format" => "FHI-aims", "directories" => directories)
+                params = from_dict(Quoll.Parser.InputParams, d)
+
+                @test params.directories == reference
+            end
+
         end
 
     end
@@ -43,12 +78,44 @@ end
 
 @testset "OutputParams" begin
 
-    @testset "Absolute directory" begin
-        test_from_dict(Quoll.Parser.OutputParams, abspath("bar"), abspath("bar"))
+    @testset "format" begin
+        directory = abspath("bar")
+
+        @testset "Correct format" begin
+            d = Dict("format" => "DeepH", "directory" => directory)
+            params = from_dict(Quoll.Parser.OutputParams, d)
+
+            @test params.format == Quoll.OperatorIO.DeepHOperator
+        end
+
+        @testset "Incorrect format" begin
+            d = Dict("format" => "foo", "directory" => directory)
+
+            @test_throws ArgumentError from_dict(Quoll.Parser.OutputParams, d)
+        end
+
     end
 
-    @testset "Relative directory" begin
-        test_from_dict(Quoll.Parser.OutputParams, "bar", abspath("bar"))
+    @testset "directory" begin
+
+        @testset "Absolute directory" begin
+            directory, reference = abspath("bar"), abspath("bar")
+
+            d = Dict("format" => "DeepH", "directory" => directory)
+            params = from_dict(Quoll.Parser.OutputParams, d)
+
+            @test params.directory == reference
+        end
+
+        @testset "Relative directory" begin
+            directory, reference = "bar", abspath("bar")
+
+            d = Dict("format" => "DeepH", "directory" => directory)
+            params = from_dict(Quoll.Parser.OutputParams, d)
+
+            @test params.directory == reference
+        end
+
     end
 
 end

@@ -34,13 +34,31 @@ end
 
 @testset "EigenvalueErrorParams" begin
 
-    d = Dict(
-        "smearing_function" => "gaussian",
-        "temperature" => 500
-    )
-    params = from_dict(Quoll.Parser.EigenvalueErrorParams, d)
-    @test params.smearing_function == Gaussian()
-    @test params.temperature == 500.0
+    @testset "Nominal case" begin
+        d = Dict(
+            "smearing_function" => "gaussian",
+            "temperature" => 500
+        )
+        params = from_dict(Quoll.Parser.EigenvalueErrorParams, d)
+        @test params.smearing_function == Gaussian()
+        @test params.temperature == 500.0
+    end
+
+    @testset "Unphysical temperature" begin
+        d = Dict(
+            "smearing_function" => "fermi_dirac",
+            "temperature" => -100
+        )
+        @test_throws ArgumentError from_dict(Quoll.Parser.EigenvalueErrorParams, d)
+    end
+
+    @testset "Non-existing smearing" begin
+        d = Dict(
+            "smearing_function" => "foo",
+            "temperature" => 1000
+        )
+        @test_throws ArgumentError from_dict(Quoll.Parser.EigenvalueErrorParams, d)
+    end
 
 end
 
