@@ -32,28 +32,28 @@ function Configurations.from_dict(
     ::Type{InputParams},
     ::OptionField{:format},
     ::Type{Type{<:AtomBasisOperator}},
-    format,
+    s,
 )
-    @argcheck isa(format, String)
+    @argcheck isa(s, String)
     
-    format_symbol = Symbol(Utils.normalize_comparison(format))
-    @argcheck hasmethod(read_format, Tuple{Val{format_symbol}}) "Reading matrix in format $format is unavailable or the format doesn't exist"
+    symbol = Symbol(Utils.normalize_comparison(s))
+    @argcheck hasmethod(implemented_read_format, Tuple{Val{symbol}}) "Writing matrix in format $s is unavailable or the format doesn't exist"
 
-    return read_format(Val(format_symbol))
+    return implemented_read_format(Val(symbol))
 end
 
 function Configurations.from_dict(
     ::Type{OutputParams},
     ::OptionField{:format},
     ::Type{Type{<:AtomBasisOperator}},
-    format,
+    s,
 )
-    @argcheck isa(format, String)
+    @argcheck isa(s, String)
     
-    format_symbol = Symbol(Utils.normalize_comparison(format))
-    @argcheck hasmethod(write_format, Tuple{Val{format_symbol}}) "Writing matrix in format $format is unavailable or the format doesn't exist"
+    symbol = Symbol(Utils.normalize_comparison(s))
+    @argcheck hasmethod(implemented_write_format, Tuple{Val{symbol}}) "Writing matrix in format $s is unavailable or the format doesn't exist"
 
-    return write_format(Val(format_symbol))
+    return implemented_write_format(Val(symbol))
 end
 
 # TODO: Remove if we don't use REGISTRY approach

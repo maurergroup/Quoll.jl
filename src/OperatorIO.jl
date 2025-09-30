@@ -1,5 +1,5 @@
 module OperatorIO
-export AtomBasisOperator, read_format, write_format
+export AtomBasisOperator, implemented_read_format, implemented_write_format
 
 abstract type AtomBasisOperator end
 
@@ -15,13 +15,13 @@ struct FHIaimsOperator <: AtomBasisOperator end
 
 struct DeepHOperator <: AtomBasisOperator end
 
-function read_format end
-function write_format end
+function implemented_read_format end
+function implemented_write_format end
 
 # Implemented read formats
-read_format(::Val{:fhiaims}) = FHIaimsOperator
+implemented_read_format(::Val{:fhiaims}) = FHIaimsOperator
 
 # Implemented write formats
-write_format(::Val{:deeph}) = DeepHOperator
+implemented_write_format(::Val{:deeph}) = DeepHOperator
 
 end

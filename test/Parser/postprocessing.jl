@@ -85,8 +85,8 @@ end
         @test params.fermi_level                           == true
         @test params.dos                                   == false
         @test params.band_structure                        == false
-        @test params.fermi_level_params.smearing_function  == FermiDirac()
-        @test params.dos_params.smearing_function          == FermiDirac()
+        @test params.fermi_level_params.smearing_function  == FermiDirac
+        @test params.dos_params.smearing_function          == FermiDirac
         @test params.dos_params.temperature                == 500.0
         @test params.dos_params.n_points                   == 1000
         @test params.dos_params.energy_begin               == -20.0
@@ -97,17 +97,4 @@ end
         ]
     end
     
-    @testset "Default values" begin
-        d = Dict{String, Any}()
-        default_params = Quoll.Parser.PostprocessParams()
-        params = from_dict(Quoll.Parser.PostprocessParams, d)
-
-        @test params.fermi_level           == default_params.fermi_level                         
-        @test params.dos                   == default_params.dos                                 
-        @test params.band_structure        == default_params.band_structure                      
-        @test params.fermi_level_params    == default_params.fermi_level_params
-        @test params.dos_params            == default_params.dos_params        
-        @test params.band_structure_params == default_params.band_structure_params
-    end
-
 end

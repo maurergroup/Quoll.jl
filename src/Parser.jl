@@ -9,18 +9,15 @@ abstract type AbstractQuollParams end
 function Configurations.from_dict(
     ::Type{OT},
     ::OptionField{:smearing_function},
-    ::Type{SmearingFunction},
-    smearing_function
+    ::Type{Type{<:SmearingFunction}},
+    s
 ) where OT<:AbstractQuollParams
-    @argcheck isa(smearing_function, String)
+    @argcheck isa(s, String)
+    
+    symbol = Symbol(Utils.normalize_comparison(s))
+    @argcheck hasmethod(implemented_smearing, Tuple{Val{symbol}}) "Smearing function $s is unavailable or doesn't exist"
 
-    itype = findfirst(
-        x -> x == Utils.normalize_comparison(smearing_function),
-        lowercase.(string.(nameof.(SMEAR_REGISTRY)))
-    )
-    @argcheck itype !== nothing "Smearing function $smearing_function not found"
-
-    return SMEAR_REGISTRY[itype]()
+    return implemented_smearing(Val(symbol))
 end
 
 include("Parser/input_output.jl")

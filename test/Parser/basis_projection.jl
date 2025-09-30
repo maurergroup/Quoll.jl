@@ -44,7 +44,7 @@ end
         )
         params = from_dict(Quoll.Parser.BasisProjectionParams{Dict{String, String}}, d)
         @test Set(params.projected_basis) == Set(projected_basis)
-        @test params.method == FC99V()
+        @test params.method == FC99V
     end
 
     @testset "Non-existing method" begin
@@ -52,7 +52,6 @@ end
             "projected_basis" => projected_basis_str,
             "method" => "foo"
         )
-        # params = from_dict(Quoll.Parser.BasisProjectionParams{Dict{String, String}}, d)
         @test_throws ArgumentError from_dict(Quoll.Parser.BasisProjectionParams{Dict{String, String}}, d)
     end
 

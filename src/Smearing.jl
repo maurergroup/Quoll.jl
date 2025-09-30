@@ -1,5 +1,5 @@
 module Smearing
-export SmearingFunction, FermiDirac, Gaussian, SMEAR_REGISTRY
+export SmearingFunction, FermiDirac, Gaussian, implemented_smearing
 
 abstract type SmearingFunction end
 
@@ -7,6 +7,9 @@ struct FermiDirac <: SmearingFunction end
 
 struct Gaussian <: SmearingFunction end
 
-const SMEAR_REGISTRY = (FermiDirac, Gaussian)
+function implemented_smearing end
+
+implemented_smearing(::Val{:fermidirac}) = FermiDirac
+implemented_smearing(::Val{:gaussian}) = Gaussian
 
 end

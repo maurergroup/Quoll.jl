@@ -2,7 +2,7 @@ using Configurations
 using ..Smearing
 
 @option struct EigenvalueErrorParams <: AbstractQuollParams
-    smearing_function::SmearingFunction = FermiDirac()
+    smearing_function::Type{<:SmearingFunction} = FermiDirac
     temperature::Float64 = 1000.0
 
     function EigenvalueErrorParams(smearing_function, temperature)
@@ -12,7 +12,7 @@ using ..Smearing
 end
 
 @option struct ElEntropyErrorParams <: AbstractQuollParams
-    smearing_function::SmearingFunction = FermiDirac()
+    smearing_function::Type{<:SmearingFunction} = FermiDirac
     temperature::Float64 = 1000.0
 
     function ElEntropyErrorParams(smearing_function, temperature)

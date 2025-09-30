@@ -3,8 +3,6 @@ using StaticArrays
 using ArgCheck
 using ..Smearing
 
-"""
-"""
 struct KPathParams
     kpoint_begin::SVector{3, Float64}
     kpoint_end::SVector{3, Float64}
@@ -14,11 +12,11 @@ struct KPathParams
 end
 
 @option struct FermiLevelParams <: AbstractQuollParams
-    smearing_function::SmearingFunction = Gaussian()
+    smearing_function::Type{<:SmearingFunction} = Gaussian
 end
 
 @option struct DOSParams <: AbstractQuollParams
-    smearing_function::SmearingFunction = Gaussian()
+    smearing_function::Type{<:SmearingFunction} = Gaussian
     temperature::Float64 = 1000.0
     n_points::Int = 1000
     energy_begin::Float64 = -5.0

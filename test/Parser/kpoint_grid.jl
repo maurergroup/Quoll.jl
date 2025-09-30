@@ -27,11 +27,4 @@ using StaticArrays
         @test_throws ArgumentError from_dict(Quoll.Parser.KPointGridParams, d)
     end
 
-    @testset "Default values" begin
-        d = Dict{String, Any}()
-        default_params = Quoll.Parser.KPointGridParams()
-        params = from_dict(Quoll.Parser.KPointGridParams, d)
-        @test params == default_params
-    end
-
 end

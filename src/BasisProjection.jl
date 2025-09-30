@@ -1,10 +1,12 @@
 module BasisProjection
-export AbstractBasisProjection, PROJ_REGISTRY, FC99V
+export AbstractBasisProjection, FC99V, implemented_basis_projection
 
 abstract type AbstractBasisProjection end
 
 struct FC99V <: AbstractBasisProjection end
 
-const PROJ_REGISTRY = (FC99V,)
+function implemented_basis_projection end
+
+implemented_basis_projection(::Val{:fc99v}) = FC99V
     
 end

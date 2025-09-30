@@ -6,7 +6,7 @@ using ..Utils
 
 @option struct BasisProjectionParams{E} <: AbstractQuollParams
     projected_basis::Vector{BasisMetadata{E}}
-    method::AbstractBasisProjection
+    method::Type{<:AbstractBasisProjection}
 end
 
 # TODO: possibly implement as a BasisMetadata constructor?
@@ -51,16 +51,13 @@ end
 function Configurations.from_dict(
     ::Type{BasisProjectionParams{E}},
     ::OptionField{:method},
-    ::Type{AbstractBasisProjection},
-    method,
+    ::Type{Type{<:AbstractBasisProjection}},
+    s,
 ) where E
-    @argcheck isa(method, String)
+    @argcheck isa(s, String)
+    
+    symbol = Symbol(Utils.normalize_comparison(s))
+    @argcheck hasmethod(implemented_basis_projection, Tuple{Val{symbol}}) "Basis projection $s is unavailable or doesn't exist"
 
-    itype = findfirst(
-        x -> x == Utils.normalize_comparison(method),
-        lowercase.(string.(nameof.(PROJ_REGISTRY)))
-    )
-    @argcheck itype !== nothing "Core projection method $method not found"
-
-    return PROJ_REGISTRY[itype]()
+    return implemented_basis_projection(Val(symbol))
 end
