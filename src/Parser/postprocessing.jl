@@ -44,9 +44,9 @@ end
 end
 
 @option struct PostprocessParams <: AbstractQuollParams
-    fermi_level::Bool = true
-    dos::Bool = true
-    band_structure::Bool = true
+    fermi_level::Bool = false
+    dos::Bool = false
+    band_structure::Bool = false
     fermi_level_params::FermiLevelParams = FermiLevelParams()
     dos_params::DOSParams = DOSParams()
     band_structure_params::BandStructureParams = BandStructureParams()

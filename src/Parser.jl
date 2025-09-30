@@ -4,6 +4,8 @@ using ArgCheck
 using ..Utils
 using ..Smearing
 
+# Types and methods that are used by multiple parameter sets
+
 abstract type AbstractQuollParams end
 
 function Configurations.from_dict(
@@ -26,16 +28,17 @@ include("Parser/basis_projection.jl")
 include("Parser/error_metrics.jl")
 include("Parser/kpoint_grid.jl")
 
-"""
-    read_inputfile(filepath::AbstractString)
+@option struct QuollParams
+    input::InputParams
 
-Read Quoll input file in TOML format.
-"""
-function read_inputfile(filepath::AbstractString) end
+    # Optional parameter sets
+    output::Union{OutputParams, Nothing} = nothing
+    basis_projection::Union{BasisProjectionParams, Nothing} = nothing
 
-# @option struct QuollParams
-#     input::InputParams
-#     output::Union{OutputParams, Nothing} = nothing
-# end
+    # Optional parameter sets with existing defaults
+    kpoint_grid::KPointGridParams = KPointGridParams()
+    postprocessing::PostprocessParams = PostprocessParams()    
+    error_metrics::ErrorMetricParams = ErrorMetricParams()
+end
 
 end

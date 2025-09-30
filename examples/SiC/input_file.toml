@@ -1,0 +1,98 @@
+# Files
+# - Input file paths
+# - Output file directory
+[input]
+format = "FHI-aims"
+directories = ["SiC_FHIaims"]
+
+
+# Convert
+# - Output format
+#   - DeepH
+#   - (Universal)
+#   - ...
+# [output]
+# format = "DeepH"
+# directory = ["../../../example_data/SiC/complete"]
+
+
+# Should also allow different types,
+# i.e. Monkhorst-Pack and even possibly different shifts
+[kpoint_grid]
+grid = [10, 10, 10]
+density = [8.0, 8.0, 8.0]
+
+
+# Core projection
+# - Basis functions to project
+# - Method
+#   - FC99+V
+#   - ...
+[basis_projection]
+projected_basis = [
+    "C  (1, 0, 0) type = atomic",
+    "Si (1, 0, 0) type = atomic",
+    "Si (2, 0, 0) type = atomic",
+    "Si (2, 1, *) type = atomic",
+]
+method = "FC99V"
+
+
+# Postprocessing
+# - Fermi level
+# - DOS
+#   - Occupation function
+#   - Discretisation
+# - Band structures
+[postprocessing]
+fermi_level = false
+dos = false
+band_structure = false
+
+[postprocessing.fermi_level_params]
+smearing_function = "gaussian"
+
+[postprocessing.dos_params]
+smearing_function = "gaussian"
+temperature = 1000
+energy_end = 10.0
+energy_begin = -10.0
+n_points = 1000
+
+# By default band paths would be computed using Brillouin
+[postprocessing.band_structure_params]
+bands = [
+    "0.0  0.0  0.0 -0.5 -0.5 -0.5 20 G X",
+    "0.5  0.0  0.0  0.0  0.0  0.0 20 Y G",
+]
+
+
+# Model validation
+# - MAE
+# - Eigenvalue error
+# - Electronic entropy error
+# For MAE, I should probably assume that both predicted and true
+# hamiltonian matrices are present in the same directory
+[error_metrics]
+mae = false
+eigenvalue_error = false
+el_entropy_error = false
+
+[error_metrics.eigenvalue_error_params]
+smearing_function = "gaussian"
+temperature = 1000
+
+[error_metrics.el_entropy_error_params]
+# Needs to check how the fermi level was evaluated
+# and reevaluate the fermi level is required
+# I will also need to check how to evaluate electronic
+# entropy for different smearing functions
+smearing_function = "fermi_dirac"
+temperature = 1000
+
+
+# Plotting
+# (some should be plotted automatically if available)
+# - DOS
+# - Band structures
+# - ...

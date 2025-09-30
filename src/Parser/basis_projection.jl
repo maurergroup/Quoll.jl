@@ -4,8 +4,10 @@ using ..Basis
 using ..BasisProjection
 using ..Utils
 
-@option struct BasisProjectionParams{E} <: AbstractQuollParams
-    projected_basis::Vector{BasisMetadata{E}}
+# TODO: Could make this parametric instead of forcing this into Dict{String, String}
+# but for now parse_basismetadata() returns Dict{String, String} anyways
+@option struct BasisProjectionParams <: AbstractQuollParams
+    projected_basis::Vector{BasisMetadata{Dict{String, String}}}
     method::Type{<:AbstractBasisProjection}
 end
 
@@ -33,27 +35,27 @@ function parse_basismetadata(basisfunc::AbstractString)
 end
 
 function Configurations.from_dict(
-    ::Type{BasisProjectionParams{E}},
+    ::Type{BasisProjectionParams},
     ::OptionField{:projected_basis},
-    ::Type{Vector{BasisMetadata{E}}},
+    ::Type{Vector{BasisMetadata{Dict{String, String}}}},
     projected_basis_str,
-) where E
+)
     @argcheck isa(projected_basis_str, Vector{String}) "`projected_basis` field must be an array of strings"
 
-    projected_basis = BasisMetadata[]
+    projected_basis = BasisMetadata{Dict{String, String}}[]
     for basisfunc in projected_basis_str
         push!(projected_basis, parse_basismetadata(basisfunc)...)
     end
 
-    return Vector{typeof(first(projected_basis))}(projected_basis)
+    return projected_basis
 end
 
 function Configurations.from_dict(
-    ::Type{BasisProjectionParams{E}},
+    ::Type{BasisProjectionParams},
     ::OptionField{:method},
     ::Type{Type{<:AbstractBasisProjection}},
     s,
-) where E
+)
     @argcheck isa(s, String)
     
     symbol = Symbol(Utils.normalize_comparison(s))
