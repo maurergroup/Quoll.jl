@@ -1,5 +1,7 @@
 module OperatorIO
-export AtomBasisOperator, implemented_read_format, implemented_write_format
+export implemented_read_format, implemented_write_format
+export AtomBasisOperator
+export FHIaimsOperator, DeepHOperator
 
 abstract type AtomBasisOperator end
 

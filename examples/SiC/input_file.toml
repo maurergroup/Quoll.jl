@@ -20,7 +20,7 @@ directories = ["SiC_FHIaims"]
 # i.e. Monkhorst-Pack and even possibly different shifts
 [kpoint_grid]
 grid = [10, 10, 10]
-density = [8.0, 8.0, 8.0]
+density = 8.0
 
 
 # Core projection
@@ -45,9 +45,9 @@ method = "FC99V"
 #   - Discretisation
 # - Band structures
 [postprocessing]
-fermi_level = false
-dos = false
-band_structure = false
+fermi_level = true
+dos = true
+band_structure = true
 
 [postprocessing.fermi_level_params]
 smearing_function = "gaussian"
