@@ -2,14 +2,12 @@ using Configurations
 using ArgCheck
 
 @option struct KPointGridParams <: AbstractQuollParams
-    grid::Union{Vector{Int}, Nothing} = nothing
-    density::Union{Vector{Float64}, Nothing} = nothing
+    grid::Union{SVector{3, Int}, Nothing} = nothing
+    density::Float64 = 10.0
 
     function KPointGridParams(grid, density)
-        @argcheck !(grid === nothing && density === nothing) "Either k-point grid or k-point density must be supplied"
-        @argcheck !(grid !== nothing && density !== nothing) "Both k-point grid and k-point density cannot be supplied"
-        @argcheck grid .> 0
-        @argcheck density .> 0
+        grid !== nothing && @argcheck all(grid .> 0)
+        @argcheck density > 0
         new(grid, density)
     end
 end
