@@ -8,6 +8,8 @@ using Reexport
 
 include("Utils.jl")
 
+include("MPITools.jl")
+
 include("Basis.jl")
 @reexport using .Basis
 
