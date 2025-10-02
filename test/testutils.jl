@@ -28,6 +28,7 @@ end
 # - move back to original directory
 function setupteardown_tarballs(f, args, kwargs, tarballs)
     starting_dir = pwd()
+    tarballs = abspath.(tarballs)
     try
         # Create temporary directory
         tempdir = mktempdir(; cleanup = true)

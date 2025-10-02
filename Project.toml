@@ -15,6 +15,9 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
+Aqua = "0.8"
+CodecZlib = "0.7"
+SafeTestsets = "0.1"
 ArgCheck = "2"
 AtomsBase = "0.5"
 AutoHashEquals = "2"
