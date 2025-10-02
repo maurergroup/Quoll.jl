@@ -2,12 +2,14 @@
 /**/*.jl.cov
 /**/*.jl.mem
 
-/docs/Manifest*.toml
 /docs/build/
 
-/Manifest*.toml
-/LocalPreferences*.toml
-
-/dev
+/**/Manifest*.toml
+/**/LocalPreferences*.toml
 
 /**/.vscode
+
+/**/*.log
+/**/*.sh
+
+/examples/SiC/SiC_FHIaims
