@@ -6,22 +6,37 @@ include("../testutils.jl")
 
 @testset "find_leafdirs" begin
 
-    tempdirs = [
-        joinpath("dir", "dir1", "dir11"),
-        joinpath("dir", "dir1", "dir12"),
-        joinpath("dir", "dir2", "dir21"),
-    ]
+    @testset "Nominal case" begin
+        tempdirs = [
+            joinpath("dir1", "dir11"),
+            joinpath("dir1", "dir12"),
+            joinpath("dir2", "dir21"),
+        ]
 
-    root, paths = create_tempdirs(tempdirs)
-    # dir
-    # ├── dir1
-    # │   ├── dir11
-    # │   └── dir12
-    # └── dir2
-    #     └── dir21
+        root, paths = create_tempdirs(tempdirs)
+        # root
+        # ├── dir1
+        # │   ├── dir11
+        # │   └── dir12
+        # └── dir2
+        #     └── dir21
 
-    leafdirs = Quoll.Utils.find_leafdirs(root)
-    @test Set(leafdirs) == Set(paths)
+        leafdirs = Quoll.Utils.find_leafdirs(root)
+        @test Set(leafdirs) == Set(paths)
+    end
+
+    @testset "Only root" begin
+        tempdirs = []
+
+        root, _ = create_tempdirs(tempdirs)
+        # root
+        # ├──
+
+        leafdirs = Quoll.Utils.find_leafdirs(root)
+        @test leafdirs == [root]
+
+    end
+
 end
 
 @testset "normalize_comparison" begin

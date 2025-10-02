@@ -3,7 +3,7 @@
 # - Output file directory
 [input]
 format = "FHI-aims"
-directories = ["SiC_FHIaims"]
+directories = ["../examples/SiC/SiC_FHIaims"]
 
 
 # Convert

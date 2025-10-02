@@ -11,6 +11,9 @@ using ..OperatorIO
         # Convert `dirs` to absolute paths
         directories = abspath.(directories)
 
+        # Check if directories exist
+        @argcheck all(isdir.(directories)) "Some of the supplied input directories do not exist"
+
         # Walk the directories to obtain all the paths
         directories = vcat(Utils.find_leafdirs.(directories)...)
 

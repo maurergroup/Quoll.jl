@@ -26,10 +26,11 @@ include("../../testutils.jl")
     @testset "directories" begin
 
         @testset "Single directory" begin
-            absroot, abspaths = create_tempdirs(["dir1"])
+            absroot, _ = create_tempdirs([])
 
             @testset "Absolute path" begin
-                directories, reference = absroot, abspaths
+                directories = absroot
+                reference = [absroot]
 
                 d = Dict("format" => "FHI-aims", "directories" => directories)
                 params = from_dict(Quoll.Parser.InputParams, d)
@@ -38,7 +39,8 @@ include("../../testutils.jl")
             end
 
             @testset "Relative path" begin
-                directories, reference = relpath(absroot), abspaths
+                directories = relpath(absroot)
+                reference = [absroot]
 
                 d = Dict("format" => "FHI-aims", "directories" => directories)
                 params = from_dict(Quoll.Parser.InputParams, d)
