@@ -55,7 +55,7 @@ for idir in my_idirs
     dir = params.input.directories[idir]
     @info "Starting configuration $(basename(dir))"
 
-    ### LOAD ATOMS ###
-
+    @info "Loading atoms"
+    atoms = load_atoms(dir, params.input.format)
 
 end

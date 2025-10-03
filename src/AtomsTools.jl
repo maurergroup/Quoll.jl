@@ -2,6 +2,7 @@ module AtomsTools
 using AtomsIOPython
 using AtomsBase
 using StaticArrays
+using Unitful
 using ArgCheck
 using ..OperatorIO
 export recentre, load_atoms
@@ -11,10 +12,13 @@ function recentre(atoms::AbstractSystem)
     # for systems with open boundary conditions
     @argcheck all(periodicity(atoms))
 
-    # Convert atom positions to fractional coordinates
+    # Convert atom positions to fractional coordinates.
+    # Strip units for matrix division because it doesn't always
+    # work with units, resulting fractional coordinates do not have units
+    # which is correct
     atom_pos = stack(position(atoms, :))
     lat = stack(cell_vectors(atoms))
-    atom_frac_pos = lat \ atom_pos
+    atom_frac_pos = ustrip(lat) \ ustrip(atom_pos)
 
     # Wrap fractional coordinates to [-0.5, 0.5) unit cell
     # and shift back to [0.0, 1.0)
