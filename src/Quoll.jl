@@ -22,6 +22,9 @@ include("Smearing.jl")
 include("OperatorIO.jl")
 @reexport using .OperatorIO
 
+include("AtomsTools.jl")
+@reexport using .AtomsTools
+
 include("Parser.jl")
 
 end
