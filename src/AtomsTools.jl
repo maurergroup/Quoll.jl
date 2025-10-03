@@ -4,7 +4,7 @@ using AtomsBase
 using StaticArrays
 using ArgCheck
 using ..OperatorIO
-export recentre
+export recentre, load_atoms
 
 function recentre(atoms::AbstractSystem)
     # Currently the following function does not support recentering

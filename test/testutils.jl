@@ -26,7 +26,7 @@ end
 # - extract tarballs
 # Teardown:
 # - move back to original directory
-function setupteardown_tarballs(f, args, kwargs, tarballs)
+function setupteardown_tmp(f, tarballs)
     starting_dir = pwd()
     tarballs = abspath.(tarballs)
     try
@@ -36,7 +36,7 @@ function setupteardown_tarballs(f, args, kwargs, tarballs)
         # Move to the temporary directory
         cd(tempdir)
 
-        # Extract tarballs
+        # Extract any supplied tarballs
         for tpath in tarballs
             bname = match(r"^[^\.]+", basename(tpath)).match
             tempdir_ext = joinpath(tempdir, bname)
@@ -45,8 +45,8 @@ function setupteardown_tarballs(f, args, kwargs, tarballs)
             Tar.extract(tar, tempdir_ext)
         end
 
-        # run the function
-        f(args...; kwargs...)
+        # run the test
+        f()
 
     finally
         cd(starting_dir)
