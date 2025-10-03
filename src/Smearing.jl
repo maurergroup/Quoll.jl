@@ -1,5 +1,5 @@
 module Smearing
-export SmearingFunction, FermiDirac, Gaussian, implemented_smearing
+export SmearingFunction, FermiDirac, Gaussian, smearing
 
 abstract type SmearingFunction end
 
@@ -7,9 +7,10 @@ struct FermiDirac <: SmearingFunction end
 
 struct Gaussian <: SmearingFunction end
 
-function implemented_smearing end
+function smearing end
 
-implemented_smearing(::Val{:fermidirac}) = FermiDirac
-implemented_smearing(::Val{:gaussian}) = Gaussian
+# TODO: move to parser? Not sure...
+smearing(::Val{:fermidirac}) = FermiDirac
+smearing(::Val{:gaussian}) = Gaussian
 
 end

@@ -58,4 +58,22 @@ for idir in my_idirs
     @info "Loading atoms"
     atoms = load_atoms(dir, params.input.format)
 
+    @info "Loading matrices"
+    # Option 1: more robust if operators don't share metadata.
+    #           operators can be a named tuple
+    # operators = load_operators(dir, params.input.operators, params.input.format)
+    # 
+    # Option 2: Assuming operator metadata is shared across operators
+    # operator_metadata = load_operatormetadata(dir, params.input.format)
+    # for operator_type in params.input.operators
+    #     params.input.format(dir, operator_metadata, operator_type)
+    # end
+
+    # Check what operators are available in the directories.
+    # ...
+    # check if supplied operators are even present in the directories.
+    # If they are `required` for some operations, @error
+    # If they are `optional` (e.g. output) then just @warn
+
+    operators = load_operators(dir, params.input.operators, params.input.format)
 end

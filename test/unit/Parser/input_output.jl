@@ -6,10 +6,33 @@ include("../../testutils.jl")
 
 @testset "InputParams" begin
 
-    @testset "format" begin
-        directories, _ = create_tempdirs(["dir1"])
+    @testset "operators" begin
+        directories, _ = create_tempdirs([])
 
-        @testset "Correct format" begin
+        @testset "Nominal case" begin
+            d = Dict("format" => "FHI-aims", "directories" => directories, "operators" => "H_ref")
+            params = from_dict(Quoll.Parser.InputParams, d)
+
+            @test params.operators == [Hamiltonian(:ref)]
+
+            d = Dict("format" => "FHI-aims", "directories" => directories, "operators" => ["H_ref"])
+            params = from_dict(Quoll.Parser.InputParams, d)
+
+            @test params.operators == [Hamiltonian(:ref)]
+        end
+
+        @testset "Incorrect kind" begin
+            d = Dict("format" => "FHI-aims", "directories" => directories, "operators" => ["foo", "bar"])
+
+            @test_throws ArgumentError params = from_dict(Quoll.Parser.InputParams, d)
+        end
+
+    end
+
+    @testset "format" begin
+        directories, _ = create_tempdirs([])
+
+        @testset "Nominal case" begin
             d = Dict("format" => "FHI-aims", "directories" => directories)
             params = from_dict(Quoll.Parser.InputParams, d)
 

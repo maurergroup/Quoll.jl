@@ -4,7 +4,7 @@
 [input]
 format = "FHI-aims"
 directories = ["SiC_FHIaims"]
-
+operators = ["H", "S"]
 
 # Convert
 # - Output format

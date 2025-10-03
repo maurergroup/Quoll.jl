@@ -59,7 +59,7 @@ function Configurations.from_dict(
     @argcheck isa(s, String)
     
     symbol = Symbol(Utils.normalize_comparison(s))
-    @argcheck hasmethod(implemented_basis_projection, Tuple{Val{symbol}}) "Basis projection $s is unavailable or doesn't exist"
+    @argcheck hasmethod(basis_projection, Tuple{Val{symbol}}) "Basis projection $s is unavailable or doesn't exist"
 
-    return implemented_basis_projection(Val(symbol))
+    return basis_projection(Val(symbol))
 end
