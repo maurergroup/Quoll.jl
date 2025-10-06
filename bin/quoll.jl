@@ -77,10 +77,15 @@ for idir in my_idirs
     end
     
     @debug "Validation successful" operatorkinds
-
-    operators = load_operators(dir, operatorkinds, params.input.format)
-
-    @info "Compute sparsity"
-
     
+    # Assuming all operators share operator_metadata
+    operators, operator_metadata = load_operators(dir, operatorkinds, params.input.format)
+
+    @info "Loading basis set metadata"
+
+    basis_metadata = BasisSetMetadata(dir, atoms, operator_metadata)
+
+    @info "Computing sparsity"
+
+
 end

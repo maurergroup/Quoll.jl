@@ -28,7 +28,7 @@ end
     SiC_inputfile = joinpath(SiC_exampledir, "input_file.toml")
     tarballs = [joinpath(SiC_exampledir, "SiC_FHIaims.tar.gz")]
 
-    setupteardown_tmp(tarballs) do
+    setupteardown_tmp(tarballs=tarballs) do
         params = from_toml(Quoll.Parser.QuollParams, SiC_inputfile)
         @test params.input.format == FHIaimsOperator
     end

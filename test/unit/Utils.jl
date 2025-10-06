@@ -13,7 +13,7 @@ include("../testutils.jl")
             joinpath("dir2", "dir21"),
         ]
 
-        root, paths = create_tempdirs(tempdirs)
+        root, paths = create_temptree(tempdirs)
         # root
         # ├── dir1
         # │   ├── dir11
@@ -28,7 +28,7 @@ include("../testutils.jl")
     @testset "Only root" begin
         tempdirs = []
 
-        root, _ = create_tempdirs(tempdirs)
+        root, _ = create_temptree(tempdirs)
         # root
         # ├──
 

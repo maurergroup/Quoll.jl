@@ -2,21 +2,20 @@ using Tar
 using CodecZlib
 
 """
-    create_tempdirs(dirs)
+    create_temptree(files)
 
-Create a temporary tree of directories stored in a collection of
-relative paths in `dirs`. Returns the root and the resulting paths
-of the created directories.
+Create a temporary tree of paths stored in a collection of relative paths
+in `files`. Returns the root and the resulting absolute paths of the created files.
 """
-function create_tempdirs(dirs)
+function create_temptree(paths)
     root = mktempdir(; cleanup = true)
 
-    paths = []
-    for dir in dirs
-        push!(paths, mkpath(joinpath(root, dir)))
+    abspaths = []
+    for p in paths
+        push!(abspaths, mkpath(joinpath(root, p)))
     end
 
-    return (root, paths)
+    return (root, abspaths)
 end
 
 # Setup:
@@ -26,7 +25,7 @@ end
 # - extract tarballs
 # Teardown:
 # - move back to original directory
-function setupteardown_tmp(f, tarballs)
+function setupteardown_tmp(f; tarballs = [])
     starting_dir = pwd()
     tarballs = abspath.(tarballs)
     try

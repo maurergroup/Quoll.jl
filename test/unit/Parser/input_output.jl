@@ -7,7 +7,7 @@ include("../../testutils.jl")
 @testset "InputParams" begin
 
     @testset "operators" begin
-        directories, _ = create_tempdirs([])
+        directories, _ = create_temptree([])
 
         @testset "Nominal case" begin
             d = Dict("format" => "FHI-aims", "directories" => directories, "operators" => "H_ref")
@@ -30,7 +30,7 @@ include("../../testutils.jl")
     end
 
     @testset "format" begin
-        directories, _ = create_tempdirs([])
+        directories, _ = create_temptree([])
 
         @testset "Nominal case" begin
             d = Dict("format" => "FHI-aims", "directories" => directories)
@@ -49,7 +49,7 @@ include("../../testutils.jl")
     @testset "directories" begin
 
         @testset "Single directory" begin
-            absroot, _ = create_tempdirs([])
+            absroot, _ = create_temptree([])
 
             @testset "Absolute path" begin
                 directories = absroot
@@ -75,7 +75,7 @@ include("../../testutils.jl")
 
         @testset "Multiple directories" begin
             absroot, abspaths =
-                create_tempdirs([joinpath("dir", "dir1"), joinpath("dir", "dir2")])
+                create_temptree([joinpath("dir", "dir1"), joinpath("dir", "dir2")])
 
             @testset "Absolute paths" begin
                 directories, reference = absroot, abspaths

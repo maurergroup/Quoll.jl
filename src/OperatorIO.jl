@@ -12,10 +12,11 @@ using DelimitedFiles
 export read_format, write_format, operator_kind
 export avail_operatorkinds
 export find_operatorkinds
-export load_operators
+export load_operators, load_operator_data, load_operator_metadata
 
 export AbstractOperator
 export FHIaimsOperator, DeepHOperator
+export FHIaimsOperatorMetadata
 export AbstractOperatorKind
 export Hamiltonian, Overlap
 
@@ -36,19 +37,23 @@ abstract type AbstractOperatorMetadata end
 abstract type AbstractQuollOperator <: AbstractOperator end
 abstract type AbstractBSparseOperator <: AbstractQuollOperator end
 
+# TODO: could the same be used for density matrices from FHI-aims?
+# If not, and if I needed to load in H, S, D at the same time it could
+# become tricky
 struct FHIaimsOperatorMetadata <: AbstractOperatorMetadata
+    n_basis::Int
     row_ind::Vector{Int}
     col_cell_ptr::Array{Int, 3}
     cells::Vector{SVector{3, Int}}
     # spherical harmonics convention?
 end
 
-# This will not be a singleton, which means if we want to dispatch
-# on the format without passing values into a method we will need to dispatch
-# on the type instead of an instance (::Type{FHIaimsOperator}).
-# Would that be inconsistent if I use singleton instances for e.g. FC99V?
+# TODO: Same as for metadata, if we want to read in density matrices or gradients,
+# we would likely need different fields but the format is still "FHIaims".
+# If it's stored not as CSC but something else we could e.g. use parametric
+# types instead of using Vector{T}
 struct FHIaimsOperator{O<:AbstractOperatorKind, T<:AbstractFloat} <: AbstractOperator
-    operatorkind::O
+    kind::O
     data::Vector{T}
     metadata::FHIaimsOperatorMetadata
 end
@@ -69,7 +74,7 @@ struct BSparseOperatorMetadata <: AbstractOperatorMetadata
 end
 
 struct RealBSparseOperator{O<:AbstractOperatorKind, T<:AbstractFloat, AT, KT} <: AbstractBSparseOperator
-    operatorkind::O
+    kind::O
     data::Dictionary{NTuple{2, ChemicalSpecies}, Array{T, 3}}
     keydata::Dictionary{NTuple{2, Int}, KeyedArray{T, 3, AT, KT}}
     metadata::BSparseOperatorMetadata
@@ -148,13 +153,14 @@ function load_operator_metadata(dir::AbstractString, ::Type{FHIaimsOperator})
 
     close(f)
 
-    return FHIaimsOperatorMetadata(row_ind, col_cell_ptr, cells)
+    return FHIaimsOperatorMetadata(n_basis, row_ind, col_cell_ptr, cells)
 end
 
 function load_operator_data(dir::AbstractString, operatorkind::AbstractOperatorKind, ::Type{FHIaimsOperator})
     @debug "Loading operator data"
 
     ps = joinpath.(dir, filenames(operatorkind, Val(operatorkind.tag), FHIaimsOperator))
+    ps = ps[ispath.(ps)]
     @argcheck !isempty(ps)
 
     exts = getindex.(splitext.(ps), 2)
@@ -173,7 +179,9 @@ function load_operator_data(dir::AbstractString, operatorkind::AbstractOperatorK
         elseif ext == ".out"
             data = readdlm(p)
 
-            # Ignore the last element (which is always zero)
+            # Reshape from (N, 1) to (N,)
+            # and ignore the last element (which is always zero)
+            data = reshape(data, :)
             pop!(data)
             return data
         else
@@ -188,9 +196,9 @@ function FHIaimsOperator(dir::AbstractString, operatorkind::AbstractOperatorKind
 end
 
 function load_operators(dir::AbstractString, operatorkinds, format::Type{FHIaimsOperator})
-    # TODO: this doesn't contain the sparsity...
     metadata = load_operator_metadata(dir, format)
-    return [FHIaimsOperator(dir, operatorkind, metadata) for operatorkind in operatorkinds]
+    operators = Dict(kind => FHIaimsOperator(dir, kind, metadata) for kind in operatorkinds)
+    return operators, metadata
 end
 
 # Available operatorkinds of the input format

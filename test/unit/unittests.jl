@@ -15,3 +15,7 @@ end
 @safetestset "AtomsTools" begin
     include("AtomsTools.jl")
 end
+
+@safetestset "OperatorIO" begin
+    include("OperatorIO.jl")
+end

@@ -10,6 +10,9 @@ include("Utils.jl")
 
 include("MPITools.jl")
 
+include("OperatorIO.jl")
+@reexport using .OperatorIO
+
 include("Basis.jl")
 @reexport using .Basis
 
@@ -18,9 +21,6 @@ include("BasisProjection.jl")
 
 include("Smearing.jl")
 @reexport using .Smearing
-
-include("OperatorIO.jl")
-@reexport using .OperatorIO
 
 include("AtomsTools.jl")
 @reexport using .AtomsTools

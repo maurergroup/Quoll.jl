@@ -77,8 +77,7 @@ end
             cell_vectors,
         )
 
-        tarballs = ()
-        setupteardown_tmp(tarballs) do
+        setupteardown_tmp() do
             open("geometry.in", "w") do io
                 write(io, geometry)
             end
