@@ -28,6 +28,27 @@ include("Parser/basis_projection.jl")
 include("Parser/error_metrics.jl")
 include("Parser/kpoint_grid.jl")
 
+# Check if the operators are sufficient for requested job
+function validate_operatorkinds(operators, output, basis_projection, postprocessing, error_metrics)
+    Sref = Overlap(:ref) ∈ operators
+    Spred = Overlap(:pred) ∈ operators
+    Href = Hamiltonian(:ref) ∈ operators
+    Hpred = Hamiltonian(:pred) ∈ operators
+
+    output !== nothing && (@argcheck Sref || Spred || Href || Hpred)
+    basis_projection !== nothing && (@argcheck Sref)
+
+    postprocessing.dos && (@argcheck (Sref && Href) || (Spred && Hpred))
+    postprocessing.fermi_level && (@argcheck (Sref && Href) || (Spred && Hpred))
+    postprocessing.band_structure && (@argcheck (Sref && Href) || (Spred && Hpred))
+
+    error_metrics.mae && (@argcheck Href && Hpred)
+    error_metrics.eigenvalue_error && (@argcheck (Sref && Href) || (Spred && Hpred))
+    error_metrics.el_entropy_error && (@argcheck (Sref && Href) || (Spred && Hpred))
+
+    return true
+end
+
 @option struct QuollParams
     input::InputParams
 
@@ -42,37 +63,9 @@ include("Parser/kpoint_grid.jl")
 
     function QuollParams(input, output, basis_projection, kpoint_grid, postprocessing, error_metrics)
         # Check if input operators are appropriate for the task
-        Sref = Overlap(:ref) ∈ input.operators
-        Spred = Overlap(:pred) ∈ input.operators
-        Href = Hamiltonian(:ref) ∈ input.operators
-        Hpred = Hamiltonian(:pred) ∈ input.operators
-
-        output !== nothing && (@argcheck Sref || Spred || Href || Hpred)
-        basis_projection !== nothing && (@argcheck Sref)
-
-        postprocessing.dos && (@argcheck (Sref && Href) || (Spred && Hpred))
-        postprocessing.fermi_level && (@argcheck (Sref && Href) || (Spred && Hpred))
-        postprocessing.band_structure && (@argcheck (Sref && Href) || (Spred && Hpred))
-
-        error_metrics.mae && (@argcheck Href && Hpred)
-        error_metrics.eigenvalue_error && (@argcheck (Sref && Href) || (Spred && Hpred))
-        error_metrics.el_entropy_error && (@argcheck (Sref && Href) || (Spred && Hpred))
-
+        validate_operatorkinds(input.operators, output, basis_projection, postprocessing, error_metrics)
         new(input, output, basis_projection, kpoint_grid, postprocessing, error_metrics)
     end
 end
-
-# TODO: remove
-# output               Sref || Spred || Href || Hpred
-# basis_projection     Sref
-# kpoint_grid          Sref || Spred || Href || Hpred
-# postprocessing
-#   dos                (Sref && Href) || (Spred && Hpred)
-#   fermi_level        (Sref && Href) || (Spred && Hpred)
-#   band_structure     (Sref && Href) || (Spred && Hpred)
-# error_metrics
-#   mae                Href && Hpred
-#   eigenvalue_error   (Sref && Href) || (Spred && Hpred)
-#   el_entropy_error   (Sref && Href) || (Spred && Hpred)
 
 end

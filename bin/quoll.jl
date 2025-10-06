@@ -50,30 +50,37 @@ params = from_toml(Quoll.Parser.QuollParams, input_filepath)
 N_dirs = length(params.input.directories)
 my_idirs = Quoll.MPITools.split_work(N_dirs, global_comm, Quoll.MPITools.DefaultSplit())
 
-
 for idir in my_idirs
     dir = params.input.directories[idir]
+
     @info "Starting configuration $(basename(dir))"
 
     @info "Loading atoms"
+
     atoms = load_atoms(dir, params.input.format)
 
-    @info "Loading matrices"
-    # Option 1: more robust if operators don't share metadata.
-    #           operators can be a named tuple
-    # operators = load_operators(dir, params.input.operators, params.input.format)
-    # 
-    # Option 2: Assuming operator metadata is shared across operators
-    # operator_metadata = load_operatormetadata(dir, params.input.format)
-    # for operator_type in params.input.operators
-    #     params.input.format(dir, operator_metadata, operator_type)
-    # end
+    @info "Loading operators"
 
-    # Check what operators are available in the directories.
-    # ...
-    # check if supplied operators are even present in the directories.
-    # If they are `required` for some operations, @error
-    # If they are `optional` (e.g. output) then just @warn
+    @debug "Validating operator kinds"
 
-    operators = load_operators(dir, params.input.operators, params.input.format)
+    # TODO: put this into a function?
+    found_operatorkinds = find_operatorkinds(dir, params.input.format)
+    if !all(params.input.operators .∈ Ref(found_operatorkinds))
+        @warn "Could not find all the requested operators"
+        operatorkinds = collect(intersect(Set(params.input.operators), Set(found_operatorkinds)))
+
+        # Validate whether the calculation can still continue
+        # even though not all operatorkinds were found
+        Quoll.Parser.validate_operatorkinds(operatorkinds)
+    else
+        operatorkinds = params.input.operators
+    end
+    
+    @debug "Validation successful" operatorkinds
+
+    operators = load_operators(dir, operatorkinds, params.input.format)
+
+    @info "Compute sparsity"
+
+    
 end

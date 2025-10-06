@@ -6,7 +6,7 @@ using ..OperatorIO
 @option struct InputParams <: AbstractQuollParams
     format::Type{<:AbstractOperator}
     directories::Vector{String}
-    operators::Vector{AbstractOperatorKind} = [Hamiltonian(:ref), Hamiltonian(:pred), Overlap(:ref)]
+    operators::Vector{AbstractOperatorKind} = avail_operatorkinds(format)
 
     function InputParams(format, directories, operators)
         # Convert `dirs` to absolute paths
