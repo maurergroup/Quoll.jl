@@ -18,6 +18,7 @@ MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+UnitfulAtomic = "a7773ee8-282e-5fa2-be4e-bd808c38a91a"
 
 [compat]
 Aqua = "0.8"
@@ -37,6 +38,7 @@ Reexport = "1.2"
 SafeTestsets = "0.1"
 StaticArrays = "1.9"
 Unitful = "1.25"
+UnitfulAtomic = "1"
 julia = "1.9"
 
 [extras]

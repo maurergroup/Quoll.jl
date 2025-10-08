@@ -1,5 +1,9 @@
 using Configurations
 using ArgCheck
+using AtomsBase
+using Unitful
+using UnitfulAtomic
+
 using ..Utils
 using ..OperatorIO
 
@@ -7,8 +11,9 @@ using ..OperatorIO
     format::Type{<:AbstractOperator}
     directories::Vector{String}
     operators::Vector{AbstractOperatorKind} = avail_operatorkinds(format)
+    radii::Union{Dict{ChemicalSpecies, Quantity{Float64, Unitful.𝐋, typeof(u"Å")}}, Nothing} = nothing
 
-    function InputParams(format, directories, operators)
+    function InputParams(format, directories, operators, radii)
         # Convert `dirs` to absolute paths
         directories = abspath.(directories)
 
@@ -18,7 +23,7 @@ using ..OperatorIO
         # Walk the directories to obtain all the paths
         directories = vcat(Utils.find_leafdirs.(directories)...)
 
-        new(format, directories, operators)
+        new(format, directories, operators, radii)
     end
 end
 
@@ -89,4 +94,42 @@ function Configurations.from_dict(
     end
 
     return operator_kind.(Val.(valid_symbols))
+end
+
+function parse_radius(radius_string)
+    re = r"\s*(\w+)\s*\+?(\d*\.?\d+)\s*(\w+)?\s*"
+    radius_match = match(re, radius_string)
+
+    z = ChemicalSpecies(Symbol(radius_match.captures[1]))
+    r = parse(Float64, radius_match.captures[2])
+    unit = radius_match.captures[3]
+    
+    if unit === nothing
+        @warn "Units to radii field not supplied, assuming Å"
+        r = r * u"Å"
+    else
+        unit = Utils.normalize_comparison(unit)
+        if unit == "bohr"
+            r = uconvert(u"Å", r * u"bohr")
+        elseif unit == "ang"
+            r = r * u"Å"
+        else
+            throw(ArgumentError("Unknown radius unit $unit"))
+        end
+    end
+    
+    return z, r
+end
+
+function Configurations.from_dict(
+    ::Type{InputParams},
+    ::OptionField{:radii},
+    ::Type{Dict{ChemicalSpecies, Quantity{Float64, Unitful.𝐋, typeof(u"Å")}}},
+    radii
+)
+    # Ensure `radii` is of type Vector{String}
+    @argcheck isa(radii, String) || isa(radii, Vector{String})
+    isa(radii, String) && (radii = [radii])
+
+    return Dict(Pair(parse_radius(radius)...) for radius in radii)
 end

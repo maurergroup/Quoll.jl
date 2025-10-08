@@ -1,8 +1,30 @@
 using Quoll
 using Test
 using Configurations
+using AtomsBase
+using Unitful
+using UnitfulAtomic
 
 include("../../testutils.jl")
+
+@testset "parse_radius" begin
+    z = ChemicalSpecies(:Si)
+    r = 10.0
+
+    s = "Si 10"
+    @test Quoll.Parser.parse_radius(s) == (z, r * u"Å")
+
+    s = "Si 10.0"
+    @test Quoll.Parser.parse_radius(s) == (z, r * u"Å")
+
+    s = "Si 10.0 bohr"
+    @test Quoll.Parser.parse_radius(s) == (z, uconvert(u"Å", r * u"bohr"))
+
+    s = "Si 10.0 foo"
+    @test_throws ArgumentError Quoll.Parser.parse_radius(s)
+
+end
+
 
 @testset "InputParams" begin
 
@@ -95,6 +117,21 @@ include("../../testutils.jl")
                 @test params.directories == reference
             end
 
+        end
+
+    end
+
+    @testset "radii" begin
+        directories, _ = create_temptree([])
+    
+        @testset "Nominal case" begin
+            radii = ["Si 12.0 ang", "C 10.0 ang"]
+            d = Dict("format" => "FHI-aims", "directories" => directories, "radii" => radii)
+            params = from_dict(Quoll.Parser.InputParams, d)
+            @test params.radii == Dict(
+                ChemicalSpecies(:Si) => 12.0u"Å",
+                ChemicalSpecies(:C) => 10.0u"Å",
+            )
         end
 
     end

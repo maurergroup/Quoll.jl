@@ -5,6 +5,10 @@
 format = "FHI-aims"
 directories = ["SiC_FHIaims"]
 operators = ["H", "S"]
+radii = [
+    "C 12.0 ang",
+    "Si 12.0 ang",
+]
 
 # Convert
 # - Output format
