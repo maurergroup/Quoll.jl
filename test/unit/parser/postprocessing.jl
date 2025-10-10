@@ -1,7 +1,8 @@
 using Quoll
-using Test
 using Configurations
 using StaticArrays
+
+using Test
 
 @testset "parse_kpathparams" begin
 

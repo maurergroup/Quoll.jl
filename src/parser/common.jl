@@ -8,10 +8,10 @@ function Configurations.from_dict(
 ) where OT<:AbstractQuollParams
     @argcheck isa(s, String)
     
-    symbol = Symbol(Utils.normalize_comparison(s))
-    @argcheck hasmethod(smearing, Tuple{Val{symbol}}) "Smearing function $s is unavailable or doesn't exist"
+    symbol = Symbol(normalize_comparison(s))
+    @argcheck hasmethod(get_smearing, Tuple{Val{symbol}}) "Smearing function $s is unavailable or doesn't exist"
 
-    return smearing(Val(symbol))
+    return get_smearing(Val(symbol))
 end
 
 """

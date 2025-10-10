@@ -1,3 +1,3 @@
 struct DeepHOperator <: AbstractOperator end
 
-write_format(::Val{:deeph}) = DeepHOperator
+get_writeformat(::Val{:deeph}) = DeepHOperator

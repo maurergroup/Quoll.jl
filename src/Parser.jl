@@ -4,10 +4,21 @@ using Configurations
 using StaticArrays
 using Unitful
 using UnitfulAtomic
+using AtomsBase
 using ArgCheck
 
+using ..Quoll
+using ..Quoll:
+    AbstractOperator,
+    AbstractOperatorKind,
+    get_avail_operatorkinds,
+    get_operatorkind,
+    get_readformat,
+    get_writeformat
 using ..Projections
+using ..Projections: AbstractBasisProjection, basis_projection
 using ..Postprocessing
+using ..Postprocessing: SmearingFunction, get_smearing
 
 # Common utilities used in multiple instances
 include("parser/common.jl")
@@ -23,17 +34,30 @@ include("parser/kpoint_grid.jl")
     input::InputParams
 
     # Optional parameter sets
-    output::Union{OutputParams, Nothing} = nothing
-    basis_projection::Union{BasisProjectionParams, Nothing} = nothing
+    output::Union{OutputParams,Nothing} = nothing
+    basis_projection::Union{BasisProjectionParams,Nothing} = nothing
 
     # Optional parameter sets with existing defaults
     kpoint_grid::KPointGridParams = KPointGridParams()
-    postprocessing::PostprocessParams = PostprocessParams()    
+    postprocessing::PostprocessParams = PostprocessParams()
     error_metrics::ErrorMetricParams = ErrorMetricParams()
 
-    function QuollParams(input, output, basis_projection, kpoint_grid, postprocessing, error_metrics)
+    function QuollParams(
+        input,
+        output,
+        basis_projection,
+        kpoint_grid,
+        postprocessing,
+        error_metrics,
+    )
         # Check if input operators are appropriate for the task
-        validate_operatorkinds(input.operators, output, basis_projection, postprocessing, error_metrics)
+        validate_operatorkinds(
+            input.operators,
+            output,
+            basis_projection,
+            postprocessing,
+            error_metrics,
+        )
         new(input, output, basis_projection, kpoint_grid, postprocessing, error_metrics)
     end
 end

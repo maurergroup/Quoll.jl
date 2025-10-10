@@ -1,7 +1,9 @@
 using Quoll
 using AtomsBase
 using Configurations
+
 using Test
+using Main.TestUtils
 
 @testset "parse_basismetadata" begin
     @test collect(Quoll.Parser.parse_basismetadata(

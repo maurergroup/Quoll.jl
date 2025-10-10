@@ -1,8 +1,8 @@
 using Quoll
 using Configurations
-using Test
 
-include("../testutils.jl")
+using Test
+using Main.TestUtils
 
 @testset "find_leafdirs" begin
 
@@ -21,7 +21,7 @@ include("../testutils.jl")
         # └── dir2
         #     └── dir21
 
-        leafdirs = Quoll.Utils.find_leafdirs(root)
+        leafdirs = Quoll.Parser.find_leafdirs(root)
         @test Set(leafdirs) == Set(paths)
     end
 
@@ -32,7 +32,7 @@ include("../testutils.jl")
         # root
         # ├──
 
-        leafdirs = Quoll.Utils.find_leafdirs(root)
+        leafdirs = Quoll.Parser.find_leafdirs(root)
         @test leafdirs == [root]
 
     end
@@ -42,9 +42,9 @@ end
 @testset "normalize_comparison" begin
 
     s = "FERMI_DIRAC"
-    @test Quoll.Utils.normalize_comparison(s) == "fermidirac"
+    @test Quoll.Parser.normalize_comparison(s) == "fermidirac"
 
     replace_pairs = tuple()
-    @test Quoll.Utils.normalize_comparison(s; replace_pairs) == "fermi_dirac"
+    @test Quoll.Parser.normalize_comparison(s; replace_pairs) == "fermi_dirac"
 
 end

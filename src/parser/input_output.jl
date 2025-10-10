@@ -1,7 +1,7 @@
 @option struct InputParams <: AbstractQuollParams
     format::Type{<:AbstractOperator}
     directories::Vector{String}
-    operators::Vector{AbstractOperatorKind} = avail_operatorkinds(format)
+    operators::Vector{AbstractOperatorKind} = get_avail_operatorkinds(format)
     radii::Union{Dict{ChemicalSpecies, Quantity{Float64, Unitful.𝐋, typeof(u"Å")}}, Nothing} = nothing
 
     function InputParams(format, directories, operators, radii)
@@ -12,7 +12,7 @@
         @argcheck all(isdir.(directories)) "Some of the supplied input directories do not exist"
 
         # Walk the directories to obtain all the paths
-        directories = vcat(Utils.find_leafdirs.(directories)...)
+        directories = vcat(find_leafdirs.(directories)...)
 
         new(format, directories, operators, radii)
     end
@@ -37,9 +37,9 @@ function Configurations.from_dict(
     @argcheck isa(s, String)
     
     symbol = Symbol(normalize_comparison(s))
-    @argcheck hasmethod(read_format, Tuple{Val{symbol}}) "Writing matrix in format $s is unavailable or the format doesn't exist"
+    @argcheck hasmethod(get_readformat, Tuple{Val{symbol}}) "Writing matrix in format $s is unavailable or the format doesn't exist"
 
-    return read_format(Val(symbol))
+    return get_readformat(Val(symbol))
 end
 
 function Configurations.from_dict(
@@ -51,9 +51,9 @@ function Configurations.from_dict(
     @argcheck isa(s, String)
     
     symbol = Symbol(normalize_comparison(s))
-    @argcheck hasmethod(write_format, Tuple{Val{symbol}}) "Writing matrix in format $s is unavailable or the format doesn't exist"
+    @argcheck hasmethod(get_writeformat, Tuple{Val{symbol}}) "Writing matrix in format $s is unavailable or the format doesn't exist"
 
-    return write_format(Val(symbol))
+    return get_writeformat(Val(symbol))
 end
 
 function Configurations.from_dict(
@@ -80,11 +80,11 @@ function Configurations.from_dict(
     valid_symbols = []
     for operator in operators
         symbol = Symbol(normalize_comparison(operator))
-        @argcheck hasmethod(avail_operatorkind, Tuple{Val{symbol}}) "Operator kind $operator is unavailable or doesn't exist"
+        @argcheck hasmethod(get_operatorkind, Tuple{Val{symbol}}) "Operator kind $operator is unavailable or doesn't exist"
         push!(valid_symbols, symbol)
     end
 
-    return avail_operatorkind.(Val.(valid_symbols))
+    return get_operatorkind.(Val.(valid_symbols))
 end
 
 function parse_radius(radius_string)

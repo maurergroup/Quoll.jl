@@ -1,5 +1,6 @@
 using Quoll
 using Configurations
+
 using Test
 
 @testset "ElEntropyErrorParams" begin

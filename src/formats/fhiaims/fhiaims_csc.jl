@@ -11,11 +11,11 @@ struct FHIaimsCSCOperator{O<:AbstractOperatorKind, T<:AbstractFloat, E} <: Abstr
     metadata::FHIaimsCSCMetadata{E}
 end
 
-read_format(::Val{:fhiaims}) = FHIaimsCSCOperator
+get_readformat(::Val{:fhiaims}) = FHIaimsCSCOperator
 
-avail_operatorkinds(::Type{FHIaimsCSCOperator}) = [Hamiltonian(:ref), Overlap(:ref)]
-avail_filenames(::Hamiltonian, ::Val{:ref}, ::Type{FHIaimsCSCOperator}) = ["rs_hamiltonian.h5", "rs_hamiltonian.out"]
-avail_filenames(::Overlap, ::Val{:ref}, ::Type{FHIaimsCSCOperator}) = ["rs_overlap.h5", "rs_overlap.out"]
+get_avail_operatorkinds(::Type{FHIaimsCSCOperator}) = [Hamiltonian(:ref), Overlap(:ref)]
+get_avail_filenames(::Hamiltonian, ::Val{:ref}, ::Type{FHIaimsCSCOperator}) = ["rs_hamiltonian.h5", "rs_hamiltonian.out"]
+get_avail_filenames(::Overlap, ::Val{:ref}, ::Type{FHIaimsCSCOperator}) = ["rs_overlap.h5", "rs_overlap.out"]
 
 function RealCSCSparsity(dir::AbstractString, ::Type{FHIaimsCSCOperator})
     @debug "Loading operator sparsity"
@@ -106,7 +106,7 @@ end
 function load_operator_data(dir::AbstractString, operatorkind::AbstractOperatorKind, ::Type{FHIaimsCSCOperator})
     @debug "Loading operator data"
 
-    ps = joinpath.(dir, avail_filenames(operatorkind, Val(operatorkind.tag), FHIaimsCSCOperator))
+    ps = joinpath.(dir, get_avail_filenames(operatorkind, Val(operatorkind.tag), FHIaimsCSCOperator))
     ps = ps[ispath.(ps)]
     @argcheck !isempty(ps)
 

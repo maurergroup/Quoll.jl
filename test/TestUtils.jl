@@ -1,5 +1,11 @@
+module TestUtils
+
 using Tar
 using CodecZlib
+using Logging
+using LoggingExtras
+
+export create_temptree, setupteardown_tmp, with_nowarn_logger
 
 """
     create_temptree(files)
@@ -50,4 +56,11 @@ function setupteardown_tmp(f; tarballs = [])
     finally
         cd(starting_dir)
     end
+end
+
+function with_nowarn_logger(f)
+    error_only_logger = MinLevelLogger(current_logger(), Logging.Error)
+    return with_logger(f, error_only_logger)
+end
+
 end

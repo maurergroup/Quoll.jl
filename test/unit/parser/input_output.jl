@@ -1,21 +1,26 @@
 using Quoll
-using Test
 using Configurations
 using AtomsBase
 using Unitful
 using UnitfulAtomic
+using Logging
 
-include("../../testutils.jl")
+using Test
+using Main.TestUtils
 
 @testset "parse_radius" begin
     z = ChemicalSpecies(:Si)
     r = 10.0
 
     s = "Si 10"
-    @test Quoll.Parser.parse_radius(s) == (z, r * u"Å")
+    with_nowarn_logger() do
+        @test Quoll.Parser.parse_radius(s) == (z, r * u"Å")
+    end
 
     s = "Si 10.0"
-    @test Quoll.Parser.parse_radius(s) == (z, r * u"Å")
+    with_nowarn_logger() do
+        @test Quoll.Parser.parse_radius(s) == (z, r * u"Å")
+    end
 
     s = "Si 10.0 bohr"
     @test Quoll.Parser.parse_radius(s) == (z, uconvert(u"Å", r * u"bohr"))
@@ -58,7 +63,7 @@ end
             d = Dict("format" => "FHI-aims", "directories" => directories)
             params = from_dict(Quoll.Parser.InputParams, d)
 
-            @test params.format == Quoll.OperatorIO.FHIaimsOperator
+            @test params.format == Quoll.FHIaimsCSCOperator
         end
 
         @testset "Incorrect format" begin
@@ -147,7 +152,7 @@ end
             d = Dict("format" => "DeepH", "directory" => directory)
             params = from_dict(Quoll.Parser.OutputParams, d)
 
-            @test params.format == Quoll.OperatorIO.DeepHOperator
+            @test params.format == Quoll.DeepHOperator
         end
 
         @testset "Incorrect format" begin

@@ -4,23 +4,27 @@ using Reexport
 using LinearAlgebra
 using StaticArrays
 using Dictionaries
-using HDF5
+using AxisKeys
 using Unitful
+using HDF5
 using AtomsBase
 using ArgCheck
 
 # Common tools
+export recentre
 include("common/mpitools.jl")
 include("common/atomtools.jl")
 
 # Core types and their methods
+export BasisMetadata
+export Overlap, Hamiltonian
 include("basis.jl")
 include("operatorkind.jl")
 include("sparsity.jl")
 
 # Operator formats and their IO routines
 # (Assuming no dependencies between different format types in each file)
-export load_atoms, load_operators
+export load_atoms, load_operators, find_operatorkinds
 include("formats/abstract.jl")
 
 include("formats/canonical/abstract.jl")

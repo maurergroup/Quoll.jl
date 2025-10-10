@@ -1,21 +1,33 @@
 using SafeTestsets
 
-@safetestset "Utils.jl" begin
-    include("Utils.jl")
+@safetestset "common" begin
+
+    @safetestset "atomtools.jl" begin
+        include("common/atomtools.jl")
+    end
+
+    @safetestset "mpitools.jl" begin
+        include("common/mpitools.jl")
+    end
+
+end
+
+@safetestset "formats" begin
+
+    @safetestset "fhiaims" begin
+    
+        @safetestset "abstract.jl" begin
+            include("formats/fhiaims/abstract.jl")
+        end
+
+        @safetestset "fhiaims_csc.jl" begin
+            include("formats/fhiaims/fhiaims_csc.jl")
+        end
+
+    end
+
 end
 
 @safetestset "Parser.jl" begin
     include("Parser.jl")
-end
-
-@safetestset "MPITools.jl" begin
-    include("MPITools.jl")
-end
-
-@safetestset "AtomsTools" begin
-    include("AtomsTools.jl")
-end
-
-@safetestset "OperatorIO" begin
-    include("OperatorIO.jl")
 end

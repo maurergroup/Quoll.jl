@@ -1,6 +1,3 @@
-using Configurations
-using ..Smearing
-
 @option struct EigenvalueErrorParams <: AbstractQuollParams
     smearing_function::Type{<:SmearingFunction} = FermiDirac
     temperature::Float64 = 1000.0
