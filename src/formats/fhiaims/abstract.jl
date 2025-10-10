@@ -19,8 +19,6 @@ function BasisSetMetadata(dir::AbstractString, atoms::AbstractSystem, ::Type{<:A
     n_atoms = length(atoms)
     n_basis_atom = zeros(Int, n_atoms)
     atom2species = species(atoms, :)
-    # TODO: replace metadata.n_basis with info from the file
-    # basis2atom = Vector{Int}(undef, metadata.n_basis)
     basis2atom = Int[]
 
     basis = dictionary(
