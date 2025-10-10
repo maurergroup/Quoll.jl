@@ -1,8 +1,3 @@
-using Configurations
-using StaticArrays
-using ArgCheck
-using ..Smearing
-
 struct KPathParams
     kpoint_begin::SVector{3, Float64}
     kpoint_end::SVector{3, Float64}

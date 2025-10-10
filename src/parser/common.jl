@@ -1,4 +1,18 @@
-module Utils
+abstract type AbstractQuollParams end
+
+function Configurations.from_dict(
+    ::Type{OT},
+    ::OptionField{:smearing_function},
+    ::Type{Type{<:SmearingFunction}},
+    s
+) where OT<:AbstractQuollParams
+    @argcheck isa(s, String)
+    
+    symbol = Symbol(Utils.normalize_comparison(s))
+    @argcheck hasmethod(smearing, Tuple{Val{symbol}}) "Smearing function $s is unavailable or doesn't exist"
+
+    return smearing(Val(symbol))
+end
 
 """
     find_leafdirs(rootdir::T) where T
@@ -28,4 +42,3 @@ function normalize_comparison(s::AbstractString; replace_pairs = (rm => "" for r
     return lowercase(replace(s, replace_pairs...))
 end
 
-end

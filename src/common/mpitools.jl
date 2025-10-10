@@ -1,4 +1,3 @@
-module MPITools
 using MPI
 
 # TODO: some notes, move somewhere else
@@ -66,6 +65,4 @@ function split_work(N::Integer, N_comm::Integer, my_rank::Integer, ::FHIaimsLAPA
     end
 
     return my_work
-end
-
 end

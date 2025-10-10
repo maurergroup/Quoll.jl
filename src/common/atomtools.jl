@@ -1,11 +1,4 @@
-module AtomsTools
 using AtomsIOPython
-using AtomsBase
-using StaticArrays
-using Unitful
-using ArgCheck
-using ..OperatorIO
-export recentre, load_atoms
 
 function recentre(atoms::AbstractSystem)
     # Currently the following function does not support recentering
@@ -36,17 +29,4 @@ function recentre(atoms::AbstractSystem)
         cell_vectors(atoms),
     )
     return recentered_atoms
-end
-
-function load_atoms(dir::AbstractString, ::Type{FHIaimsOperator})
-    path = joinpath(dir, "geometry.in")
-    atoms = load_system(path)
-
-    # Recentre atom positions to be consistent with relative positions
-    # that are used during real-space matrix integration in FHI-aims
-    all(periodicity(atoms)) && (atoms = recentre(atoms))
-    
-    return atoms
-end
-
 end

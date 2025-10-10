@@ -15,6 +15,7 @@ include("../testutils.jl")
         # |-----||--x₁-|x₂---|| →
         # |x₂---||--x₁-|-----|| →
         # |-----||x₂---|--x₁-||
+        # TODO: rename cell to something else, this clashes with AtomsBase
         cell = SA[
             SA[1.0,   0.0,   0.0],
             SA[0.0, 100.0,   0.0],

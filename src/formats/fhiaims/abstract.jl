@@ -1,38 +1,27 @@
-module Basis
-using Dictionaries
-using AtomsBase
-using AutoHashEquals
-using Dictionaries
-using ArgCheck
+abstract type AbstractFHIaimsOperator <: AbstractOperator end
+abstract type AbstractFHIaimsMetadata <: AbstractOperatorMetadata end
 
-using ..OperatorIO
+function load_atoms(dir::AbstractString, ::Type{<:AbstractFHIaimsOperator})
+    path = joinpath(dir, "geometry.in")
+    atoms = load_system(path)
 
-export BasisMetadata, BasisSetMetadata
-
-@auto_hash_equals struct BasisMetadata{E}
-    z::ChemicalSpecies
-    n::Int
-    l::Int
-    m::Int
-    extras::E
+    # Recentre atom positions to be consistent with relative positions
+    # that are used during real-space matrix integration in FHI-aims
+    all(periodicity(atoms)) && (atoms = recentre(atoms))
+    
+    return atoms
 end
 
-struct BasisSetMetadata{E}
-    basis::Dictionary{ChemicalSpecies, Vector{BasisMetadata{E}}}
-    n_basis_atom::Vector{Int}
-    atom2species::Vector{ChemicalSpecies}
-    basis2atom::Vector{Int}
-    atom2basis::Vector{UnitRange{Int}}
-end
-
-function BasisSetMetadata(dir::AbstractString, atoms::AbstractSystem, metadata::FHIaimsOperatorMetadata)
+function BasisSetMetadata(dir::AbstractString, atoms::AbstractSystem, ::Type{<:AbstractFHIaimsOperator})
     p = joinpath(dir, "basis-indices.out")
     @argcheck ispath(p)
 
     n_atoms = length(atoms)
     n_basis_atom = zeros(Int, n_atoms)
     atom2species = species(atoms, :)
-    basis2atom = Vector{Int}(undef, metadata.n_basis)
+    # TODO: replace metadata.n_basis with info from the file
+    # basis2atom = Vector{Int}(undef, metadata.n_basis)
+    basis2atom = Int[]
 
     basis = dictionary(
         species => BasisMetadata{Dict{String, String}}[]
@@ -48,7 +37,9 @@ function BasisSetMetadata(dir::AbstractString, atoms::AbstractSystem, metadata::
         species => findfirst(x -> x == species, atom2species)
         for species in unique(atom2species)
     )
-    for ib in 1:metadata.n_basis
+
+    ib = 1
+    while !(eof(f))
         _, type, iat, n, l, m = convert.(String, split(readline(f)))
         iat, n, l, m = parse.(Int, (iat, n, l, m))
 
@@ -59,8 +50,9 @@ function BasisSetMetadata(dir::AbstractString, atoms::AbstractSystem, metadata::
             )
         end
 
-        basis2atom[ib] = iat
+        push!(basis2atom, iat)
         n_basis_atom[iat] += 1
+        ib += 1
     end
     close(f)
 
@@ -71,6 +63,4 @@ function BasisSetMetadata(dir::AbstractString, atoms::AbstractSystem, metadata::
     ]
 
     return BasisSetMetadata(basis, n_basis_atom, atom2species, basis2atom, atom2basis)
-end
-
 end

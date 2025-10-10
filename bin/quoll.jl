@@ -12,6 +12,8 @@ using Configurations
 using LinearAlgebra
 using MPI
 
+include("logger.jl")
+
 ### START MPI ###
 MPI.Init()
 BLAS.set_num_threads(1)
@@ -29,7 +31,6 @@ global_rank = MPI.Comm_rank(global_comm)
 # - Also could add timestamps to logging messages.
 # - If we keep logger here, maybe we should keep the parser here as well?
 #   For example, Configurations.jl is only needed for parsing.
-include("logger.jl")
 global_logger(
     filterrank_logger(
         timestamp_rank_logger(
@@ -48,42 +49,20 @@ params = from_toml(Quoll.Parser.QuollParams, input_filepath)
 @info "Splitting configurations across MPI tasks"
 
 N_dirs = length(params.input.directories)
-my_idirs = Quoll.MPITools.split_work(N_dirs, global_comm, Quoll.MPITools.DefaultSplit())
+my_idirs = Quoll.split_work(N_dirs, global_comm, Quoll.DefaultSplit())
 
 for idir in my_idirs
     dir = params.input.directories[idir]
 
     @info "Starting configuration $(basename(dir))"
-
     @info "Loading atoms"
 
     atoms = load_atoms(dir, params.input.format)
 
     @info "Loading operators"
-
-    @debug "Validating operator kinds"
-
-    # TODO: put this into a function?
-    found_operatorkinds = find_operatorkinds(dir, params.input.format)
-    if !all(params.input.operators .∈ Ref(found_operatorkinds))
-        @warn "Could not find all the requested operators"
-        operatorkinds = collect(intersect(Set(params.input.operators), Set(found_operatorkinds)))
-
-        # Validate whether the calculation can still continue
-        # even though not all operatorkinds were found
-        Quoll.Parser.validate_operatorkinds(operatorkinds)
-    else
-        operatorkinds = params.input.operators
-    end
     
-    @debug "Validation successful" operatorkinds
-    
-    # Assuming all operators share operator_metadata
-    operators, operator_metadata = load_operators(dir, operatorkinds, params.input.format)
-
-    @info "Loading basis set metadata"
-
-    basis_metadata = BasisSetMetadata(dir, atoms, operator_metadata)
+    operatorkinds = Quoll.Parser.find_operatorkinds(params.operators, params)
+    operators = load_operators(dir, operatorkinds, atoms, params.input.format)
 
     @info "Computing sparsity"
 

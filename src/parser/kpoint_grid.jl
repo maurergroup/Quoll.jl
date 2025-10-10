@@ -1,6 +1,3 @@
-using Configurations
-using ArgCheck
-
 @option struct KPointGridParams <: AbstractQuollParams
     grid::Union{SVector{3, Int}, Nothing} = nothing
     density::Float64 = 10.0

@@ -1,11 +1,3 @@
-using Configurations
-using AtomsBase
-using ..Basis
-using ..BasisProjection
-using ..Utils
-
-# TODO: Could make this parametric instead of forcing this into Dict{String, String}
-# but for now parse_basismetadata() returns Dict{String, String} anyways
 @option struct BasisProjectionParams <: AbstractQuollParams
     projected_basis::Vector{BasisMetadata{Dict{String, String}}}
     method::Type{<:AbstractBasisProjection}
@@ -58,7 +50,7 @@ function Configurations.from_dict(
 )
     @argcheck isa(s, String)
     
-    symbol = Symbol(Utils.normalize_comparison(s))
+    symbol = Symbol(normalize_comparison(s))
     @argcheck hasmethod(basis_projection, Tuple{Val{symbol}}) "Basis projection $s is unavailable or doesn't exist"
 
     return basis_projection(Val(symbol))

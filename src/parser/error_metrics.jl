@@ -22,8 +22,7 @@ end
 end
 
 @option struct ErrorMetricParams <: AbstractQuollParams
-    # TODO: could warn if reference or predicted data not found in supplied directories
-    # TODO: Also I could allow for subblock MAE here
+    # TODO: I could allow for subblock MAE
     mae::Bool = false
     eigenvalue_error::Bool = false
     el_entropy_error::Bool = false

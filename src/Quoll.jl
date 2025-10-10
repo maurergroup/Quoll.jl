@@ -1,30 +1,51 @@
 module Quoll
+
 using Reexport
+using LinearAlgebra
+using StaticArrays
+using Dictionaries
+using HDF5
+using Unitful
+using AtomsBase
+using ArgCheck
 
-# TODO: maybe don't use reexport for everything, it might be
-# better to explicitly export specific methods because this
-# would allow me to export more methods from modules without
-# worrying that they could be used by users without namespace
+# Common tools
+include("common/mpitools.jl")
+include("common/atomtools.jl")
 
-include("Utils.jl")
+# Core types and their methods
+include("basis.jl")
+include("operatorkind.jl")
+include("sparsity.jl")
 
-include("MPITools.jl")
+# Operator formats and their IO routines
+# (Assuming no dependencies between different format types in each file)
+export load_atoms, load_operators
+include("formats/abstract.jl")
 
-include("OperatorIO.jl")
-@reexport using .OperatorIO
+include("formats/canonical/abstract.jl")
+include("formats/canonical/bsparse.jl")
 
-include("Basis.jl")
-@reexport using .Basis
+include("formats/deeph/deeph.jl")
 
-include("BasisProjection.jl")
-@reexport using .BasisProjection
+export FHIaimsCSCOperator
+include("formats/fhiaims/abstract.jl")
+include("formats/fhiaims/fhiaims_csc.jl")
 
-include("Smearing.jl")
-@reexport using .Smearing
+# Operator format conversions
+include("conversions/canonical/bsparse.jl")
+include("conversions/fhiaims/fhiaims_csc.jl")
 
-include("AtomsTools.jl")
-@reexport using .AtomsTools
+# Basis projection module
+include("Projections.jl")
+@reexport using .Projections
 
+# Postprocessing module
+include("Postprocessing.jl")
+@reexport using .Postprocessing
+
+# Parser module
 include("Parser.jl")
+using .Parser
 
 end

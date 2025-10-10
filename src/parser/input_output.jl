@@ -1,12 +1,3 @@
-using Configurations
-using ArgCheck
-using AtomsBase
-using Unitful
-using UnitfulAtomic
-
-using ..Utils
-using ..OperatorIO
-
 @option struct InputParams <: AbstractQuollParams
     format::Type{<:AbstractOperator}
     directories::Vector{String}
@@ -45,7 +36,7 @@ function Configurations.from_dict(
 )
     @argcheck isa(s, String)
     
-    symbol = Symbol(Utils.normalize_comparison(s))
+    symbol = Symbol(normalize_comparison(s))
     @argcheck hasmethod(read_format, Tuple{Val{symbol}}) "Writing matrix in format $s is unavailable or the format doesn't exist"
 
     return read_format(Val(symbol))
@@ -59,7 +50,7 @@ function Configurations.from_dict(
 )
     @argcheck isa(s, String)
     
-    symbol = Symbol(Utils.normalize_comparison(s))
+    symbol = Symbol(normalize_comparison(s))
     @argcheck hasmethod(write_format, Tuple{Val{symbol}}) "Writing matrix in format $s is unavailable or the format doesn't exist"
 
     return write_format(Val(symbol))
@@ -88,12 +79,12 @@ function Configurations.from_dict(
 
     valid_symbols = []
     for operator in operators
-        symbol = Symbol(Utils.normalize_comparison(operator))
-        @argcheck hasmethod(operator_kind, Tuple{Val{symbol}}) "Operator kind $operator is unavailable or doesn't exist"
+        symbol = Symbol(normalize_comparison(operator))
+        @argcheck hasmethod(avail_operatorkind, Tuple{Val{symbol}}) "Operator kind $operator is unavailable or doesn't exist"
         push!(valid_symbols, symbol)
     end
 
-    return operator_kind.(Val.(valid_symbols))
+    return avail_operatorkind.(Val.(valid_symbols))
 end
 
 function parse_radius(radius_string)
@@ -108,7 +99,7 @@ function parse_radius(radius_string)
         @warn "Units to radii field not supplied, assuming Å"
         r = r * u"Å"
     else
-        unit = Utils.normalize_comparison(unit)
+        unit = normalize_comparison(unit)
         if unit == "bohr"
             r = uconvert(u"Å", r * u"bohr")
         elseif unit == "ang"
