@@ -64,4 +64,8 @@ for idir in my_idirs
     operatorkinds = find_operatorkinds(dir, params)
     operators = load_operators(dir, atoms, operatorkinds, params.input.format)
 
+    # TODO: in the future could allow for <other canonical formats/shortcut conversions>
+    @info "Converting operators into canonical format"
+
+    
 end
