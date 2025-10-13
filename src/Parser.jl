@@ -15,6 +15,7 @@ using ..Quoll:
     get_operatorkind,
     get_readformat,
     get_writeformat
+import ..Quoll: find_operatorkinds
 using ..Projections
 using ..Projections: AbstractBasisProjection, basis_projection
 using ..Postprocessing

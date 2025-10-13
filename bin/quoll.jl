@@ -61,10 +61,7 @@ for idir in my_idirs
 
     @info "Loading operators"
     
-    operatorkinds = Quoll.Parser.find_operatorkinds(params.operators, params)
-    operators = load_operators(dir, operatorkinds, atoms, params.input.format)
-
-    @info "Computing sparsity"
-
+    operatorkinds = find_operatorkinds(dir, params)
+    operators = load_operators(dir, atoms, operatorkinds, params.input.format)
 
 end
