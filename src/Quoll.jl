@@ -16,7 +16,7 @@ include("common/mpitools.jl")
 include("common/atomtools.jl")
 
 # Core types and their methods
-export BasisMetadata
+export BasisMetadata, SpinMetadata
 export Overlap, Hamiltonian
 include("basis.jl")
 include("operatorkind.jl")
