@@ -12,6 +12,12 @@ function Base.show(io::IO, basisf::BasisMetadata)
     print(io, "$(basisf.z)$(basisf.n)$(basisf.l)$(basisf.m)")
 end
 
+# Would BasisSetMetadata have to be modified in the case of SOC?
+# I think a reasonable (although maybe not the most memory-efficient) way would be to assume
+# BasisSetMetadata.basis would store 2x basis functions without realising some of them are
+# spin up and spin down. However, can we tell which basis function would have which spin?
+# That would depend on electronic structure method (in which case SpinSetMetadata constructor
+# could be additionally dispatched on Type{AbstractOperator}).
 struct BasisSetMetadata{E}
     basis::Dictionary{ChemicalSpecies, Vector{BasisMetadata{E}}}
     n_basis_atom::Vector{Int}
@@ -22,20 +28,14 @@ struct BasisSetMetadata{E}
     # However, I'm not sure if I could use it to perform conversion between
     # different conventions in an efficient way
 end
+# 1) Which basis functions belong to which atom? basis
+# 2) which basis function INDICES belong to which atom? basis2atom
+#    Do we need to know the indices in the case of every format?
+#    It's something that's required if one wants to interconvert between certain formats.
+#    More precisely, we need it when we convert it to a different format but we should
+#    have freedom to change that indexing during conversions.
 
-struct SpinMetadata
-    spin::Rational{Int}
-
-    function SpinMetadata(spin)
-        @argcheck spin ∈ (-1//2, 1//2)
-        return new(spin)
-    end
-end
-
-function Base.show(io::IO, spin::SpinMetadata)
-    if spin.spin == -1//2
-        print(io, "↓")
-    elseif spin.spin == 1//2
-        print(io, "↑")
-    end
-end
+# If we load basis-indices and construct RealCSCSparsity, what do we get?
+# We get a struct which describes the sparsity pattern a 3D array.
+# Whereas basis2atom describes slices of that 3D array which belong
+# to particular atoms.

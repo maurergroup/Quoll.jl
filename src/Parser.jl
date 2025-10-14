@@ -12,7 +12,7 @@ using ..Quoll:
     AbstractOperator,
     AbstractOperatorKind,
     get_avail_operatorkinds,
-    get_operatorkind,
+    get_operatorkinds,
     get_readformat,
     get_writeformat
 import ..Quoll: find_operatorkinds

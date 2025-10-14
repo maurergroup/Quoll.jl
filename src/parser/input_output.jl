@@ -80,11 +80,11 @@ function Configurations.from_dict(
     valid_symbols = []
     for operator in operators
         symbol = Symbol(normalize_comparison(operator))
-        @argcheck hasmethod(get_operatorkind, Tuple{Val{symbol}}) "Operator kind $operator is unavailable or doesn't exist"
+        @argcheck hasmethod(get_operatorkinds, Tuple{Val{symbol}}) "Operator kind $operator is unavailable or doesn't exist"
         push!(valid_symbols, symbol)
     end
 
-    return get_operatorkind.(Val.(valid_symbols))
+    return vcat(get_operatorkinds.(Val.(valid_symbols))...)
 end
 
 function parse_radius(radius_string)

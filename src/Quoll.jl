@@ -16,10 +16,12 @@ include("common/mpitools.jl")
 include("common/atomtools.jl")
 
 # Core types and their methods
-export BasisMetadata, SpinMetadata
 export Overlap, Hamiltonian
-include("basis.jl")
+export BasisMetadata
+export SpinMetadata
 include("operatorkind.jl")
+include("basis.jl")
+include("spin.jl")
 include("sparsity.jl")
 
 # Operator formats and their IO routines

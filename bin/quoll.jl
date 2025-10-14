@@ -55,17 +55,12 @@ for idir in my_idirs
     dir = params.input.directories[idir]
 
     @info "Starting configuration $(basename(dir))"
-    @info "Loading atoms"
-
-    atoms = load_atoms(dir, params.input.format)
-
     @info "Loading operators"
     
     operatorkinds = find_operatorkinds(dir, params)
-    operators = load_operators(dir, atoms, operatorkinds, params.input.format)
+    operators = load_operators(dir, operatorkinds, params.input.format)
 
     # TODO: in the future could allow for <other canonical formats/shortcut conversions>
     @info "Converting operators into canonical format"
-
     
 end

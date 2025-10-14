@@ -1,19 +1,48 @@
 abstract type AbstractOperatorKind end
 
 struct Hamiltonian <:AbstractOperatorKind
-    tag::Symbol
+    source::Symbol
+    spin::Symbol
 end
+
+Hamiltonian(source::Symbol) = Hamiltonian(source, :none)
 
 struct Overlap <:AbstractOperatorKind
-    tag::Symbol
+    source::Symbol
 end
 
-function get_operatorkind end
+function get_operatorkinds end
 
-get_operatorkind(::Val{:h}) = Hamiltonian(:ref)
-get_operatorkind(::Val{:href}) = Hamiltonian(:ref)
-get_operatorkind(::Val{:hpred}) = Hamiltonian(:pred)
+get_operatorkinds(::Val{:h}) = [
+    Hamiltonian(source, spin)
+    for source in (:ref, :pred) for spin in (:none, :soc, :up, :down)
+]
+get_operatorkinds(::Val{:href}) = [
+    Hamiltonian(source, spin)
+    for source in (:ref,) for spin in (:none, :soc, :up, :down)
+]
+get_operatorkinds(::Val{:hpred}) = [
+    Hamiltonian(source, spin)
+    for source in (:pred,) for spin in (:none, :soc, :up, :down)
+]
+get_operatorkinds(::Val{:hsoc}) = [
+    Hamiltonian(source, spin)
+    for source in (:ref, :pred) for spin in (:soc,)
+]
+get_operatorkinds(::Val{:hpol}) = [
+    Hamiltonian(source, spin)
+    for source in (:ref, :pred) for spin in (:up, :down)
+]
 
-get_operatorkind(::Val{:s}) = Overlap(:ref)
-get_operatorkind(::Val{:sref}) = Overlap(:ref)
-get_operatorkind(::Val{:spred}) = Overlap(:pred)
+get_operatorkinds(::Val{:s}) = [
+    Overlap(source)
+    for source in (:ref, :pred)
+]
+get_operatorkinds(::Val{:sref}) = [
+    Overlap(source)
+    for source in (:ref,)
+]
+get_operatorkinds(::Val{:spred}) = [
+    Overlap(source)
+    for source in (:pred,)
+]

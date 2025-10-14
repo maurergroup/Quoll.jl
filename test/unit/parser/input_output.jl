@@ -40,12 +40,22 @@ end
             d = Dict("format" => "FHI-aims", "directories" => directories, "operators" => "H_ref")
             params = from_dict(Quoll.Parser.InputParams, d)
 
-            @test params.operators == [Hamiltonian(:ref)]
+            @test Set(params.operators) == Set([
+                Hamiltonian(:ref, :none),
+                Hamiltonian(:ref, :soc),
+                Hamiltonian(:ref, :up),
+                Hamiltonian(:ref, :down),
+            ])
 
             d = Dict("format" => "FHI-aims", "directories" => directories, "operators" => ["H_ref"])
             params = from_dict(Quoll.Parser.InputParams, d)
 
-            @test params.operators == [Hamiltonian(:ref)]
+            @test Set(params.operators) == Set([
+                Hamiltonian(:ref, :none),
+                Hamiltonian(:ref, :soc),
+                Hamiltonian(:ref, :up),
+                Hamiltonian(:ref, :down),
+            ])
         end
 
         @testset "Incorrect kind" begin
