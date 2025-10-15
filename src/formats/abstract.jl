@@ -9,6 +9,8 @@ abstract type AbstractOperatorMetadata end
 # but if I find that fields are the same I should consider refactoring
 # the code in favour of dispatch on operator format (more consistent
 # with the rest and fewer unnecessary types).
+# (N.B. in that case OperatorMetadata would become a more parametric type
+# than before because we wouldn't know the sparsity type)
 
 function get_readformat end
 function get_writeformat end

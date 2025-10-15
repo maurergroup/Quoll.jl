@@ -73,8 +73,8 @@ function RealBlockSparsity(atoms::AbstractSystem, nlist::PairList, maxedges::Dic
     return RealBlockSparsity(ij2images, nlist.S, hermitian)
 end
 
-function RealBlockSparsity(csc_sparsity::RealCSCSparsity, basis::BasisSetMetadata)
-    return RealBlockSparsity(csc_sparsity.colcelptr, csc_sparsity.rowval, csc_sparsity.images, basis.basis2atom)
+function RealBlockSparsity(csc_sparsity::RealCSCSparsity, basisset::BasisSetMetadata)
+    return RealBlockSparsity(csc_sparsity.colcelptr, csc_sparsity.rowval, csc_sparsity.images, basisset.basis2atom)
 end
 
 function RealBlockSparsity(colcellptr, rowval, images, basis2atom)
@@ -104,10 +104,3 @@ function RealBlockSparsity(colcellptr, rowval, images, basis2atom)
     end
     return RealBlockSparsity(ij2images, images, true)
 end
-# struct BasisSetMetadata{E}
-#     basis::Dictionary{ChemicalSpecies, Vector{BasisMetadata{E}}}
-#     n_basis_atom::Vector{Int}
-#     atom2species::Vector{ChemicalSpecies}
-#     basis2atom::Vector{Int}
-#     atom2basis::Vector{UnitRange{Int}}
-# end
