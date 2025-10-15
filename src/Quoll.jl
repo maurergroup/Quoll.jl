@@ -18,7 +18,7 @@ include("common/atomtools.jl")
 # Core types and their methods
 export Overlap, Hamiltonian
 export BasisMetadata
-export SpinMetadata
+export ⬆, ⬇
 include("operatorkind.jl")
 include("basis.jl")
 include("spin.jl")

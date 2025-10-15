@@ -17,10 +17,10 @@ struct FHIaimsCSCMetadata{A<:AbstractSystem, E} <: AbstractFHIaimsMetadata
     atoms::A
     sparsity::RealCSCSparsity
     basisset::BasisSetMetadata{E}
-    spinset::Union{SpinSetMetadata, Nothing}
-    # TODO: Is Union{SpinSetMetadata, Nothing} best approach here?
+    spins::Union{SpinsMetadata, Nothing}
+    # TODO: Is Union{SpinsMetadata, Nothing} best approach here?
     # Making FHIaimsCSCMetadata a parametric type wrt typeof(spins)
-    # or making SpinSetMetadata a parametric type might be an overkill
+    # or making SpinsMetadata a parametric type might be an overkill
 end
 
 struct FHIaimsCSCOperator{O<:AbstractOperatorKind, T<:AbstractFloat, A<:AbstractSystem, E} <: AbstractFHIaimsOperator
@@ -112,8 +112,8 @@ function load_operators(dir::AbstractString, operatorkinds, ::Type{FHIaimsCSCOpe
 
     operators = Dict{AbstractOperatorKind, FHIaimsCSCOperator}()
     for kind in operatorkinds
-        spinset = SpinSetMetadata(kind, basisset, FHIaimsCSCOperator)
-        metadata = FHIaimsCSCMetadata(atoms, sparsity, basisset, spinset)
+        spinsset = SpinsMetadata(kind, basisset, FHIaimsCSCOperator)
+        metadata = FHIaimsCSCMetadata(atoms, sparsity, basisset, spinsset)
         push!(operators, kind => FHIaimsCSCOperator(dir, kind, metadata))
     end
 
@@ -130,8 +130,8 @@ function FHIaimsCSCMetadata(dir::AbstractString, kind::AbstractOperatorKind)
     atoms = load_atoms(dir, FHIaimsCSCOperator)
     sparsity = RealCSCSparsity(dir, FHIaimsCSCOperator)
     basisset = BasisSetMetadata(dir, atoms, FHIaimsCSCOperator)
-    spinset = SpinSetMetadata(kind, basisset, FHIaimsCSCOperator)
-    return FHIaimsCSCMetadata(atoms, sparsity, basisset, spinset)
+    spins = SpinsMetadata(kind, basisset, FHIaimsCSCOperator)
+    return FHIaimsCSCMetadata(atoms, sparsity, basisset, spins)
 end
 
 function FHIaimsCSCOperator(dir::AbstractString, operatorkind::AbstractOperatorKind, metadata::FHIaimsCSCMetadata)

@@ -16,7 +16,7 @@ end
 # I think a reasonable (although maybe not the most memory-efficient) way would be to assume
 # BasisSetMetadata.basis would store 2x basis functions without realising some of them are
 # spin up and spin down. However, can we tell which basis function would have which spin?
-# That would depend on electronic structure method (in which case SpinSetMetadata constructor
+# That would depend on electronic structure method (in which case SpinsMetadata constructor
 # could be additionally dispatched on Type{AbstractOperator}).
 struct BasisSetMetadata{E}
     basis::Dictionary{ChemicalSpecies, Vector{BasisMetadata{E}}}

@@ -3,7 +3,7 @@ struct RealBSparseMetadata{A<:AbstractSystem, E} <: AbstractOperatorMetadata
     atoms::A
     sparsity::RealBlockSparsity
     basisset::BasisSetMetadata{E}
-    spinset::Union{SpinSetMetadata, Nothing}
+    spins::Union{SpinsMetadata, Nothing}
     z1z2_ij2interval::Dictionary{NTuple{2, ChemicalSpecies}, Dictionary{NTuple{2, Int}, UnitRange{Int}}}
     # TODO: possibly construct this by only taking BasisSetMetadata, Atoms, Sparsity,
     # but create an outer constructor which could compute z1z2_ij2interval from those internally.
@@ -59,6 +59,7 @@ function compute_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSpar
     end
 end
 
+# Constructor to initialize the operator with zero values
 # function RealBSparseOperator(kind::AbstractOperatorKind, metadata::RealBSparseMetadata)
 
 # end

@@ -23,10 +23,10 @@ end
 #     atoms::A
 #     sparsity::RealCSCSparsity
 #     basisset::BasisSetMetadata{E}
-#     spinset::Union{SpinSetMetadata, Nothing}
-#     # TODO: Is Union{SpinSetMetadata, Nothing} best approach here?
+#     spinset::Union{SpinsMetadata, Nothing}
+#     # TODO: Is Union{SpinsMetadata, Nothing} best approach here?
 #     # Making FHIaimsCSCMetadata a parametric type wrt typeof(spins)
-#     # or making SpinSetMetadata a parametric type might be an overkill
+#     # or making SpinsMetadata a parametric type might be an overkill
 # end
 
 # struct FHIaimsCSCOperator{O<:AbstractOperatorKind, T<:AbstractFloat, A<:AbstractSystem, E} <: AbstractFHIaimsOperator
