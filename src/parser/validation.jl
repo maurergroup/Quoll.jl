@@ -30,7 +30,7 @@ end
 function find_operatorkinds(dir::AbstractString, params::QuollParams)
     found_operatorkinds = find_operatorkinds(dir, params.input.format)
     if !all(params.input.operators .∈ Ref(found_operatorkinds))
-        operatorkinds = collect(intersect(Set(params.input.operators), Set(found_operatorkinds)))
+        operatorkinds = collect(Set(params.input.operators) ∩ Set(found_operatorkinds))
 
         # Validate whether the calculation can still continue
         # even though not all operatorkinds were found

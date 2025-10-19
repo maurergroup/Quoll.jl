@@ -11,8 +11,6 @@ end
 
 # TODO: this makes sense only in real space
 # In reciprocal space we could only have unique (i, j) pairs from `ij2images`
-# TODO: do we need images here? we need this to know where each element is (together with BasisSetMetadata).
-# All required images are in ij2images, but we can keep a separate array of images for convenience
 # TODO: hermitian could be either `U` or `L`
 struct RealBlockSparsity <: AbstractSparsity
     ij2images::Dictionary{Tuple{Int, Int}, Vector{SVector{3, Int}}}
@@ -74,7 +72,7 @@ function RealBlockSparsity(atoms::AbstractSystem, nlist::PairList, maxedges::Dic
 end
 
 function RealBlockSparsity(csc_sparsity::RealCSCSparsity, basisset::BasisSetMetadata)
-    return RealBlockSparsity(csc_sparsity.colcelptr, csc_sparsity.rowval, csc_sparsity.images, basisset.basis2atom)
+    return RealBlockSparsity(csc_sparsity.colcellptr, csc_sparsity.rowval, csc_sparsity.images, basisset.basis2atom)
 end
 
 function RealBlockSparsity(colcellptr, rowval, images, basis2atom)
@@ -83,6 +81,7 @@ function RealBlockSparsity(colcellptr, rowval, images, basis2atom)
     # TODO: could define csc iteration, but i_atom_col would have to be evaluated in inner loop
     for i_cell in axes(colcellptr, 2)
         image = images[i_cell]
+
         for i_basis_col in axes(colcellptr, 3)
             i_atom_col = basis2atom[i_basis_col]
 
@@ -103,4 +102,11 @@ function RealBlockSparsity(colcellptr, rowval, images, basis2atom)
         end
     end
     return RealBlockSparsity(ij2images, images, true)
+end
+
+function get_iglobal2ilocal(sparsity::RealBlockSparsity)
+    return Dictionary(
+        keys(sparsity.ij2images),
+        [indexin(sparsity.images, images_local) for images_local in sparsity.ij2images],
+    )
 end

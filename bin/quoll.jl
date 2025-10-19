@@ -62,5 +62,6 @@ for idir in my_idirs
 
     # TODO: in the future could allow for <other canonical formats/shortcut conversions>
     @info "Converting operators into canonical format"
+    # operators = Dict(Quoll.RealBSparseOperator, operators)
     
 end

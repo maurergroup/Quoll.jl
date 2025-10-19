@@ -1,4 +1,5 @@
 using Base
+using OffsetArrays
 
 # Conversion with respect to wiki
 struct SHConversion{T}
@@ -82,4 +83,18 @@ end
 
 function get_shiftphase(basis::BasisMetadata, shconv::SHConversion)
     return get_shift(basis.l, basis.m, shconv), get_phase(basis.l, basis.m, shconv)
+end
+
+function precompute_shiftphases(basisset::BasisSetMetadata, shconv::SHConversion)
+    shifts = Dictionary{ChemicalSpecies, Vector{Int}}()
+    phases = Dictionary{ChemicalSpecies, Vector{Int}}()
+    for z in unique(basisset.atom2species)
+        n_basis = length(basis_species(basisset, z))
+        insert!(shifts, z, Vector{Int}(undef, n_basis))
+        insert!(phases, z, Vector{Int}(undef, n_basis))
+        for (ib, orbital) in enumerate(basisset.basis[z])
+            shifts[z][ib], phases[z][ib] = get_shiftphase(orbital, shconv)
+        end
+    end
+    return shifts, phases
 end

@@ -1,3 +1,4 @@
+using StructArrays
 
 struct RealBSparseMetadata{A<:AbstractSystem, E} <: AbstractOperatorMetadata
     atoms::A
@@ -35,6 +36,70 @@ struct RealBSparseOperator{O<:AbstractOperatorKind, T<:AbstractFloat, A<:Abstrac
     metadata::RealBSparseMetadata{A, E}
 end
 
+# Constructor to initialize the operator with zero values
+function RealBSparseOperator(kind::AbstractOperatorKind, metadata::RealBSparseMetadata; T = Float64)
+
+    # Construct data
+    data = Dictionary{NTuple{2, ChemicalSpecies}, Array{T, 3}}()
+
+    for (z1, z2) in keys(metadata.z1z2_ij2interval)
+        insert!(
+            data, (z1, z2),
+            zeros(
+                T,
+                length(basis_species(metadata.basisset, z1)),
+                length(basis_species(metadata.basisset, z2)),
+                # End interval value of the last (i, j) pair
+                metadata.z1z2_ij2interval[(z1, z2)][end][end] 
+            )
+        )
+    end
+
+    # Construct keydata
+    keydata_values = []
+    ij_contiguous = NTuple{2, Int}[]
+
+    for (z1, z2) in keys(metadata.z1z2_ij2interval)
+        
+        if metadata.spins !== nothing
+            μ = StructArray(
+                orbital = basis_species(metadata.basisset, z1),
+                spin = spins_species(metadata.spins, z1),
+            )
+            ν = StructArray(
+                orbital = basis_species(metadata.basisset, z2),
+                spin = spins_species(metadata.spins, z2),
+            )
+        else
+            μ = StructArray(
+                orbital = basis_species(metadata.basisset, z1),
+            )
+            ν = StructArray(
+                orbital = basis_species(metadata.basisset, z2),
+            )
+        end
+
+        # TODO: AxisKeys.findindex treats each element of StaticArray instance
+        # as separate values to search for. Using tuples instead is a workaround
+        # but it's not ideal
+        for ij in keys(metadata.z1z2_ij2interval[(z1, z2)])
+            push!(ij_contiguous, ij)
+            push!(
+                keydata_values,
+                KeyedArray(
+                    view(data[(z1, z2)], :, :, metadata.z1z2_ij2interval[(z1, z2)][ij]),
+                    μ = μ,
+                    ν = ν,
+                    R = Tuple.(metadata.sparsity.ij2images[ij])
+                )
+            )
+        end
+    end
+    keydata = Dictionary{NTuple{2, Int}, typeof(first(keydata_values))}(ij_contiguous, keydata_values)
+
+    return RealBSparseOperator(kind, data, keydata, metadata)
+end
+
 function compute_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSparsity)
     unique_species = unique(species(atoms, :))
 
@@ -42,10 +107,11 @@ function compute_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSpar
     for z1 in unique_species, z2 in unique_species
         ij_filtered = filter(
             ij -> (species(atoms, ij[1]), species(atoms, ij[2])) == (z1, z2),
-            keys(sparsity)
+            keys(sparsity.ij2images)
         )
+        isempty(ij_filtered) && continue
 
-        n_images = length.(view(sparsity, ij_filtered))
+        n_images = [length(sparsity.ij2images[ij]) for ij in ij_filtered]
         interval_end = cumsum(n_images)
         interval_start = interval_end .- n_images .+ 1
 
@@ -57,9 +123,6 @@ function compute_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSpar
         )
         insert!(z1z2_ij2interval, (z1, z2), ij2interval)
     end
+
+    return z1z2_ij2interval
 end
-
-# Constructor to initialize the operator with zero values
-# function RealBSparseOperator(kind::AbstractOperatorKind, metadata::RealBSparseMetadata)
-
-# end

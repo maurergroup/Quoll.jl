@@ -3,7 +3,6 @@ module Quoll
 using Reexport
 using LinearAlgebra
 using StaticArrays
-using OffsetArrays
 using Dictionaries
 using AxisKeys
 using Unitful

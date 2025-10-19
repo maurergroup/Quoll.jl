@@ -8,6 +8,7 @@ using Base
     m::Int
     extras::E
 end
+
 function Base.show(io::IO, basisf::BasisMetadata)
     print(io, "$(basisf.z)$(basisf.n)$(basisf.l)$(basisf.m)")
 end
@@ -24,9 +25,6 @@ struct BasisSetMetadata{E}
     atom2species::Vector{ChemicalSpecies}
     basis2atom::Vector{Int}
     atom2basis::Vector{UnitRange{Int}}
-    # TODO: spherical harmonics convention? Can be useful to have generally.
-    # However, I'm not sure if I could use it to perform conversion between
-    # different conventions in an efficient way
 end
 # 1) Which basis functions belong to which atom? basis
 # 2) which basis function INDICES belong to which atom? basis2atom
@@ -39,3 +37,17 @@ end
 # We get a struct which describes the sparsity pattern a 3D array.
 # Whereas basis2atom describes slices of that 3D array which belong
 # to particular atoms.
+
+# TODO: Alternatively (or additionally) could implement Base.getindex for Int and ChemicalSpecies
+function basis_atom(basisset::BasisSetMetadata, iat::Int)
+    return basisset.basis[basisset.atom2species[iat]]
+end
+
+function basis_species(basisset::BasisSetMetadata, species::ChemicalSpecies)
+    return basisset.basis[species]
+end
+
+# Get a number of basis functions belonging to atoms with a lower index for every atom
+function get_offsets(basisset::BasisSetMetadata)
+    return [interval[begin] - 1 for interval in basisset.atom2basis]
+end
