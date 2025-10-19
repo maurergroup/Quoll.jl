@@ -1,6 +1,15 @@
 abstract type AbstractFHIaimsOperator <: AbstractOperator end
 abstract type AbstractFHIaimsMetadata <: AbstractOperatorMetadata end
 
+# Same order as wiki
+# For m > 0 opposite CS phase
+const FHIaimsSHConversion = SHConversion(
+    [[1], [1,  2,  3], [1,  2,  3,  4,  5], [1,  2,  3,  4,  5,  6,  7], [1,  2,  3,  4,  5,  6,  7,  8,  9]],
+    [[1], [1,  1, -1], [1,  1,  1, -1,  1], [1,  1,  1,  1, -1,  1, -1], [1,  1,  1,  1,  1, -1,  1, -1,  1]],
+)
+
+SHConversion(::Type{<:AbstractFHIaimsOperator}) = FHIaimsSHConversion
+
 function load_atoms(dir::AbstractString, ::Type{<:AbstractFHIaimsOperator})
     path = joinpath(dir, "geometry.in")
     atoms = load_system(path)

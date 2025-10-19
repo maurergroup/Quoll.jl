@@ -3,6 +3,7 @@ module Quoll
 using Reexport
 using LinearAlgebra
 using StaticArrays
+using OffsetArrays
 using Dictionaries
 using AxisKeys
 using Unitful
@@ -23,6 +24,7 @@ include("operatorkind.jl")
 include("basis.jl")
 include("spin.jl")
 include("sparsity.jl")
+include("shconversion.jl")
 
 # Operator formats and their IO routines
 # (Assuming no dependencies between different format types in each file)
