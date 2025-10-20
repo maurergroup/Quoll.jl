@@ -104,6 +104,7 @@ function RealBlockSparsity(colcellptr, rowval, images, basis2atom)
     return RealBlockSparsity(ij2images, images, true)
 end
 
+# A map from image indices in `images` to local image indices in `ij2images` for a given ij
 function get_iglobal2ilocal(sparsity::RealBlockSparsity)
     return Dictionary(
         keys(sparsity.ij2images),

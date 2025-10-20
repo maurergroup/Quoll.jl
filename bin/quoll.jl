@@ -62,6 +62,24 @@ for idir in my_idirs
 
     # TODO: in the future could allow for <other canonical formats/shortcut conversions>
     @info "Converting operators into canonical format"
-    # operators = Dict(Quoll.RealBSparseOperator, operators)
-    
+
+    operators = Dict([
+        operatorkind => Quoll.RealBSparseOperator(operator, params.input.radii)
+        for (operatorkind, operator) in operators
+    ])
+
+    # TODO: include a function here which would initialise the k-point grid if its required
+    # so that we don't have to do logic everywhere else multiple times
+
+    # Basis projection
+    # - requires k-point grid
+    # - incompatible with error metrics (TODO: probably should throw an error but I could do that at parse time)
+
+    # Postprocessing
+    # - most of them require k-point grid (except band structure)
+    # - should store eigenvalues, fermi level and pass them to error metrics if required
+
+    # Error metrics
+    # - some require k-point grid and eigenvalues (e.g. eigenvalue error)
+
 end

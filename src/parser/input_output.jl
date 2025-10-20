@@ -95,7 +95,7 @@ function parse_radius(radius_string)
     r = parse(Float64, radius_match.captures[2])
     unit = radius_match.captures[3]
     
-    if unit === nothing
+    if isnothing(unit)
         @warn "Units to radii field not supplied, assuming Å"
         r = r * u"Å"
     else

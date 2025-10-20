@@ -1,19 +1,25 @@
 
 # TODO: might need to write a more specialized function which doesn't do conversions for
 # each operator separately assuming the metadata is the same
-function RealBSparseOperator(in_operator::FHIaimsCSCOperator)
-    ## Metadata
-    # Convert sparsity
-    out_sparsity = RealBlockSparsity(in_operator.metadata.sparsity, in_operator.metadata.basisset)
+# TODO: Allow to compute sparsity from radii
+function RealBSparseOperator(in_operator::FHIaimsCSCOperator, radii)
+
+    # Obtain sparsity
+    if isnothing(radii)
+        out_sparsity = RealBlockSparsity(in_operator.metadata.sparsity, in_operator.metadata.basisset)
+    else
+        @info "Computing sparsity manually from radii"
+        out_sparsity = RealBlockSparsity(in_operator.metadata.atoms, radii, hermitian = true)
+    end
 
     # Compute z1z2_ij2interval
     z1z2_ij2interval = compute_z1z2_ij2interval(in_operator.metadata.atoms, out_sparsity)
 
+    # Construct metadata
     out_metadata = RealBSparseMetadata(
         in_operator.metadata.atoms, out_sparsity, in_operator.metadata.basisset, in_operator.metadata.spins, z1z2_ij2interval
     )
     
-    ## Data
     # Initialize out_operator with zeros
     out_operator = RealBSparseOperator(in_operator.kind, out_metadata)
 
@@ -41,9 +47,11 @@ function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity
 
     atom2basis_offset = get_offsets(out_basisset)
     iglobal2ilocal = get_iglobal2ilocal(out_sparsity)
+    shconv = SHConversion(out_type) ∘ inv(SHConversion(in_type))
 
-    # shconv = SHConversion(out_type) ∘ inv(SHConversion(in_type))
-    # shifts, phases = precompute_shiftphases(out_basisset, shconv)
+    # Use inv(shconv) for shifts and phases because matrix is being reordered
+    # using `type2` reordering, for more information see tests/unit/shconversion.jl
+    shifts, phases = precompute_shiftphases(out_basisset, inv(shconv))
 
     for i_cell in axes(in_sparsity.colcellptr, 2)
         image = in_sparsity.images[i_cell]
@@ -65,24 +73,31 @@ function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity
                 i_basis_row_local = i_basis_row - atom2basis_offset[i_atom_row]
                 i_basis_col_local = i_basis_col - atom2basis_offset[i_atom_col]
 
-                out_keydata[(i_atom_row, i_atom_col)][i_basis_row_local, i_basis_col_local, i_cell_local] = in_data[i_index]
+                out_keydata[(i_atom_row, i_atom_col)][
+                    i_basis_row_local + shifts[out_basisset.atom2species[i_atom_row]][i_basis_row_local],
+                    i_basis_col_local + shifts[out_basisset.atom2species[i_atom_col]][i_basis_col_local],
+                    i_cell_local
+                ] = (
+                    in_data[i_index]
+                    * phases[out_basisset.atom2species[i_atom_row]][i_basis_row_local]
+                    * phases[out_basisset.atom2species[i_atom_col]][i_basis_col_local]
+                )
             end
         end
     end
+
+    # Fill in the 'L' part of on-site blocks that, due of Hermitian CSC sparsity,
+    # were not filled in the loop above
+    n_atoms = length(atom2basis_offset)
+    for i_atom in 1:n_atoms
+        for k in axes(out_keydata[(i_atom, i_atom)], 3)
+            for j in axes(out_keydata[(i_atom, i_atom)], 2)
+                @inbounds for i in axes(out_keydata[(i_atom, i_atom)], 1)
+                    j > i || continue
+                    out_keydata[(i_atom, i_atom)][j, i, k] = out_keydata[(i_atom, i_atom)][i, j, k]
+                end
+            end
+        end
+    end
+
 end
-
-# struct FHIaimsCSCMetadata{A<:AbstractSystem, E} <: AbstractFHIaimsMetadata
-#     atoms::A
-#     sparsity::RealCSCSparsity
-#     basisset::BasisSetMetadata{E}
-#     spinset::Union{SpinsMetadata, Nothing}
-#     # TODO: Is Union{SpinsMetadata, Nothing} best approach here?
-#     # Making FHIaimsCSCMetadata a parametric type wrt typeof(spins)
-#     # or making SpinsMetadata a parametric type might be an overkill
-# end
-
-# struct FHIaimsCSCOperator{O<:AbstractOperatorKind, T<:AbstractFloat, A<:AbstractSystem, E} <: AbstractFHIaimsOperator
-#     kind::O
-#     data::Vector{T}
-#     metadata::FHIaimsCSCMetadata{A, E}
-# end

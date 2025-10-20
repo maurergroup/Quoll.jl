@@ -3,7 +3,7 @@ using AtomsBase
 
 using Test
 
-function reorder_matrix(A1, basis, shconv)
+function reorder_matrix_type1(A1, basis, shconv)
     A2 = zero(A1)
 
     # Precompute shifts and phases
@@ -24,6 +24,34 @@ function reorder_matrix(A1, basis, shconv)
             phase_i = phases[i]
 
             A2[i, j] = A1[i + shift_i, j + shift_j] * phase_i * phase_j
+        end
+    end
+
+    return A2
+end
+
+function reorder_matrix_type2(A1, basis, inv_shconv)
+    A2 = zero(A1)
+
+    # Precompute shifts and phases
+    n = size(A1, 2)
+    shifts = Vector{Int}(undef, n)
+    phases = Vector{Int}(undef, n)
+
+    for j in 1:n
+        shifts[j], phases[j] = Quoll.get_shiftphase(basis[j], inv_shconv)
+    end
+
+    for j in 1:n
+        shift_j = shifts[j]
+        phase_j = phases[j]
+
+        for i in 1:n
+            shift_i = shifts[i]
+            phase_i = phases[i]
+
+            # Note shifts on A2 instead of A1 as in type1 conversion
+            A2[i + shift_i, j + shift_j] = A1[i, j] * phase_i * phase_j
         end
     end
 
@@ -89,7 +117,7 @@ end
     shconv2 = Quoll.SHConversion(orders2, phases2)
 
     @testset "Basic" begin
-        A2 = reorder_matrix(A1, basis, shconv1)
+        A2 = reorder_matrix_type1(A1, basis, shconv1)
         @test A2 == [
             0  2 -1  3;
             2  4 -3  5;
@@ -106,18 +134,22 @@ end
             2 3 5 4;
         ]
 
-        A2 = reorder_matrix(A1, basis, shconv1)
-        A3 = reorder_matrix(A2, basis, shconv2)
+        A2 = reorder_matrix_type1(A1, basis, shconv1)
+        A3 = reorder_matrix_type1(A2, basis, shconv2)
         @test A3 == ref
 
-        A3_direct = reorder_matrix(A1, basis, shconv2 ∘ shconv1)
+        A3_direct = reorder_matrix_type1(A1, basis, shconv2 ∘ shconv1)
         @test A3_direct == ref
     end
 
     @testset "Inverse" begin
-        A2 = reorder_matrix(A1, basis, shconv1)
-        A3 = reorder_matrix(A2, basis, inv(shconv1))
+        A2 = reorder_matrix_type1(A1, basis, shconv1)
+        A3 = reorder_matrix_type1(A2, basis, inv(shconv1))
         @test A1 == A3
+
+        A2type1 = reorder_matrix_type1(A1, basis, shconv1)
+        A2type2 = reorder_matrix_type2(A1, basis, inv(shconv1))
+        @test A2type1 == A2type2
 
         identity_shconv = inv(shconv1) ∘ shconv1
 
