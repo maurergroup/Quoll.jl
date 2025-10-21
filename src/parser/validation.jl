@@ -1,4 +1,10 @@
-# Check if the operators are sufficient for requested job
+function search_clashes(basis_projection, error_metrics)
+    @argcheck !(!isnothing(basis_projection) && error_metrics.mae)
+    @argcheck !(!isnothing(basis_projection) && error_metrics.eigenvalue_error)
+    @argcheck !(!isnothing(basis_projection) && error_metrics.el_entropy_error)
+end
+
+# Check if the operators are sufficient for the requested job
 function validate_operatorkinds(operatorkinds, output, basis_projection, postprocessing, error_metrics)
     Sref = Overlap(:ref) ∈ operatorkinds
     Spred = Overlap(:pred) ∈ operatorkinds
@@ -23,8 +29,6 @@ function validate_operatorkinds(operatorkinds, output, basis_projection, postpro
 
     return true
 end
-
-# [h.spin for h in operatorkinds if h isa Hamiltonian]
 
 # Find operatorkinds and check if they are compatible with the supplied parameters
 function find_operatorkinds(dir::AbstractString, params::QuollParams)
@@ -51,3 +55,28 @@ function find_operatorkinds(dir::AbstractString, params::QuollParams)
     @debug "Intersection between found and requested operators:" operatorkinds
     return operatorkinds
 end
+
+function requires_kpoint_grid(params)
+    requires = false
+    requires |= !isnothing(params.basis_projection)
+    requires |= params.postprocessing.fermi_level
+    requires |= params.postprocessing.dos
+    requires |= params.error_metrics.eigenvalue_error
+    requires |= params.error_metrics.el_entropy_error
+    return requires
+end
+
+# TODO: DOS requires fermi level calculation
+# What happens in dos == true but fermi_level == false?
+# In that case I could just ignore the fermi level parameter
+
+# Basis projection
+# - requires k-point grid
+# - incompatible with error metrics
+
+# Postprocessing
+# - most of them require k-point grid (except band structure)
+# - should store eigenvalues, fermi level and pass them to error metrics if required
+
+# Error metrics
+# - some require k-point grid and eigenvalues (e.g. eigenvalue error)

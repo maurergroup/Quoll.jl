@@ -68,18 +68,8 @@ for idir in my_idirs
         for (operatorkind, operator) in operators
     ])
 
-    # TODO: include a function here which would initialise the k-point grid if its required
-    # so that we don't have to do logic everywhere else multiple times
-
-    # Basis projection
-    # - requires k-point grid
-    # - incompatible with error metrics (TODO: probably should throw an error but I could do that at parse time)
-
-    # Postprocessing
-    # - most of them require k-point grid (except band structure)
-    # - should store eigenvalues, fermi level and pass them to error metrics if required
-
-    # Error metrics
-    # - some require k-point grid and eigenvalues (e.g. eigenvalue error)
+    if Quoll.Parser.requires_kpoint_grid(params)
+        @info "Initialising k-point grid"
+    end
 
 end

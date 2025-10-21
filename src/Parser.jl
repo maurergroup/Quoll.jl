@@ -59,6 +59,7 @@ include("parser/kpoint_grid.jl")
             postprocessing,
             error_metrics,
         )
+        search_clashes(basis_projection, error_metrics)
         new(input, output, basis_projection, kpoint_grid, postprocessing, error_metrics)
     end
 end
