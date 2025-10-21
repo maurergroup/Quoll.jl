@@ -72,10 +72,10 @@ function RealBlockSparsity(atoms::AbstractSystem, nlist::PairList, maxedges::Dic
 end
 
 function RealBlockSparsity(csc_sparsity::RealCSCSparsity, basisset::BasisSetMetadata)
-    return RealBlockSparsity(csc_sparsity.colcellptr, csc_sparsity.rowval, csc_sparsity.images, basisset.basis2atom)
+    return RealBlockSparsity(csc_sparsity.colcellptr, csc_sparsity.rowval, csc_sparsity.images, basisset.basis2atom, csc_sparsity.hermitian)
 end
 
-function RealBlockSparsity(colcellptr, rowval, images, basis2atom)
+function RealBlockSparsity(colcellptr, rowval, images, basis2atom, hermitian)
     ij2images = Dictionary{Tuple{Int, Int}, Vector{SVector{3, Int}}}()
 
     # TODO: could define csc iteration, but i_atom_col would have to be evaluated in inner loop
@@ -101,7 +101,7 @@ function RealBlockSparsity(colcellptr, rowval, images, basis2atom)
             end
         end
     end
-    return RealBlockSparsity(ij2images, images, true)
+    return RealBlockSparsity(ij2images, images, hermitian)
 end
 
 # A map from image indices in `images` to local image indices in `ij2images` for a given ij
@@ -110,4 +110,81 @@ function get_iglobal2ilocal(sparsity::RealBlockSparsity)
         keys(sparsity.ij2images),
         [indexin(sparsity.images, images_local) for images_local in sparsity.ij2images],
     )
+end
+
+# Good that it's not inplace because otherwise the sparsity
+# of the operator might not match its data.
+# The function might look more sophisticated than it needs to be,
+# but it might make more sense if one considers an example
+# Non-hermitian ij2images:
+# (i, j) => [R1, R2]
+# (j, i) => [-R1, -R2]
+# Hermitian ij2images type 1
+# (i, j) => [R1, R2]
+# <(j, i) => ...>: not present
+# Hermitian ij2images type 2
+# (i, j) => [R1]
+# (j, i) => [-R2]
+# Both possibilities are valid hermitian sparsities.
+# 
+# If converting from type 1 to nonhermitian sparsity then we will have new keys in ij2images.
+# Does that affect how we convert other properties during operator -> operator conversion?
+# This matters only for conversions where image order and (i, j) order matters in other operator
+# fields, e.g. 3rd axis in keydata in RealBSparseOperator contains some order of images
+# and by changing the sparsity the order would not be the same anymore.
+# This would make RealBSparseOperator -> RealBSparseOperator conversion a bit tricky
+# but it's not something that would have to be done normally.
+function convert_to_nonhermitian(sparsity::RealBlockSparsity)
+    !sparsity.hermitian && return sparsity
+
+    ij_list = Tuple{Int, Int}[]
+    images_list = Vector{SVector{3, Int}}[]
+
+    unique_sorted_ij = unique(j > i ? (i, j) : (j, i) for (i, j) in keys(sparsity.ij2images))
+    for (i, j) in unique_sorted_ij
+        if i ≠ j
+            ij_images = get(sparsity.ij2images, (i, j), SVector{3, Int}[]) ∪ (-1 * get(sparsity.ij2images, (j, i), SVector{3, Int}[]))
+            ji_images = -1 * ij_images
+
+            push!(ij_list, (i, j), (j, i))
+            push!(images_list, ij_images, ji_images)
+        else
+            ii_images = get(sparsity.ij2images, (i, i), SVector{3, Int}[])
+            ii_images = vcat(ii_images, -1 * ii_images)
+            
+            push!(ij_list, (i, i))
+            push!(images_list, ii_images)
+        end
+    end
+    nonhermitian_ij2images = Dictionary(ij_list, images_list)
+
+    return RealBlockSparsity(nonhermitian_ij2images, sparsity.images, false)
+end
+
+# Converting to "type 1" hermitian sparsity (for more information see `convert_to_nonhermitian`)
+# Same as for `convert_to_nonhermitian`, some of the keys will be deleted here.
+function convert_to_hermitian(sparsity::RealBlockSparsity)
+    sparsity.hermitian && return sparsity
+
+    ij_list = Tuple{Int, Int}[]
+    images_list = Vector{SVector{3, Int}}[]
+    unique_sorted_ij = unique(j > i ? (i, j) : (j, i) for (i, j) in keys(sparsity.ij2images))
+
+    for (i, j) in unique_sorted_ij
+        if i ≠ j
+            ij_images = get(sparsity.ij2images, (i, j), SVector{3, Int}[])
+
+            push!(ij_list, (i, j))
+            push!(images_list, ij_images)
+        else
+            ii_images = get(sparsity.ij2images, (i, i), SVector{3, Int}[])
+            ii_images = unique(map(image -> image > -image ? image : -image))
+            
+            push!(ij_list, (i, i))
+            push!(images_list, ii_images)
+        end
+    end
+    hermitian_ij2images = Dictionary(ij_list, images_list)
+
+    return RealBlockSparsity(hermitian_ij2images, sparsity.images, true)
 end

@@ -1,8 +1,7 @@
 
 # TODO: might need to write a more specialized function which doesn't do conversions for
 # each operator separately assuming the metadata is the same
-# TODO: Allow to compute sparsity from radii
-function RealBSparseOperator(in_operator::FHIaimsCSCOperator, radii)
+function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing)
 
     # Obtain sparsity
     if isnothing(radii)
