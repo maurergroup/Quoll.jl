@@ -66,10 +66,6 @@ function requires_kpoint_grid(params)
     return requires
 end
 
-# TODO: DOS requires fermi level calculation
-# What happens in dos == true but fermi_level == false?
-# In that case I could just ignore the fermi level parameter
-
 # Basis projection
 # - requires k-point grid
 # - incompatible with error metrics
@@ -77,6 +73,10 @@ end
 # Postprocessing
 # - most of them require k-point grid (except band structure)
 # - should store eigenvalues, fermi level and pass them to error metrics if required
+
+# TODO: DOS requires fermi level calculation
+# What happens in dos == true but fermi_level == false?
+# In that case I could just ignore the fermi level parameter
 
 # Error metrics
 # - some require k-point grid and eigenvalues (e.g. eigenvalue error)

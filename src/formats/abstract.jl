@@ -1,5 +1,12 @@
+using Base
+
 abstract type AbstractOperator end
 abstract type AbstractOperatorMetadata end
+
+function Base.show(io::IO, operator::AbstractOperator)
+    print(io, nameof(typeof(operator)))
+    print(io, "($(operator.kind))")
+end
 
 # TODO: Even though the fields of metadata might be the same among different formats,
 # the constructors will differ.
