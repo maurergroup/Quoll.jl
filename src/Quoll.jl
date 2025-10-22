@@ -40,7 +40,6 @@ include("formats/fhiaims/abstract.jl")
 include("formats/fhiaims/fhiaims_csc.jl")
 
 # Operator format conversions
-include("conversions/canonical/bsparse.jl")
 include("conversions/fhiaims/fhiaims_csc.jl")
 
 # Basis projection module
