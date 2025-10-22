@@ -13,4 +13,5 @@
 /**/*.sh
 
 /examples/SiC/SiC_FHIaims
+/examples/SiC/SiC_DeepH
 /tmp
