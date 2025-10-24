@@ -43,7 +43,8 @@ global_logger(
 
 @info "Parsing QUOLL input file"
 
-input_filepath = abspath(ARGS[1])
+input_filepath = "/home/chem/phrpwt/Jobs/Data_Pipeline/Quoll_Workspace/Quoll/examples/SiC/input_file.toml"
+# input_filepath = abspath(ARGS[1])
 params = from_toml(Quoll.Parser.QuollParams, input_filepath)
 
 @info "Splitting configurations across MPI tasks"
@@ -61,15 +62,25 @@ for idir in my_idirs
     operators = load_operators(dir, operatorkinds, params.input.format)
 
     # TODO: in the future could allow for <other canonical formats/shortcut conversions>
-    @info "Converting operators into canonical format"
+    @info "Converting operators into RealBSparseOperator format"
 
     operators = Dict([
-        operatorkind => Quoll.RealBSparseOperator(operator, params.input.radii)
+        operatorkind => Quoll.RealBSparseOperator(operator; radii = params.input.radii)
         for (operatorkind, operator) in operators
     ])
 
     if Quoll.Parser.requires_kpoint_grid(params)
         @info "Initialising k-point grid"
+    end
+
+    if !isnothing(params.output)
+        # @info "Converting operators into $(params.output.format) format"
+        # TODO: hermitian should probably be a parameter with default
+        operators = Dict([
+            # operatorkind => params.output.format(operator; hermitian = false)
+            operatorkind => Quoll.DeepHOperator(operator; hermitian = false)
+            for (operatorkind, operator) in operators
+        ])
     end
 
 end

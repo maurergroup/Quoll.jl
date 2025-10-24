@@ -15,9 +15,9 @@ operators = ["H", "S"]
 #   - DeepH
 #   - (Universal)
 #   - ...
-# [output]
-# format = "DeepH"
-# directory = ["../../../example_data/SiC/complete"]
+[output]
+format = "DeepH"
+directory = "output"
 
 
 # Should also allow different types,

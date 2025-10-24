@@ -1,9 +1,10 @@
 using Base
 using OffsetArrays
 
-# Conversion with respect to wiki
+# Conversion from wiki to a given format
 struct SHConversion{T}
     orders::T
+    shifts::T
     phases::T
     lmax::Int
 end
@@ -20,12 +21,21 @@ function SHConversion(orders, phases)
         offset_static(order .- (l + 1), l)
         for (l, order) in zip(0:lmax, orders)
     )...)
+    _shifts = compute_shifts(_orders)
+
     _phases = tuple((
         offset_static(phase, l)
         for (l, phase) in zip(0:lmax, phases)
     )...)
 
-    return SHConversion(_orders, _phases, lmax)
+    return SHConversion(_orders, _shifts, _phases, lmax)
+end
+
+function compute_shifts(orders)
+    return tuple((
+        offset_static(OffsetArrays.no_offset_view(order) .- collect(-l:l), l)
+        for (l, order) in zip(0:(length(orders) - 1), orders)
+    )...)
 end
 
 function Base.inv(shconv::SHConversion)
@@ -34,11 +44,13 @@ function Base.inv(shconv::SHConversion)
         inv_order(shconv.orders, l)
         for l in 0:lmax
     )...)
+    inv_shifts = compute_shifts(inv_orders)
+
     inv_phases = tuple((
         offset_static(shconv.phases[l + 1][inv_order(shconv.orders, l)], l)
         for l in 0:lmax
     )...)
-    return SHConversion(inv_orders, inv_phases, lmax)
+    return SHConversion(inv_orders, inv_shifts, inv_phases, lmax)
 end
 
 function inv_order(orders, l)
@@ -53,10 +65,12 @@ function offset_static(vec, l)
     return OffsetArray(SVector{2l + 1, Int}(OffsetArrays.no_offset_view(vec)), -l:l)
 end
 
-function Base.:(∘)(shconv2::T, shconv1::T) where T<:SHConversion
+# SHConvention is not callable and the result doesn't return ComposedFunction,
+# so not sure if it's bad to overwrite this or not
+function Base.:(∘)(shconv2::T1, shconv1::T2) where {T1<:SHConversion, T2<:SHConversion}
     if shconv1.lmax != shconv2.lmax
         @warn "lmax of two SH conventions do not match, setting lmax to the lower value"
-        shconv1.lmax > shconv2.lmax ? (lmax = shconv1.lmax) : (lmax = shconv2.lmax)
+        shconv1.lmax > shconv2.lmax ? (lmax = shconv2.lmax) : (lmax = shconv1.lmax)
     else
         lmax = shconv1.lmax
     end
@@ -65,12 +79,14 @@ function Base.:(∘)(shconv2::T, shconv1::T) where T<:SHConversion
         offset_static(shconv1.orders[l + 1][shconv2.orders[l + 1]], l)
         for l in 0:lmax
     )...)
+    shifts = compute_shifts(orders)
+
     phases = tuple((
         offset_static(shconv2.phases[l + 1] .* shconv1.phases[l + 1][shconv2.orders[l + 1]], l)
         for l in 0:lmax
     )...)
 
-    return SHConversion(orders, phases, lmax)
+    return SHConversion(orders, shifts, phases, lmax)
 end
 
 function get_shift(l, m, shconv::SHConversion)
@@ -88,13 +104,16 @@ end
 function precompute_shiftphases(basisset::BasisSetMetadata, shconv::SHConversion)
     shifts = Dictionary{ChemicalSpecies, Vector{Int}}()
     phases = Dictionary{ChemicalSpecies, Vector{Int}}()
+
     for z in unique(basisset.atom2species)
         n_basis = length(basis_species(basisset, z))
         insert!(shifts, z, Vector{Int}(undef, n_basis))
         insert!(phases, z, Vector{Int}(undef, n_basis))
+
         for (ib, orbital) in enumerate(basisset.basis[z])
             shifts[z][ib], phases[z][ib] = get_shiftphase(orbital, shconv)
         end
     end
+
     return shifts, phases
 end

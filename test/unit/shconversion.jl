@@ -66,12 +66,16 @@ end
 
     l = 0
     @test shconv.orders[l + 1][0] == 1 - (l + 1)
+    @test shconv.shifts[l + 1][0] == 1 - (l + 1) - 0
     @test shconv.phases[l + 1][0] == 1
 
     l = 1
     @test shconv.orders[l + 1][-1] == 3 - (l + 1)
     @test shconv.orders[l + 1][0] == 1 - (l + 1)
     @test shconv.orders[l + 1][1] == 2 - (l + 1)
+    @test shconv.shifts[l + 1][-1] == 3 - (l + 1) + 1
+    @test shconv.shifts[l + 1][0] == 1 - (l + 1)
+    @test shconv.shifts[l + 1][1] == 2 - (l + 1) - 1
     @test shconv.phases[l + 1][-1] == 1
     @test shconv.phases[l + 1][0] == -1
     @test shconv.phases[l + 1][1] == 1
@@ -82,6 +86,11 @@ end
     @test shconv.orders[l + 1][0] == 5 - (l + 1)
     @test shconv.orders[l + 1][1] == 3 - (l + 1)
     @test shconv.orders[l + 1][2] == 2 - (l + 1)
+    @test shconv.shifts[l + 1][-2] == 1 - (l + 1) + 2
+    @test shconv.shifts[l + 1][-1] == 4 - (l + 1) + 1
+    @test shconv.shifts[l + 1][0] == 5 - (l + 1)
+    @test shconv.shifts[l + 1][1] == 3 - (l + 1) - 1
+    @test shconv.shifts[l + 1][2] == 2 - (l + 1) - 2
     @test shconv.phases[l + 1][-2] == 1
     @test shconv.phases[l + 1][-1] == 1
     @test shconv.phases[l + 1][0] == -1
@@ -155,12 +164,16 @@ end
 
         l = 0
         @test identity_shconv.orders[l + 1][0] == 1 - (l + 1)
+        @test identity_shconv.shifts[l + 1][0] == 0
         @test identity_shconv.phases[l + 1][0] == 1
 
         l = 1
         @test identity_shconv.orders[l + 1][-1] == 1 - (l + 1)
         @test identity_shconv.orders[l + 1][0] == 2 - (l + 1)
         @test identity_shconv.orders[l + 1][1] == 3 - (l + 1)
+        @test identity_shconv.shifts[l + 1][-1] == 0
+        @test identity_shconv.shifts[l + 1][0] == 0
+        @test identity_shconv.shifts[l + 1][1] == 0
         @test identity_shconv.phases[l + 1][-1] == 1
         @test identity_shconv.phases[l + 1][0] == 1
         @test identity_shconv.phases[l + 1][1] == 1

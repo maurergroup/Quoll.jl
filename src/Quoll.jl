@@ -41,6 +41,7 @@ include("formats/fhiaims/fhiaims_csc.jl")
 
 # Operator format conversions
 include("conversions/fhiaims/fhiaims_csc.jl")
+include("conversions/deeph/deeph.jl")
 
 # Basis projection module
 include("Projections.jl")

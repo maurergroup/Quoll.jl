@@ -1,7 +1,7 @@
 
 # TODO: might need to write a more specialized function which doesn't do conversions for
 # each operator separately assuming the metadata is the same
-function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing)
+function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, T = Float64)
 
     # Obtain sparsity
     if isnothing(radii)
@@ -20,7 +20,7 @@ function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing)
     )
     
     # Initialize out_operator with zeros
-    out_operator = RealBSparseOperator(in_operator.kind, out_metadata)
+    out_operator = RealBSparseOperator(in_operator.kind, out_metadata; T = T)
 
     # Populate out_operator with values from the in_operator
     populate!(out_operator, in_operator)
@@ -85,17 +85,21 @@ function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity
         end
     end
 
-    # Fill in the 'L' part of on-site blocks that, due of Hermitian CSC sparsity,
+    # Fill in the 'L' part of on-site blocks which, due of Hermitian CSC sparsity,
     # were not filled in the loop above
     n_atoms = length(atom2basis_offset)
-    for i_atom in 1:n_atoms
-        for k in axes(out_keydata[(i_atom, i_atom)], 3)
-            for j in axes(out_keydata[(i_atom, i_atom)], 2)
-                @inbounds for i in axes(out_keydata[(i_atom, i_atom)], 1)
-                    j > i || continue
-                    out_keydata[(i_atom, i_atom)][j, i, k] = out_keydata[(i_atom, i_atom)][i, j, k]
+    onsite_ilocal2milocal = get_onsite_ilocal2milocal(out_sparsity)
+    for iat in 1:n_atoms
+        for iR in axes(out_keydata[(iat, iat)], 3)
+            miR = onsite_ilocal2milocal[iat][iR]
+
+            for iν in axes(out_keydata[(iat, iat)], 2)
+                @inbounds for iμ in axes(out_keydata[(iat, iat)], 1)
+                    iν > iμ || continue
+                    out_keydata[(iat, iat)][iν, iμ, miR] = out_keydata[(iat, iat)][iμ, iν, iR]
                 end
             end
+
         end
     end
 

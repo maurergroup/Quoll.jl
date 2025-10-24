@@ -59,22 +59,29 @@ function RealBlockSparsity(atoms::AbstractSystem, nlist::PairList, maxedges::Dic
     end
 
     # Add self-interactions for R = [0, 0, 0]
-    for (i, _) in enumerate(atoms)
-        ii = (i, i)
+    # This results in non-hermitian on-site ij2images even when hermitian is true.
+    # Before having seen element-wise sparsity, there is no way to tell whether
+    # any on-site blocks will only contain data in the upper diagonal.
+    # Therefore, to be consistent with the rest of the code, I'm assuming that
+    # on-site ij2images always contain mirror images even when they are
+    # not strictly required e.g. during sparsity conversion from CSC to block-wise
+    for (iat, _) in enumerate(atoms)
+        ii = (iat, iat)
 
         # Add empty array if the key doesn't exist yet
         # (would be in the case of no i self-interactions across periodic boundaries)
-        ii ∈ keys(ij2images) || insert!(ij2images, ii, SVector{3, Int}[])
-        push!(ij2images[ii], SA[0, 0, 0])
+        haskey(ij2images, ii) || insert!(ij2images, ii, SVector{3, Int}[])
+        push!(ij2images[ii], SA[0, 0, 0]) 
     end
 
-    return RealBlockSparsity(ij2images, nlist.S, hermitian)
+    return RealBlockSparsity(ij2images, unique(nlist.S), hermitian)
 end
 
 function RealBlockSparsity(csc_sparsity::RealCSCSparsity, basisset::BasisSetMetadata)
     return RealBlockSparsity(csc_sparsity.colcellptr, csc_sparsity.rowval, csc_sparsity.images, basisset.basis2atom, csc_sparsity.hermitian)
 end
 
+# TODO: Does this always return fully non-hermitian (iat, iat)? It doesn't but make sure it does
 function RealBlockSparsity(colcellptr, rowval, images, basis2atom, hermitian)
     ij2images = Dictionary{Tuple{Int, Int}, Vector{SVector{3, Int}}}()
 
@@ -94,7 +101,7 @@ function RealBlockSparsity(colcellptr, rowval, images, basis2atom, hermitian)
 
                 # If ij doesn't exist in ij2images create an empty array
                 ij = (i_atom_row, i_atom_col)
-                ij ∈ keys(ij2images) || insert!(ij2images, ij, SVector{3, Int}[])
+                haskey(ij2images, ij) || insert!(ij2images, ij, SVector{3, Int}[])
 
                 # If the image doesn't exist in ij2images[ij] then push the image inside
                 image ∈ ij2images[ij] || push!(ij2images[ij], image)
@@ -109,6 +116,15 @@ function get_iglobal2ilocal(sparsity::RealBlockSparsity)
     return Dictionary(
         keys(sparsity.ij2images),
         [indexin(sparsity.images, images_local) for images_local in sparsity.ij2images],
+    )
+end
+
+function get_onsite_ilocal2milocal(sparsity::RealBlockSparsity)
+    return Dictionary(
+        [iat for (iat, jat) in keys(sparsity.ij2images) if iat == jat],
+        [indexin(images_local, -images_local)
+        for ((iat, jat), images_local) in pairs(sparsity.ij2images)
+        if iat == jat]
     )
 end
 
@@ -140,17 +156,23 @@ function convert_to_nonhermitian(sparsity::RealBlockSparsity)
     ij_list = Tuple{Int, Int}[]
     images_list = Vector{SVector{3, Int}}[]
 
-    unique_sorted_ij = unique(j > i ? (i, j) : (j, i) for (i, j) in keys(sparsity.ij2images))
+    unique_sorted_ij = filter(keys(sparsity.ij2images)) do ij
+        i, j = ij
+        i ≤ j
+    end
+
     for (i, j) in unique_sorted_ij
         if i ≠ j
-            ij_images = get(sparsity.ij2images, (i, j), SVector{3, Int}[]) ∪ (-1 * get(sparsity.ij2images, (j, i), SVector{3, Int}[]))
+            ij_images = union(
+                get(() -> SVector{3, Int}[], sparsity.ij2images, (i, j)),
+                (-1 * get(() -> SVector{3, Int}[], sparsity.ij2images, (j, i)))
+            )
             ji_images = -1 * ij_images
 
             push!(ij_list, (i, j), (j, i))
             push!(images_list, ij_images, ji_images)
         else
-            ii_images = get(sparsity.ij2images, (i, i), SVector{3, Int}[])
-            ii_images = vcat(ii_images, -1 * ii_images)
+            ii_images = get(() -> SVector{3, Int}[], sparsity.ij2images, (i, i))
             
             push!(ij_list, (i, i))
             push!(images_list, ii_images)
@@ -166,25 +188,11 @@ end
 function convert_to_hermitian(sparsity::RealBlockSparsity)
     sparsity.hermitian && return sparsity
 
-    ij_list = Tuple{Int, Int}[]
-    images_list = Vector{SVector{3, Int}}[]
-    unique_sorted_ij = unique(j > i ? (i, j) : (j, i) for (i, j) in keys(sparsity.ij2images))
-
-    for (i, j) in unique_sorted_ij
-        if i ≠ j
-            ij_images = get(sparsity.ij2images, (i, j), SVector{3, Int}[])
-
-            push!(ij_list, (i, j))
-            push!(images_list, ij_images)
-        else
-            ii_images = get(sparsity.ij2images, (i, i), SVector{3, Int}[])
-            ii_images = unique(map(image -> image > -image ? image : -image))
-            
-            push!(ij_list, (i, i))
-            push!(images_list, ii_images)
-        end
+    unique_sorted_ij = filter(keys(sparsity.ij2images)) do ij
+        i, j = ij
+        i ≤ j
     end
-    hermitian_ij2images = Dictionary(ij_list, images_list)
+    hermitian_ij2images = Dictionary(view(sparsity.ij2images, unique_sorted_ij))
 
     return RealBlockSparsity(hermitian_ij2images, sparsity.images, true)
 end
