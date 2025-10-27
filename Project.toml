@@ -1,7 +1,7 @@
 name = "Quoll"
 uuid = "9d051eb3-b680-40d1-9fd2-1a9acedfca1f"
-authors = ["Valdas Vitartas <valdas.vitartas@warwick.ac.uk> and contributors"]
 version = "0.1.0"
+authors = ["Valdas Vitartas <valdas.vitartas@warwick.ac.uk> and contributors"]
 
 [deps]
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
@@ -47,7 +47,7 @@ StaticArrays = "1.9"
 StructArrays = "0.7"
 Unitful = "1.25"
 UnitfulAtomic = "1"
-julia = "1.10"
+julia = "1.12"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"

@@ -12,16 +12,16 @@ using SafeTestsets
 
 end
 
-@safetestset "formats" begin
+@safetestset "operators" begin
 
     @safetestset "fhiaims" begin
     
         @safetestset "abstract.jl" begin
-            include("formats/fhiaims/abstract.jl")
+            include("operators/fhiaims/abstract.jl")
         end
 
         @safetestset "fhiaims_csc.jl" begin
-            include("formats/fhiaims/fhiaims_csc.jl")
+            include("operators/fhiaims/fhiaims_csc.jl")
         end
 
     end

@@ -74,11 +74,10 @@ for idir in my_idirs
     end
 
     if !isnothing(params.output)
-        # @info "Converting operators into $(params.output.format) format"
+        @info "Converting operators into $(params.output.format) format"
         # TODO: hermitian should probably be a parameter with default
         operators = Dict([
-            # operatorkind => params.output.format(operator; hermitian = false)
-            operatorkind => Quoll.DeepHOperator(operator; hermitian = false)
+            operatorkind => params.output.format(operator; hermitian = false)
             for (operatorkind, operator) in operators
         ])
     end
