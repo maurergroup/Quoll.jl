@@ -20,11 +20,12 @@ end
 
 @option struct OutputParams <: AbstractQuollParams
     format::Type{<:AbstractOperator}
+    hermitian::Bool = false
     directory::String
     
-    function OutputParams(format, directory)
+    function OutputParams(format, hermitian, directory)
         directory = abspath(directory)
-        new(format, directory)
+        new(format, hermitian, directory)
     end
 end
 

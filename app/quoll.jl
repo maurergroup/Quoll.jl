@@ -75,9 +75,8 @@ for idir in my_idirs
 
     if !isnothing(params.output)
         @info "Converting operators into $(params.output.format) format"
-        # TODO: hermitian should probably be a parameter with default
         operators = Dict([
-            operatorkind => params.output.format(operator; hermitian = false)
+            operatorkind => params.output.format(operator; hermitian = params.output.hermitian)
             for (operatorkind, operator) in operators
         ])
     end

@@ -173,6 +173,19 @@ end
 
     end
 
+    @testset "hermitian" begin
+
+        @testset "Overwrite default" begin
+            directory, format = abspath("bar"), "DeepH"
+
+            d = Dict("format" => format, "directory" => directory, "hermitian" => true)
+            params = from_dict(Quoll.Parser.OutputParams, d)
+
+            @test params.hermitian == true
+        end
+
+    end
+
     @testset "directory" begin
 
         @testset "Absolute directory" begin

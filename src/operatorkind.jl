@@ -32,7 +32,8 @@ const Overlap = OperatorKind{:Overlap}
 
 # Technically eveything below is for parsing only
 # TODO: I should probably consider modifying the `operators` field in the input file
-# to explicitly accept tags so that we don't need to define `get_operatorkinds` for every case
+# to explicitly accept tags so that we don't need to define `get_operatorkinds` for every case.
+# Also I'm not sure if keeping this code here is the best idea
 
 function get_operatorkinds end
 
