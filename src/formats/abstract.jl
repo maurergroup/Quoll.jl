@@ -27,7 +27,7 @@ function get_avail_filenames end
 
 # Find available operators in the supplied dir
 function find_operatorkinds(dir::AbstractString, format::Type{<:AbstractOperator})
-    found_operatorkinds = AbstractOperatorKind[]
+    found_operatorkinds = OperatorKind[]
     for operatorkind in get_avail_operatorkinds(format)
         names = get_avail_filenames(operatorkind, format)
         ps = joinpath.(dir, names)
@@ -38,22 +38,19 @@ function find_operatorkinds(dir::AbstractString, format::Type{<:AbstractOperator
     return found_operatorkinds
 end
 
-function get_avail_filenames(operatorkind::Hamiltonian, T::Type{<:AbstractOperator})
-    return get_avail_filenames(operatorkind, Val(operatorkind.source), Val(operatorkind.spin), T)
+function get_avail_filenames(operatorkind::OperatorKind, T::Type{<:AbstractOperator})
+    pairtypes = (Pair(Val(pair[1]), Val(pair[2])) for pair in pairs(operatorkind.tags))
+    return get_avail_filenames(operatorkind, pairtypes..., T)
 end
 
-function get_avail_filenames(operatorkind::Overlap, T::Type{<:AbstractOperator})
-    return get_avail_filenames(operatorkind, Val(operatorkind.source), T)
-end
-
-# Constructors for SpinsMetadata from AbstractOperatorKind, BasisSetMetadata, and AbstractOperator.
+# Constructors for SpinsMetadata from OperatorKind, BasisSetMetadata, and AbstractOperator.
 # AbstractOperator is required for the SOC case. This is because for now in the case of SOC
 # BasisSetMetadata.basis stores 2x the number of basis functions, and we don't know which of them
 # are spin up and spin down. This type of information might depend on the format
 # TODO: this could be moved to spin.jl if this file was imported before spin.jl
 # (the only reason this is here is because of the dependence on AbstractOperator)
 
-function SpinsMetadata(kind::AbstractOperatorKind, basisset::BasisSetMetadata, format::Type{<:AbstractOperator})
+function SpinsMetadata(kind::OperatorKind, basisset::BasisSetMetadata, format::Type{<:AbstractOperator})
     return SpinsMetadata(kind, basisset.basis, format)
 end
 

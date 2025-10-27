@@ -29,7 +29,7 @@ end
 # 
 # I will usually work with the case where metadata in keydata are named tuples
 # i.e. KT == Tuple{Vector{@NamedTuple{basisf::BasisMetadata{E}, spin::SpinMetadata}}, ...}
-struct RealBSparseOperator{O<:AbstractOperatorKind, T<:AbstractFloat, A<:AbstractSystem, E, AT, KT} <: AbstractBSparseOperator
+struct RealBSparseOperator{O<:OperatorKind, T<:AbstractFloat, A<:AbstractSystem, E, AT, KT} <: AbstractBSparseOperator
     kind::O
     data::Dictionary{NTuple{2, ChemicalSpecies}, Array{T, 3}}
     keydata::Dictionary{NTuple{2, Int}, KeyedArray{T, 3, AT, KT}}
@@ -37,7 +37,7 @@ struct RealBSparseOperator{O<:AbstractOperatorKind, T<:AbstractFloat, A<:Abstrac
 end
 
 # Constructor to initialize the operator with zero values
-function RealBSparseOperator(kind::AbstractOperatorKind, metadata::RealBSparseMetadata; T = Float64)
+function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; T = Float64)
 
     # Construct data
     data = Dictionary{NTuple{2, ChemicalSpecies}, Array{T, 3}}()

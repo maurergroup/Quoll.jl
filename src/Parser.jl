@@ -10,7 +10,7 @@ using ArgCheck
 using ..Quoll
 using ..Quoll:
     AbstractOperator,
-    AbstractOperatorKind,
+    OperatorKind,
     get_avail_operatorkinds,
     get_operatorkinds,
     get_readformat,

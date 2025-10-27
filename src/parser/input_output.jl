@@ -1,7 +1,7 @@
 @option struct InputParams <: AbstractQuollParams
     format::Type{<:AbstractOperator}
     directories::Vector{String}
-    operators::Vector{AbstractOperatorKind} = get_avail_operatorkinds(format)
+    operators::Vector{OperatorKind} = get_avail_operatorkinds(format)
     radii::Union{Dict{ChemicalSpecies, Quantity{Float64, Unitful.𝐋, typeof(u"Å")}}, Nothing} = nothing
 
     function InputParams(format, directories, operators, radii)
@@ -70,7 +70,7 @@ end
 function Configurations.from_dict(
     ::Type{InputParams},
     ::OptionField{:operators},
-    ::Type{Vector{AbstractOperatorKind}},
+    ::Type{Vector{OperatorKind}},
     operators
 )
     # Ensure `operators` is of type Vector{String}

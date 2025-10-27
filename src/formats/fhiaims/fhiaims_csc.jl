@@ -18,12 +18,9 @@ struct FHIaimsCSCMetadata{A<:AbstractSystem, E} <: AbstractFHIaimsMetadata
     sparsity::RealCSCSparsity
     basisset::BasisSetMetadata{E}
     spins::Union{SpinsMetadata, Nothing}
-    # TODO: Is Union{SpinsMetadata, Nothing} best approach here?
-    # Making FHIaimsCSCMetadata a parametric type wrt typeof(spins)
-    # or making SpinsMetadata a parametric type might be an overkill
 end
 
-struct FHIaimsCSCOperator{O<:AbstractOperatorKind, T<:AbstractFloat, A<:AbstractSystem, E} <: AbstractFHIaimsOperator
+struct FHIaimsCSCOperator{O<:OperatorKind, T<:AbstractFloat, A<:AbstractSystem, E} <: AbstractFHIaimsOperator
     kind::O
     data::Vector{T}
     metadata::FHIaimsCSCMetadata{A, E}
@@ -32,17 +29,38 @@ end
 get_readformat(::Val{:fhiaims}) = FHIaimsCSCOperator
 
 get_avail_operatorkinds(::Type{FHIaimsCSCOperator}) = [
-    Hamiltonian(:ref, :none),
-    Hamiltonian(:ref, :up),
-    Hamiltonian(:ref, :down),
-    Overlap(:ref),
+    Hamiltonian(source = :ref, spin = :none),
+    Hamiltonian(source = :ref, spin = :up),
+    Hamiltonian(source = :ref, spin = :down),
+    Overlap(source = :ref),
 ]
 
-get_avail_filenames(::Hamiltonian, ::Val{:ref}, ::Val{:none}, ::Type{FHIaimsCSCOperator}) = ["rs_hamiltonian.h5", "rs_hamiltonian.out"]
-get_avail_filenames(::Hamiltonian, ::Val{:ref}, ::Val{:up}, ::Type{FHIaimsCSCOperator}) = ["rs_hamiltonian_up.h5", "rs_hamiltonian_up.out"]
-get_avail_filenames(::Hamiltonian, ::Val{:ref}, ::Val{:down}, ::Type{FHIaimsCSCOperator}) = ["rs_hamiltonian_down.h5", "rs_hamiltonian_dn.out"]
+get_avail_filenames(
+    ::Hamiltonian,
+    ::Pair{Val{:source}, Val{:ref}},
+    ::Pair{Val{:spin}, Val{:none}},
+    ::Type{FHIaimsCSCOperator}
+) = ["rs_hamiltonian.h5", "rs_hamiltonian.out"]
 
-get_avail_filenames(::Overlap, ::Val{:ref}, ::Type{FHIaimsCSCOperator}) = ["rs_overlap.h5", "rs_overlap.out"]
+get_avail_filenames(
+    ::Hamiltonian,
+    ::Pair{Val{:source}, Val{:ref}},
+    ::Pair{Val{:spin}, Val{:up}},
+    ::Type{FHIaimsCSCOperator}
+) = ["rs_hamiltonian_up.h5", "rs_hamiltonian_up.out"]
+
+get_avail_filenames(
+    ::Hamiltonian,
+    ::Pair{Val{:source}, Val{:ref}},
+    ::Pair{Val{:spin}, Val{:down}},
+    ::Type{FHIaimsCSCOperator}
+) = ["rs_hamiltonian_down.h5", "rs_hamiltonian_dn.out"]
+
+get_avail_filenames(
+    ::Overlap,
+    ::Pair{Val{:source}, Val{:ref}},
+    ::Type{FHIaimsCSCOperator}
+) = ["rs_overlap.h5", "rs_overlap.out"]
 
 function RealCSCSparsity(dir::AbstractString, ::Type{FHIaimsCSCOperator})
     p = joinpath(dir, "rs_indices.out")
@@ -110,7 +128,7 @@ function load_operators(dir::AbstractString, operatorkinds, ::Type{FHIaimsCSCOpe
     sparsity = RealCSCSparsity(dir, FHIaimsCSCOperator)
     basisset = BasisSetMetadata(dir, atoms, FHIaimsCSCOperator)
 
-    operators = Dict{AbstractOperatorKind, FHIaimsCSCOperator}()
+    operators = Dict{OperatorKind, FHIaimsCSCOperator}()
     for kind in operatorkinds
         spinsset = SpinsMetadata(kind, basisset, FHIaimsCSCOperator)
         metadata = FHIaimsCSCMetadata(atoms, sparsity, basisset, spinsset)
@@ -122,11 +140,11 @@ end
 
 # TODO: Not sure if I'll keep this function, it could be useful to have if
 # we want to use load_operator_metadata in quoll/bin
-function load_operator_metadata(dir::AbstractString, kind::AbstractOperatorKind, ::Type{FHIaimsCSCOperator})
+function load_operator_metadata(dir::AbstractString, kind::OperatorKind, ::Type{FHIaimsCSCOperator})
     return FHIaimsCSCMetadata(dir, kind) 
 end
 
-function FHIaimsCSCMetadata(dir::AbstractString, kind::AbstractOperatorKind)
+function FHIaimsCSCMetadata(dir::AbstractString, kind::OperatorKind)
     atoms = load_atoms(dir, FHIaimsCSCOperator)
     sparsity = RealCSCSparsity(dir, FHIaimsCSCOperator)
     basisset = BasisSetMetadata(dir, atoms, FHIaimsCSCOperator)
@@ -134,12 +152,12 @@ function FHIaimsCSCMetadata(dir::AbstractString, kind::AbstractOperatorKind)
     return FHIaimsCSCMetadata(atoms, sparsity, basisset, spins)
 end
 
-function FHIaimsCSCOperator(dir::AbstractString, operatorkind::AbstractOperatorKind, metadata::FHIaimsCSCMetadata)
+function FHIaimsCSCOperator(dir::AbstractString, operatorkind::OperatorKind, metadata::FHIaimsCSCMetadata)
     data = load_operator_data(dir, operatorkind, FHIaimsCSCOperator)
     return FHIaimsCSCOperator(operatorkind, data, metadata)
 end
 
-function load_operator_data(dir::AbstractString, operatorkind::AbstractOperatorKind, ::Type{FHIaimsCSCOperator})
+function load_operator_data(dir::AbstractString, operatorkind::OperatorKind, ::Type{FHIaimsCSCOperator})
     ps = joinpath.(dir, get_avail_filenames(operatorkind, FHIaimsCSCOperator))
     ps = ps[ispath.(ps)]
     @argcheck !isempty(ps)

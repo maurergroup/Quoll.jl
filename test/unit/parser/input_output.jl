@@ -41,20 +41,20 @@ end
             params = from_dict(Quoll.Parser.InputParams, d)
 
             @test Set(params.operators) == Set([
-                Hamiltonian(:ref, :none),
-                Hamiltonian(:ref, :soc),
-                Hamiltonian(:ref, :up),
-                Hamiltonian(:ref, :down),
+                Hamiltonian(source = :ref, spin = :none),
+                Hamiltonian(source = :ref, spin = :soc),
+                Hamiltonian(source = :ref, spin = :up),
+                Hamiltonian(source = :ref, spin = :down),
             ])
 
             d = Dict("format" => "FHI-aims", "directories" => directories, "operators" => ["H_ref"])
             params = from_dict(Quoll.Parser.InputParams, d)
 
             @test Set(params.operators) == Set([
-                Hamiltonian(:ref, :none),
-                Hamiltonian(:ref, :soc),
-                Hamiltonian(:ref, :up),
-                Hamiltonian(:ref, :down),
+                Hamiltonian(source = :ref, spin = :none),
+                Hamiltonian(source = :ref, spin = :soc),
+                Hamiltonian(source = :ref, spin = :up),
+                Hamiltonian(source = :ref, spin = :down),
             ])
         end
 

@@ -6,14 +6,14 @@ end
 
 # Check if the operators are sufficient for the requested job
 function validate_operatorkinds(operatorkinds, output, basis_projection, postprocessing, error_metrics)
-    Sref = Overlap(:ref) ∈ operatorkinds
-    Spred = Overlap(:pred) ∈ operatorkinds
+    Sref = Overlap(source = :ref) ∈ operatorkinds
+    Spred = Overlap(source = :pred) ∈ operatorkinds
 
     spins = [h.spin for h in operatorkinds if h isa Hamiltonian]
 
     for spin in spins
-        Href = Hamiltonian(:ref, spin) ∈ operatorkinds
-        Hpred = Hamiltonian(:pred, spin) ∈ operatorkinds
+        Href = Hamiltonian(source = :ref, spin = spin) ∈ operatorkinds
+        Hpred = Hamiltonian(source = :pred, spin = spin) ∈ operatorkinds
 
         output !== nothing && (@argcheck Sref || Spred || Href || Hpred)
         basis_projection !== nothing && (@argcheck Sref)
@@ -34,7 +34,6 @@ end
 function find_operatorkinds(dir::AbstractString, params::QuollParams)
     found_operatorkinds = find_operatorkinds(dir, params.input.format)
     if !all(params.input.operators .∈ Ref(found_operatorkinds))
-        # operatorkinds = collect(Set(params.input.operators) ∩ Set(found_operatorkinds))
         operatorkinds = params.input.operators ∩ found_operatorkinds
 
         # Validate whether the calculation can still continue

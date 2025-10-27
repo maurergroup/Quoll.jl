@@ -5,7 +5,7 @@ struct DeepHMetadata{A<:AbstractSystem, E} <: AbstractOperatorMetadata
     spins::Union{SpinsMetadata, Nothing}
 end
 
-struct DeepHOperator{O<:AbstractOperatorKind, T<:AbstractFloat, A<:AbstractSystem, E} <: AbstractOperator
+struct DeepHOperator{O<:OperatorKind, T<:AbstractFloat, A<:AbstractSystem, E} <: AbstractOperator
     kind::O
     data::Dictionary{NTuple{5, Int}, Array{T, 2}}
     metadata::DeepHMetadata{A, E}
@@ -31,15 +31,29 @@ SHConversion(::Type{DeepHOperator}) = DeepHSHConversion
 get_writeformat(::Val{:deeph}) = DeepHOperator
 
 get_avail_operatorkinds(::Type{DeepHOperator}) = [
-    Hamiltonian(:ref, :none),
-    Hamiltonian(:ref, :soc),
-    Hamiltonian(:pred, :none),
-    Hamiltonian(:pred, :soc),
-    Overlap(:ref),
+    Hamiltonian(source = :ref, spin = :none),
+    Hamiltonian(source = :ref, spin = :soc),
+    Hamiltonian(source = :pred, spin = :none),
+    Hamiltonian(source = :pred, spin = :soc),
+    Overlap(source = :ref),
 ]
 
-get_avail_filenames(::Hamiltonian, ::Val{:ref}, ::Val, ::Type{DeepHOperator}) = ["hamiltonians.h5"]
-get_avail_filenames(::Hamiltonian, ::Val{:pred}, ::Val,  ::Type{DeepHOperator}) = ["hamiltonians_pred.h5"]
+get_avail_filenames(
+    ::Hamiltonian,
+    ::Pair{Val{:source}, Val{:ref}},
+    ::Pair{Val{:spin}, Val{SPIN}},
+    ::Type{DeepHOperator}
+) where SPIN = ["hamiltonians.h5"]
 
-get_avail_filenames(::Overlap, ::Val{:ref}, ::Type{DeepHOperator}) = ["overlaps.h5"]
+get_avail_filenames(
+    ::Hamiltonian,
+    ::Pair{Val{:source}, Val{:pred}},
+    ::Pair{Val{:spin}, Val{SPIN}},
+    ::Type{DeepHOperator}
+) where SPIN = ["hamiltonians_pred.h5"]
 
+get_avail_filenames(
+    ::Overlap, 
+    ::Pair{Val{:source}, Val{:ref}},
+    ::Type{DeepHOperator}
+) = ["overlaps.h5"]

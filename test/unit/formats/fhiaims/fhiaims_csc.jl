@@ -11,12 +11,12 @@ using Main.TestUtils
     paths = ["rs_hamiltonian.h5", "rs_overlap.out"]
     root, abspaths = create_temptree(paths)
     found_operatorkinds = find_operatorkinds(root, FHIaimsCSCOperator)
-    @test Set(found_operatorkinds) == Set([Overlap(:ref), Hamiltonian(:ref, :none)])
+    @test Set(found_operatorkinds) == Set([Overlap(source = :ref), Hamiltonian(source = :ref, spin = :none)])
 
     paths = ["rs_overlap.out"]
     root, abspaths = create_temptree(paths)
     found_operatorkinds = find_operatorkinds(root, FHIaimsCSCOperator)
-    @test Set(found_operatorkinds) == Set([Overlap(:ref)])
+    @test Set(found_operatorkinds) == Set([Overlap(source = :ref)])
 
     paths = ["foo"]
     root, abspaths = create_temptree(paths)
@@ -74,7 +74,7 @@ end
             open("rs_hamiltonian.out", "w") do io
                 writedlm(io, rs_hamiltonian)
             end
-            operator_data = Quoll.load_operator_data(pwd(), Hamiltonian(:ref, :none), FHIaimsCSCOperator)
+            operator_data = Quoll.load_operator_data(pwd(), Hamiltonian(source = :ref, spin = :none), FHIaimsCSCOperator)
             @test operator_data ≈ rs_hamiltonian[begin:end-1]
         end
     end
@@ -85,7 +85,7 @@ end
                 dset = create_dataset(io, "sparse_matrix", Float64, (7,))
                 write(dset, rs_hamiltonian)
             end
-            operator_data = Quoll.load_operator_data(pwd(), Hamiltonian(:ref, :none), FHIaimsCSCOperator)
+            operator_data = Quoll.load_operator_data(pwd(), Hamiltonian(source = :ref, spin = :none), FHIaimsCSCOperator)
             @test operator_data ≈ rs_hamiltonian[begin:end-1]
         end
 
