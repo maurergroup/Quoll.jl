@@ -1,6 +1,4 @@
 using Base
-using ArgCheck
-using Dictionaries
 using AutoHashEquals
 
 @auto_hash_equals struct OperatorKind{K}

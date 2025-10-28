@@ -1,26 +1,25 @@
+function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermitian = true, T = Float64)
 
-# TODO: might need to write a more specialized function which doesn't do conversions for
-# each operator separately assuming the metadata is the same
-function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, T = Float64)
+    in_metadata = get_metadata(in_operator)
+    in_atoms = get_atoms(in_operator)
+    in_basisset = get_basisset(in_operator)
+    in_spins = get_spins(in_operator)
+    in_kind = get_kind(in_operator)
 
-    # Obtain sparsity
-    if isnothing(radii)
-        out_sparsity = RealBlockSparsity(in_operator.metadata.sparsity, in_operator.metadata.basisset)
-    else
-        @info "Computing sparsity manually from radii"
-        out_sparsity = RealBlockSparsity(in_operator.metadata.atoms, radii, hermitian = true)
-    end
+    # Convert sparsity
+    # out_sparsity = RealBlockSparsity(in_metadata, radii, hermitian)
+    out_sparsity = convert_sparsity(in_metadata, radii, RealBlockSparsity, hermitian = hermitian)
 
     # Compute z1z2_ij2interval
-    z1z2_ij2interval = compute_z1z2_ij2interval(in_operator.metadata.atoms, out_sparsity)
+    z1z2_ij2interval = get_z1z2_ij2interval(in_atoms, out_sparsity)
 
     # Construct metadata
     out_metadata = RealBSparseMetadata(
-        in_operator.metadata.atoms, out_sparsity, in_operator.metadata.basisset, in_operator.metadata.spins, z1z2_ij2interval
+        in_atoms, out_sparsity, in_basisset, in_spins, z1z2_ij2interval
     )
-    
+
     # Initialize out_operator with zeros
-    out_operator = RealBSparseOperator(in_operator.kind, out_metadata; T = T)
+    out_operator = RealBSparseOperator(in_kind, out_metadata; T = T)
 
     # Populate out_operator with values from the in_operator
     populate!(out_operator, in_operator)
@@ -31,11 +30,11 @@ end
 # Probably shouldn't be used directly because this assumes appropriately converted metadata
 function populate!(out_operator::RealBSparseOperator, in_operator::FHIaimsCSCOperator)
     return populate!(
-        out_operator.keydata,
-        out_operator.metadata.sparsity,
-        out_operator.metadata.basisset,
-        in_operator.data,
-        in_operator.metadata.sparsity,
+        get_keydata(out_operator),
+        get_sparsity(out_operator),
+        get_basisset(out_operator),
+        get_data(in_operator),
+        get_sparsity(in_operator),
         RealBSparseOperator,
         FHIaimsCSCOperator,
     )
@@ -52,19 +51,23 @@ function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity
     # using `type2` reordering, for more information see tests/unit/shconversion.jl
     shifts, phases = precompute_shiftphases(out_basisset, inv(shconv))
 
-    for i_cell in axes(in_sparsity.colcellptr, 2)
-        image = in_sparsity.images[i_cell]
-        image ∈ out_sparsity.images || continue
+    rowval, colcellptr, in_images = in_sparsity.rowval, in_sparsity.colcellptr, in_sparsity.images
+    basis2atom, atom2species, out_images = out_basisset.basis2atom, out_basisset.atom2species, out_sparsity.images
 
-        for i_basis_col in axes(in_sparsity.colcellptr, 3)
-            i_atom_col = out_basisset.basis2atom[i_basis_col]
+    for i_cell in axes(colcellptr, 2)
+        image = in_images[i_cell]
+        image ∈ out_images || continue
 
-            i_index_first = in_sparsity.colcellptr[1, i_cell, i_basis_col]
-            i_index_last = in_sparsity.colcellptr[2, i_cell, i_basis_col]
+        for i_basis_col in axes(colcellptr, 3)
+            i_atom_col = basis2atom[i_basis_col]
 
+            i_index_first = colcellptr[1, i_cell, i_basis_col]
+            i_index_last = colcellptr[2, i_cell, i_basis_col]
+
+            # @inbounds for i_index in i_index_first:i_index_last
             for i_index in i_index_first:i_index_last
-                i_basis_row = in_sparsity.rowval[i_index]
-                i_atom_row = out_basisset.basis2atom[i_basis_row]
+                i_basis_row = rowval[i_index]
+                i_atom_row = basis2atom[i_basis_row]
 
                 i_cell_local = iglobal2ilocal[(i_atom_row, i_atom_col)][i_cell]
                 !isnothing(i_cell_local) || continue
@@ -73,13 +76,13 @@ function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity
                 i_basis_col_local = i_basis_col - atom2basis_offset[i_atom_col]
 
                 out_keydata[(i_atom_row, i_atom_col)][
-                    i_basis_row_local + shifts[out_basisset.atom2species[i_atom_row]][i_basis_row_local],
-                    i_basis_col_local + shifts[out_basisset.atom2species[i_atom_col]][i_basis_col_local],
+                    i_basis_row_local + shifts[atom2species[i_atom_row]][i_basis_row_local],
+                    i_basis_col_local + shifts[atom2species[i_atom_col]][i_basis_col_local],
                     i_cell_local
                 ] = (
                     in_data[i_index]
-                    * phases[out_basisset.atom2species[i_atom_row]][i_basis_row_local]
-                    * phases[out_basisset.atom2species[i_atom_col]][i_basis_col_local]
+                    * phases[atom2species[i_atom_row]][i_basis_row_local]
+                    * phases[atom2species[i_atom_col]][i_basis_col_local]
                 )
             end
         end

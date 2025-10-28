@@ -9,24 +9,82 @@ struct RealCSCSparsity <: AbstractSparsity
     hermitian::Bool
 end
 
-# TODO: this makes sense only in real space
 # In reciprocal space we could only have unique (i, j) pairs from `ij2images`
-# TODO: hermitian could be either `U` or `L`
+# Assuming 'U' hermicity
 struct RealBlockSparsity <: AbstractSparsity
     ij2images::Dictionary{Tuple{Int, Int}, Vector{SVector{3, Int}}}
     images::Vector{SVector{3, Int}}
     hermitian::Bool
 end
 
-function get_maxedges(radii::Dict{ChemicalSpecies, T}) where T<:Number
-    angstrom = unit(T) == NoUnits ? u"Å" : one(T)
-    maxedges = Dict(
-        (zi, zj) => (i_cut + j_cut) * angstrom
-        for (zi, i_cut) in radii
-        for (zj, j_cut) in radii
-    )
-    return maxedges
+# General conversion constructor, for it to work properly one needs to define
+# (::Type{T1})(in_metadata::AbstractOperatorMetadata)
+# where get_sparsity(in_metadata)::T2
+# and T1 ≠ T2
+#
+# in_metadata is passed instead of in_sparsity because sometimes sparsity conversions require more
+# metadata than what is present in the sparsity alone, e.g. RealBlockSparsity requires basis2atom
+#
+# This method is not intended to be used directly by users
+# TODO: This method is ambiguous with respect to default constructor. It would not be contiguous if 
+# ::Type{T} was replaced by explicit type
+# Possibly could rename to a function name like convert_sparsity
+
+function convert_sparsity(in_metadata::AbstractOperatorMetadata, radii::Dict{ChemicalSpecies}, T::Type{<:AbstractSparsity}; hermitian = false)
+    @info "Computing sparsity manually from radii"
+    return T(get_atoms(in_metadata), radii, hermitian = hermitian)
 end
+
+function convert_sparsity(in_metadata::AbstractOperatorMetadata, ::Nothing, out_sparsity_type::Type{<:AbstractSparsity}; hermitian = false)
+    @info "Converting sparsity"
+    return convert_sparsity(in_metadata, out_sparsity_type, hermitian = hermitian)
+end
+
+# Works out of the box for in_sparsity_type == out_sparsity_type. Also would work for sparsity conversions
+# which define convert_sparsity(::AbstractSparsity, ::Type{<:AbstractSparsity}; hermitian).
+# However for some sparsity conversions in_sparsity is not enough to convert to out_sparsity.
+# In that case this method needs to be specialised for the OperatorMetadata in question.
+function convert_sparsity(in_metadata::AbstractOperatorMetadata, out_sparsity_type::Type{<:AbstractSparsity}; hermitian = false)
+    in_sparsity = get_sparsity(in_metadata)
+
+    # Generally throws an error if sparsity conversion
+    # for in_sparsity ≠ out_sparsity is not defined
+    return convert_sparsity(in_sparsity, out_sparsity_type, hermitian = hermitian)
+end
+
+# Handles in_sparsity == out_sparsity conversions, i.e; only hermicity needs to be changed
+function convert_sparsity(in_sparsity::T, ::Type{T}; hermitian = false) where T<:AbstractSparsity
+    if hermitian
+        return convert_to_hermitian(in_sparsity)
+    else
+        return convert_to_nonhermitian(in_sparsity)
+    end
+end
+
+### TODO: remove later, this leads to method ambiguity with default constructors
+# function (::Type{T})(in_metadata::AbstractOperatorMetadata, radii::Dict{ChemicalSpecies}; hermitian = false) where T<:AbstractSparsity
+#     @info "Computing sparsity manually from radii"
+#     return T(get_atoms(in_metadata), radii, hermitian = hermitian)
+# end
+# function (::Type{T})(in_metadata::AbstractOperatorMetadata, ::Nothing; hermitian = false) where T<:AbstractSparsity
+#     @info "Converting sparsity"
+#     return T(in_metadata, hermitian = hermitian)
+# end
+# # Handles in_sparsity == out_sparsity conversions
+# function (::Type{T})(in_metadata::AbstractOperatorMetadata; hermitian = false) where T<:AbstractSparsity
+#     in_sparsity = get_sparsity(in_metadata)
+
+#     # Generally throws an error if sparsity conversion
+#     # for in_sparsity ≠ out_sparsity is not defined
+#     return T(in_sparsity, hermitian = hermitian)
+# end
+# function (::Type{T})(sparsity::T; hermitian = false) where T<:AbstractSparsity
+#     if hermitian
+#         return convert_to_hermitian(sparsity)
+#     else
+#         return convert_to_nonhermitian(sparsity)
+#     end
+# end
 
 # assumes fractional coordinates of all atoms are [0.0, 1.0)
 # if T is unitless assumes angstrom
@@ -77,12 +135,12 @@ function RealBlockSparsity(atoms::AbstractSystem, nlist::PairList, maxedges::Dic
     return RealBlockSparsity(ij2images, unique(nlist.S), hermitian)
 end
 
-function RealBlockSparsity(csc_sparsity::RealCSCSparsity, basisset::BasisSetMetadata)
-    return RealBlockSparsity(csc_sparsity.colcellptr, csc_sparsity.rowval, csc_sparsity.images, basisset.basis2atom, csc_sparsity.hermitian)
+function convert_sparsity(in_sparsity::RealCSCSparsity, basisset::BasisSetMetadata, out_sparsity_type::Type{RealBlockSparsity}; hermitian = true)
+    out_sparsity = RealBlockSparsity(in_sparsity.colcellptr, in_sparsity.rowval, in_sparsity.images, basisset.basis2atom)
+    return convert_sparsity(out_sparsity, out_sparsity_type, hermitian = hermitian)
 end
 
-# TODO: Does this always return fully non-hermitian (iat, iat)? It doesn't but make sure it does
-function RealBlockSparsity(colcellptr, rowval, images, basis2atom, hermitian)
+function RealBlockSparsity(colcellptr::Array{T, 3}, rowval::Vector{T}, images, basis2atom::Vector{T}) where T<:Integer
     ij2images = Dictionary{Tuple{Int, Int}, Vector{SVector{3, Int}}}()
 
     # TODO: could define csc iteration, but i_atom_col would have to be evaluated in inner loop
@@ -108,7 +166,21 @@ function RealBlockSparsity(colcellptr, rowval, images, basis2atom, hermitian)
             end
         end
     end
-    return RealBlockSparsity(ij2images, images, hermitian)
+
+    # Make on-site blocks non-hermitian even when hermitian == true
+    make_onsite_hermitian!(ij2images, maximum(basis2atom))
+    
+    return RealBlockSparsity(ij2images, images, true)
+end
+
+function get_maxedges(radii::Dict{ChemicalSpecies, T}) where T<:Number
+    angstrom = unit(T) == NoUnits ? u"Å" : one(T)
+    maxedges = Dict(
+        (zi, zj) => (i_cut + j_cut) * angstrom
+        for (zi, i_cut) in radii
+        for (zj, j_cut) in radii
+    )
+    return maxedges
 end
 
 # A map from image indices in `images` to local image indices in `ij2images` for a given ij
@@ -119,6 +191,8 @@ function get_iglobal2ilocal(sparsity::RealBlockSparsity)
     )
 end
 
+# Assuming sparsity.ij2images[(i, j)] for i == j will contain
+# redundant images even when sparsity.hermitian == true
 function get_onsite_ilocal2milocal(sparsity::RealBlockSparsity)
     return Dictionary(
         [iat for (iat, jat) in keys(sparsity.ij2images) if iat == jat],
@@ -195,4 +269,12 @@ function convert_to_hermitian(sparsity::RealBlockSparsity)
     hermitian_ij2images = Dictionary(view(sparsity.ij2images, unique_sorted_ij))
 
     return RealBlockSparsity(hermitian_ij2images, sparsity.images, true)
+end
+
+function make_onsite_hermitian!(ij2images, n_atoms)
+    for iat in 1:n_atoms
+        ii_images = get(() -> SVector{3, Int}, ij2images, (iat, iat))
+        ij2images[(iat, iat)] = union(ii_images, -ii_images)
+    end
+    return ij2images
 end

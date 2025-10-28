@@ -122,6 +122,10 @@ function RealCSCSparsity(dir::AbstractString, ::Type{FHIaimsCSCOperator})
     return RealCSCSparsity(rowval, colcellptr, cells, true)
 end
 
+function convert_sparsity(in_metadata::FHIaimsCSCMetadata, out_sparsity_type::Type{RealBlockSparsity}; hermitian = true)
+    return convert_sparsity(get_sparsity(in_metadata), get_basisset(in_metadata), out_sparsity_type, hermitian = hermitian)
+end
+
 function load_operators(dir::AbstractString, operatorkinds, ::Type{FHIaimsCSCOperator})
     # Load shared metadata
     atoms = load_atoms(dir, FHIaimsCSCOperator)

@@ -6,9 +6,6 @@ struct RealBSparseMetadata{A<:AbstractSystem, E} <: AbstractOperatorMetadata
     basisset::BasisSetMetadata{E}
     spins::Union{SpinsMetadata, Nothing}
     z1z2_ij2interval::Dictionary{NTuple{2, ChemicalSpecies}, Dictionary{NTuple{2, Int}, UnitRange{Int}}}
-    # TODO: possibly construct this by only taking BasisSetMetadata, Atoms, Sparsity,
-    # but create an outer constructor which could compute z1z2_ij2interval from those internally.
-    # TODO: possibly create a constructor which could create a matrix with zero values
     # TODO: add additional field with spin metadata? This is related to considerations of
     # the ability to add arbitrary element metadata to `keydata`, how could this be extendable?
     # Would any additional metadata in `keydata` elements would have to be added to RealBSparseMetadata as a field?
@@ -36,21 +33,32 @@ struct RealBSparseOperator{O<:OperatorKind, T<:AbstractFloat, A<:AbstractSystem,
     metadata::RealBSparseMetadata{A, E}
 end
 
+get_keydata(operator::RealBSparseOperator) = operator.keydata
+get_z1z2_ij2interval(operator::RealBSparseOperator) = operator.metadata.z1z2_ij2interval
+get_z1z2_ij2interval(metadata::RealBSparseMetadata) = metadata.z1z2_ij2interval
+
+get_sparsity_type(::Type{RealBSparseOperator}) = RealBlockSparsity
+
 # Constructor to initialize the operator with zero values
+# TODO: possibly split into smaller functions?
 function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; T = Float64)
+
+    z1z2_ij2interval = get_z1z2_ij2interval(metadata)
+    basisset = get_basisset(metadata)
+    spins = get_spins(metadata)
+    sparsity = get_sparsity(metadata)
 
     # Construct data
     data = Dictionary{NTuple{2, ChemicalSpecies}, Array{T, 3}}()
+    species2nb = get_species2nb(basisset)
 
-    for (z1, z2) in keys(metadata.z1z2_ij2interval)
+    for ((z1, z2), interval) in pairs(z1z2_ij2interval)
         insert!(
             data, (z1, z2),
             zeros(
-                T,
-                length(basis_species(metadata.basisset, z1)),
-                length(basis_species(metadata.basisset, z2)),
+                T, species2nb[z1], species2nb[z2],
                 # End interval value of the last (i, j) pair
-                metadata.z1z2_ij2interval[(z1, z2)][end][end] 
+                interval[end][end] 
             )
         )
     end
@@ -59,38 +67,38 @@ function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; 
     keydata_values = []
     ij_contiguous = NTuple{2, Int}[]
 
-    for (z1, z2) in keys(metadata.z1z2_ij2interval)
+    for (z1, z2) in keys(z1z2_ij2interval)
         
         if metadata.spins !== nothing
             μ = StructArray(
-                orbital = basis_species(metadata.basisset, z1),
-                spin = spins_species(metadata.spins, z1),
+                orbital = basis_species(basisset, z1),
+                spin = spins_species(spins, z1),
             )
             ν = StructArray(
-                orbital = basis_species(metadata.basisset, z2),
-                spin = spins_species(metadata.spins, z2),
+                orbital = basis_species(basisset, z2),
+                spin = spins_species(spins, z2),
             )
         else
             μ = StructArray(
-                orbital = basis_species(metadata.basisset, z1),
+                orbital = basis_species(basisset, z1),
             )
             ν = StructArray(
-                orbital = basis_species(metadata.basisset, z2),
+                orbital = basis_species(basisset, z2),
             )
         end
 
         # TODO: AxisKeys.findindex treats each element of StaticArray instance
         # as separate values to search for. Using tuples instead is a workaround
         # but it's not ideal
-        for ij in keys(metadata.z1z2_ij2interval[(z1, z2)])
+        for ij in keys(z1z2_ij2interval[(z1, z2)])
             push!(ij_contiguous, ij)
             push!(
                 keydata_values,
                 KeyedArray(
-                    view(data[(z1, z2)], :, :, metadata.z1z2_ij2interval[(z1, z2)][ij]),
+                    view(data[(z1, z2)], :, :, z1z2_ij2interval[(z1, z2)][ij]),
                     μ = μ,
                     ν = ν,
-                    R = Tuple.(metadata.sparsity.ij2images[ij])
+                    R = Tuple.(sparsity.ij2images[ij])
                 )
             )
         end
@@ -100,7 +108,7 @@ function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; 
     return RealBSparseOperator(kind, data, keydata, metadata)
 end
 
-function compute_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSparsity)
+function get_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSparsity)
     unique_species = unique(species(atoms, :))
 
     z1z2_ij2interval = Dictionary{NTuple{2, ChemicalSpecies}, Dictionary{NTuple{2, Int}, UnitRange{Int}}}()

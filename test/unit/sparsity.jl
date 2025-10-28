@@ -248,3 +248,22 @@ end
     end
 
 end
+
+@testset "make_onsite_hermitian!" begin
+    ij2images = dictionary([
+        (1, 1) => [SA[0, 0, 0], SA[1, 0, 0]],
+        (1, 2) => [SA[0, 0, 0], SA[1, 0, 0]],
+        (2, 2) => [SA[0, 0, 0], SA[0, 0, 1]],
+    ])
+    n_atoms = 2
+
+    ij2images_ref = dictionary([
+        (1, 1) => [SA[0, 0, 0], SA[1, 0, 0], SA[-1, 0, 0]],
+        (1, 2) => [SA[0, 0, 0], SA[1, 0, 0]],
+        (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]],
+    ])
+
+    Quoll.make_onsite_hermitian!(ij2images, n_atoms)
+    @test sort(ij2images[(1, 1)]) == sort(ij2images_ref[(1, 1)])
+    @test sort(ij2images[(2, 2)]) == sort(ij2images_ref[(2, 2)])
+end
