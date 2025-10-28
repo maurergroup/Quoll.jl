@@ -20,9 +20,10 @@ end
 # but eventually this could break, e.g. in the case of gradients
 # (assuming we treat gradients as a type of operatorkind instead
 # of defining a separate struct).
-# However, this wouldn't be too hard to extend because operatorkind
-# immediately implies a particular dimension (which also suggests
-# dispatching on dimension separately would not be required)
+# Right now I assume N = 3 in all methods, but I could modify this
+# type by making it parametric on N and then modifying the methods
+# which I could modify based on OperatorKind instead of N
+# because a particular OperatorKind immediately implies particular N
 # 
 # I will usually work with the case where metadata in keydata are named tuples
 # i.e. KT == Tuple{Vector{@NamedTuple{basisf::BasisMetadata{E}, spin::SpinMetadata}}, ...}
@@ -36,8 +37,6 @@ end
 get_keydata(operator::RealBSparseOperator) = operator.keydata
 get_z1z2_ij2interval(operator::RealBSparseOperator) = operator.metadata.z1z2_ij2interval
 get_z1z2_ij2interval(metadata::RealBSparseMetadata) = metadata.z1z2_ij2interval
-
-get_sparsity_type(::Type{RealBSparseOperator}) = RealBlockSparsity
 
 # Constructor to initialize the operator with zero values
 # TODO: possibly split into smaller functions?
