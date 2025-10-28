@@ -46,13 +46,10 @@ end
 # In that case this method needs to be specialised for the OperatorMetadata in question.
 function convert_sparsity(in_metadata::AbstractOperatorMetadata, out_sparsity_type::Type{<:AbstractSparsity}; hermitian = false)
     in_sparsity = get_sparsity(in_metadata)
-
-    # Generally throws an error if sparsity conversion
-    # for in_sparsity ≠ out_sparsity is not defined
     return convert_sparsity(in_sparsity, out_sparsity_type, hermitian = hermitian)
 end
 
-# Handles in_sparsity == out_sparsity conversions, i.e; only hermicity needs to be changed
+# Handles in_sparsity == out_sparsity conversions, only hermicity needs to be changed in such cases
 function convert_sparsity(in_sparsity::T, ::Type{T}; hermitian = false) where T<:AbstractSparsity
     if hermitian
         return convert_to_hermitian(in_sparsity)
@@ -136,7 +133,8 @@ function RealBlockSparsity(atoms::AbstractSystem, nlist::PairList, maxedges::Dic
 end
 
 function convert_sparsity(in_sparsity::RealCSCSparsity, basisset::BasisSetMetadata, out_sparsity_type::Type{RealBlockSparsity}; hermitian = true)
-    out_sparsity = RealBlockSparsity(in_sparsity.colcellptr, in_sparsity.rowval, in_sparsity.images, basisset.basis2atom)
+    basis2atom = get_basis2atom(basisset)
+    out_sparsity = RealBlockSparsity(in_sparsity.colcellptr, in_sparsity.rowval, in_sparsity.images, basis2atom)
     return convert_sparsity(out_sparsity, out_sparsity_type, hermitian = hermitian)
 end
 

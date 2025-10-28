@@ -72,9 +72,6 @@ end
         
         @test basis_metadata.basis[z1] == [BasisMetadata(z1, 1, 0, 0, Dict("type" => "atomic"))]
         @test basis_metadata.basis[z2] == [BasisMetadata(z2, 2, 1, -1, Dict("type" => "ionic"))]
-        @test basis_metadata.n_basis_atom == [1, 1]
         @test basis_metadata.atom2species == [z1, z2]
-        @test basis_metadata.basis2atom == [1, 2]
-        @test basis_metadata.atom2basis == [1:1, 2:2]
     end
 end

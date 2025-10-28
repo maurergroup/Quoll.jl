@@ -1,5 +1,7 @@
 using Quoll
 using AtomsBase
+using Dictionaries
+using StaticArrays
 
 using Test
 

@@ -50,13 +50,13 @@ function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; 
 
     # Construct data
     data = Dictionary{NTuple{2, ChemicalSpecies}, Array{T, 3}}()
-    species2nb = get_species2nb(basisset)
+    species2nbasis = get_species2nbasis(basisset)
 
     for ((z1, z2), interval) in pairs(z1z2_ij2interval)
         insert!(
             data, (z1, z2),
             zeros(
-                T, species2nb[z1], species2nb[z2],
+                T, species2nbasis[z1], species2nbasis[z2],
                 # End interval value of the last (i, j) pair
                 interval[end][end] 
             )

@@ -26,9 +26,9 @@ function BasisSetMetadata(dir::AbstractString, atoms::AbstractSystem, ::Type{<:A
     @argcheck ispath(p)
 
     n_atoms = length(atoms)
-    n_basis_atom = zeros(Int, n_atoms)
     atom2species = species(atoms, :)
-    basis2atom = Int[]
+    # atom2nbasis = zeros(Int, n_atoms)
+    # basis2atom = Int[]
 
     basis = dictionary(
         species => BasisMetadata{Dict{String, String}}[]
@@ -57,17 +57,18 @@ function BasisSetMetadata(dir::AbstractString, atoms::AbstractSystem, ::Type{<:A
             )
         end
 
-        push!(basis2atom, iat)
-        n_basis_atom[iat] += 1
+        # push!(basis2atom, iat)
+        # atom2nbasis[iat] += 1
         ib += 1
     end
     close(f)
 
-    atom2basis_start = cumsum(n_basis_atom) .- n_basis_atom .+ 1
-    atom2basis = [
-        atom2basis_start[iat]:atom2basis_start[iat] + n_basis_atom[iat] - 1
-        for iat in 1:n_atoms
-    ]
+    # atom2basis_start = cumsum(atom2nbasis) .- atom2nbasis .+ 1
+    # atom2basis = [
+    #     atom2basis_start[iat]:atom2basis_start[iat] + atom2nbasis[iat] - 1
+    #     for iat in 1:n_atoms
+    # ]
 
-    return BasisSetMetadata(basis, n_basis_atom, atom2species, basis2atom, atom2basis)
+    # return BasisSetMetadata(basis, atom2nbasis, atom2species, basis2atom, atom2basis)
+    return BasisSetMetadata(basis, atom2species)
 end

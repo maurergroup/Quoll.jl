@@ -7,7 +7,6 @@ function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, h
     in_kind = get_kind(in_operator)
 
     # Convert sparsity
-    # out_sparsity = RealBlockSparsity(in_metadata, radii, hermitian)
     out_sparsity = convert_sparsity(in_metadata, radii, RealBlockSparsity, hermitian = hermitian)
 
     # Compute z1z2_ij2interval
@@ -42,8 +41,16 @@ end
 
 # Loop over the CSC sparsity and occupy appropriate values based on block sparsity
 function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity, out_type::Type{RealBSparseOperator}, in_type::Type{FHIaimsCSCOperator})
-
+    # TODO: We could perform hermitian to hermitian populate! and afterwards perform
+    # RealBSparseOperator hermitian -> RealBSparseOperator non-hermitian conversion.
+    # However, one would have to modify RealBSparseOperator(::FHIaimsCSCOperator)
+    # by computing non-hermitian sparsity and metadata after populate! and initiating
+    # the conversion.
+    herm_to_nonherm = in_sparsity.hermitian && !out_sparsity.hermitian
+    herm_to_nonherm && throw(error("Hermitian to non-hermitian populate! is not implemented"))
+    
     atom2basis_offset = get_offsets(out_basisset)
+    basis2atom = get_basis2atom(out_basisset)
     iglobal2ilocal = get_iglobal2ilocal(out_sparsity)
     shconv = SHConversion(out_type) ∘ inv(SHConversion(in_type))
 
@@ -52,7 +59,7 @@ function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity
     shifts, phases = precompute_shiftphases(out_basisset, inv(shconv))
 
     rowval, colcellptr, in_images = in_sparsity.rowval, in_sparsity.colcellptr, in_sparsity.images
-    basis2atom, atom2species, out_images = out_basisset.basis2atom, out_basisset.atom2species, out_sparsity.images
+    atom2species, out_images = out_basisset.atom2species, out_sparsity.images
 
     for i_cell in axes(colcellptr, 2)
         image = in_images[i_cell]
@@ -64,8 +71,7 @@ function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity
             i_index_first = colcellptr[1, i_cell, i_basis_col]
             i_index_last = colcellptr[2, i_cell, i_basis_col]
 
-            # @inbounds for i_index in i_index_first:i_index_last
-            for i_index in i_index_first:i_index_last
+            @inbounds for i_index in i_index_first:i_index_last
                 i_basis_row = rowval[i_index]
                 i_atom_row = basis2atom[i_basis_row]
 
