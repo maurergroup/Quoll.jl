@@ -1,6 +1,5 @@
 function DeepHOperator(in_operator::RealBSparseOperator; radii = nothing, hermitian = false, T = Float64)
 
-    # in_sparsity = get_sparsity(in_operator)
     in_metadata = get_metadata(in_operator)
     in_atoms = get_atoms(in_operator)
     in_basisset = get_basisset(in_operator)
@@ -8,13 +7,10 @@ function DeepHOperator(in_operator::RealBSparseOperator; radii = nothing, hermit
     in_kind = get_kind(in_operator)
 
     # Convert sparsity
-    # out_sparsity = convert_sparsity(in_sparsity, DeepHOperator, in_atoms = in_atoms, radii = radii, hermitian = hermitian)
     out_sparsity = convert_sparsity(in_metadata, radii, RealBlockSparsity; hermitian = hermitian)
 
     # Construct metadata
-    out_metadata = DeepHMetadata(
-        in_atoms, out_sparsity, in_basisset, in_spins
-    )
+    out_metadata = DeepHMetadata(in_atoms, out_sparsity, in_basisset, in_spins)
     
     # Convert data
     out_data = convert_operator_data(out_metadata, in_operator, T = T)
@@ -72,7 +68,7 @@ function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_sparsi
 
             block = Array{T, 2}(undef, Nb_dict[zi], Nb_dict[zj])
             if herm_nonherm_conv && (!ij_present || image ∉ in_sparsity.ij2images[(iat, jat)])
-                mt_image = Tuple(-image) # need to check allocations for this, maybe use view
+                mt_image = Tuple(-image) # TODO: need to check allocations for this, maybe use view
                 for jb in axes(block, 2)
                     @inbounds for ib in axes(block, 1)
                         block[ib, jb] = in_keydata[(jat, iat)][
