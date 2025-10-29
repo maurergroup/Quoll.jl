@@ -59,3 +59,25 @@ function get_avail_filenames(operatorkind::OperatorKind, T::Type{<:AbstractOpera
     pairtypes = (Pair(Val(pair[1]), Val(pair[2])) for pair in pairs(operatorkind.tags))
     return get_avail_filenames(operatorkind, pairtypes..., T)
 end
+
+# Could implement basic versions of those like for convert_operator
+function load_operators end
+function write_operators end
+
+# Could be specialised for particular operator conversions if the conversion can be done in a more efficient way
+# e.g. if metadata is always shared between operators
+function convert_operators(in_operators, out_operator_type::Type{<:AbstractOperator};
+    radii = nothing, hermitian = nothing, float = nothing)
+    return convert_operator.(in_operators, out_operator_type; radii = radii, hermitian = hermitian, float = float)
+end
+
+# Requires defining appropriate constructor for T2.
+# This function is just an alias for the constructor
+function convert_operator(in_operator::T1, ::Type{T2};
+    radii = nothing, hermitian = nothing, float = nothing) where {T1<:AbstractOperator, T2<:AbstractOperator}
+
+    isnothing(hermitian) && (hermitian = get_sparsity(in_operator).hermitian)
+    isnothing(float) && (float = get_float(in_operator))
+
+    return T2(in_operator, radii = radii, hermitian = hermitian, float = float)
+end

@@ -64,10 +64,7 @@ for idir in my_idirs
     # TODO: in the future could allow for <other canonical formats/shortcut conversions>
     @info "Converting operators into RealBSparseOperator format"
 
-    operators = Dict([
-        operatorkind => Quoll.RealBSparseOperator(operator; radii = params.input.radii)
-        for (operatorkind, operator) in operators
-    ])
+    operators = convert_operators(operators, RealBSparseOperator)
 
     if Quoll.Parser.requires_kpoint_grid(params)
         @info "Initialising k-point grid"
@@ -75,10 +72,8 @@ for idir in my_idirs
 
     if !isnothing(params.output)
         @info "Converting operators into $(params.output.format) format"
-        operators = Dict([
-            operatorkind => params.output.format(operator; hermitian = params.output.hermitian)
-            for (operatorkind, operator) in operators
-        ])
+
+        operators = convert_operators(operators, params.output.format; hermitian = params.output.hermitian)
     end
 
 end

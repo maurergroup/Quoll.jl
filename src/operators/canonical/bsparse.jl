@@ -34,13 +34,14 @@ struct RealBSparseOperator{O<:OperatorKind, T<:AbstractFloat, A<:AbstractSystem,
     metadata::RealBSparseMetadata{A, E}
 end
 
+get_float(operator::RealBSparseOperator) = typeof(operator).parameters[2]
 get_keydata(operator::RealBSparseOperator) = operator.keydata
 get_z1z2_ij2interval(operator::RealBSparseOperator) = operator.metadata.z1z2_ij2interval
 get_z1z2_ij2interval(metadata::RealBSparseMetadata) = metadata.z1z2_ij2interval
 
 # Constructor to initialize the operator with zero values
 # TODO: possibly split into smaller functions?
-function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; T = Float64)
+function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; float = Float64)
 
     z1z2_ij2interval = get_z1z2_ij2interval(metadata)
     basisset = get_basisset(metadata)
@@ -48,14 +49,14 @@ function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; 
     sparsity = get_sparsity(metadata)
 
     # Construct data
-    data = Dictionary{NTuple{2, ChemicalSpecies}, Array{T, 3}}()
+    data = Dictionary{NTuple{2, ChemicalSpecies}, Array{float, 3}}()
     species2nbasis = get_species2nbasis(basisset)
 
     for ((z1, z2), interval) in pairs(z1z2_ij2interval)
         insert!(
             data, (z1, z2),
             zeros(
-                T, species2nbasis[z1], species2nbasis[z2],
+                float, species2nbasis[z1], species2nbasis[z2],
                 # End interval value of the last (i, j) pair
                 interval[end][end] 
             )

@@ -21,7 +21,9 @@ include("common/atomtools.jl")
 export Overlap, Hamiltonian
 include("operatorkind.jl")
 
-export load_atoms, load_operators, find_operatorkinds
+export load_atoms, find_operatorkinds
+export load_operators
+export convert_operators, convert_operator, write_operators
 include("operators/abstract.jl")
 
 export BasisMetadata

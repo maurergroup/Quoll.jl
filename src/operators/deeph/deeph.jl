@@ -11,6 +11,8 @@ struct DeepHOperator{O<:OperatorKind, T<:AbstractFloat, A<:AbstractSystem, E} <:
     metadata::DeepHMetadata{A, E}
 end
 
+get_float(operator::DeepHOperator) = typeof(operator).parameters[2]
+
 # TODO: write
 # - R_list.dat
 # - element.dat

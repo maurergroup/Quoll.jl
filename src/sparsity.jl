@@ -31,12 +31,12 @@ end
 # Possibly could rename to a function name like convert_sparsity
 
 function convert_sparsity(in_metadata::AbstractOperatorMetadata, radii::Dict{ChemicalSpecies}, T::Type{<:AbstractSparsity}; hermitian = false)
-    @info "Computing sparsity manually from radii"
+    @debug "Computing sparsity manually from radii"
     return T(get_atoms(in_metadata), radii, hermitian = hermitian)
 end
 
 function convert_sparsity(in_metadata::AbstractOperatorMetadata, ::Nothing, out_sparsity_type::Type{<:AbstractSparsity}; hermitian = false)
-    @info "Converting sparsity"
+    @debug "Converting sparsity"
     return convert_sparsity(in_metadata, out_sparsity_type, hermitian = hermitian)
 end
 
@@ -60,11 +60,11 @@ end
 
 ### TODO: remove later, this leads to method ambiguity with default constructors
 # function (::Type{T})(in_metadata::AbstractOperatorMetadata, radii::Dict{ChemicalSpecies}; hermitian = false) where T<:AbstractSparsity
-#     @info "Computing sparsity manually from radii"
+#     @debug "Computing sparsity manually from radii"
 #     return T(get_atoms(in_metadata), radii, hermitian = hermitian)
 # end
 # function (::Type{T})(in_metadata::AbstractOperatorMetadata, ::Nothing; hermitian = false) where T<:AbstractSparsity
-#     @info "Converting sparsity"
+#     @debug "Converting sparsity"
 #     return T(in_metadata, hermitian = hermitian)
 # end
 # # Handles in_sparsity == out_sparsity conversions

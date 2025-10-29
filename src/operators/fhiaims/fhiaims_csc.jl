@@ -26,6 +26,8 @@ struct FHIaimsCSCOperator{O<:OperatorKind, T<:AbstractFloat, A<:AbstractSystem, 
     metadata::FHIaimsCSCMetadata{A, E}
 end
 
+get_float(operator::FHIaimsCSCOperator) = typeof(operator).parameters[2]
+
 get_readformat(::Val{:fhiaims}) = FHIaimsCSCOperator
 
 get_avail_operatorkinds(::Type{FHIaimsCSCOperator}) = [
@@ -132,11 +134,13 @@ function load_operators(dir::AbstractString, operatorkinds, ::Type{FHIaimsCSCOpe
     sparsity = RealCSCSparsity(dir, FHIaimsCSCOperator)
     basisset = BasisSetMetadata(dir, atoms, FHIaimsCSCOperator)
 
-    operators = Dict{OperatorKind, FHIaimsCSCOperator}()
+    # TODO: dictionary is not really necessary when the kind is present in the operator itself
+    # operators = Dict{OperatorKind, FHIaimsCSCOperator}()
+    operators = []
     for kind in operatorkinds
         spinsset = SpinsMetadata(kind, basisset, FHIaimsCSCOperator)
         metadata = FHIaimsCSCMetadata(atoms, sparsity, basisset, spinsset)
-        push!(operators, kind => FHIaimsCSCOperator(dir, kind, metadata))
+        push!(operators, FHIaimsCSCOperator(dir, kind, metadata))
     end
 
     return operators

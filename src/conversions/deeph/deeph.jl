@@ -1,4 +1,4 @@
-function DeepHOperator(in_operator::RealBSparseOperator; radii = nothing, hermitian = false, T = Float64)
+function DeepHOperator(in_operator::RealBSparseOperator; radii = nothing, hermitian = false, float = Float64)
 
     in_metadata = get_metadata(in_operator)
     in_atoms = get_atoms(in_operator)
@@ -13,23 +13,25 @@ function DeepHOperator(in_operator::RealBSparseOperator; radii = nothing, hermit
     out_metadata = DeepHMetadata(in_atoms, out_sparsity, in_basisset, in_spins)
     
     # Convert data
-    out_data = convert_operator_data(out_metadata, in_operator, T = T)
+    out_data = convert_operator_data(out_metadata, in_operator, float = float)
 
     return DeepHOperator(in_kind, out_data, out_metadata)
 end
 
-function convert_operator_data(out_metadata::DeepHMetadata, in_operator::RealBSparseOperator; T = Float64)
+function convert_operator_data(out_metadata::DeepHMetadata, in_operator::RealBSparseOperator; float = Float64)
     return convert_operator_data(
         get_sparsity(out_metadata),
         get_basisset(out_metadata),
         get_keydata(in_operator),
         get_sparsity(in_operator),
         DeepHOperator,
-        RealBSparseOperator
+        RealBSparseOperator,
+        float = float,
     )
 end
 
-function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_sparsity, out_type::Type{DeepHOperator}, in_type::Type{RealBSparseOperator}; T = Float64)
+function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_sparsity,
+    out_type::Type{DeepHOperator}, in_type::Type{RealBSparseOperator}; float = Float64)
 
     # hermitian -> non-hermitian:
     # - Can be checked if that's the case via hermitian fields in sparsities
@@ -55,7 +57,7 @@ function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_sparsi
     shifts, phases = precompute_shiftphases(out_basisset, shconv)
 
     out_keys = NTuple{5, Int}[]
-    out_blocks = Array{T, 2}[]
+    out_blocks = Array{float, 2}[]
 
     for ((iat, jat), images_ij) in pairs(out_sparsity.ij2images)
         ij_present = haskey(in_sparsity.ij2images, (iat, jat))
@@ -66,7 +68,7 @@ function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_sparsi
         for image in images_ij
             push!(out_keys, (image..., iat, jat))
 
-            block = Array{T, 2}(undef, Nb_dict[zi], Nb_dict[zj])
+            block = Array{float, 2}(undef, Nb_dict[zi], Nb_dict[zj])
             if herm_nonherm_conv && (!ij_present || image ∉ in_sparsity.ij2images[(iat, jat)])
                 mt_image = Tuple(-image) # TODO: need to check allocations for this, maybe use view
                 for jb in axes(block, 2)

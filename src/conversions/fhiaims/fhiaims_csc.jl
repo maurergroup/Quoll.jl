@@ -1,4 +1,5 @@
-function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermitian = true, T = Float64)
+
+function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermitian = true, float = Float64)
 
     in_metadata = get_metadata(in_operator)
     in_atoms = get_atoms(in_operator)
@@ -13,12 +14,10 @@ function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, h
     z1z2_ij2interval = get_z1z2_ij2interval(in_atoms, out_sparsity)
 
     # Construct metadata
-    out_metadata = RealBSparseMetadata(
-        in_atoms, out_sparsity, in_basisset, in_spins, z1z2_ij2interval
-    )
+    out_metadata = RealBSparseMetadata(in_atoms, out_sparsity, in_basisset, in_spins, z1z2_ij2interval)
 
     # Initialize out_operator with zeros
-    out_operator = RealBSparseOperator(in_kind, out_metadata; T = T)
+    out_operator = RealBSparseOperator(in_kind, out_metadata; float = float)
 
     # Populate out_operator with values from the in_operator
     populate!(out_operator, in_operator)
@@ -40,7 +39,8 @@ function populate!(out_operator::RealBSparseOperator, in_operator::FHIaimsCSCOpe
 end
 
 # Loop over the CSC sparsity and occupy appropriate values based on block sparsity
-function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity, out_type::Type{RealBSparseOperator}, in_type::Type{FHIaimsCSCOperator})
+function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity,
+    out_type::Type{RealBSparseOperator}, in_type::Type{FHIaimsCSCOperator})
     # TODO: We could perform hermitian to hermitian populate! and afterwards perform
     # RealBSparseOperator hermitian -> RealBSparseOperator non-hermitian conversion.
     # However, one would have to modify RealBSparseOperator(::FHIaimsCSCOperator)
