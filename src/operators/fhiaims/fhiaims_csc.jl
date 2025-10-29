@@ -128,41 +128,12 @@ function convert_sparsity(in_metadata::FHIaimsCSCMetadata, out_sparsity_type::Ty
     return convert_sparsity(get_sparsity(in_metadata), get_basisset(in_metadata), out_sparsity_type, hermitian = hermitian)
 end
 
-function load_operators(dir::AbstractString, operatorkinds, ::Type{FHIaimsCSCOperator})
-    # Load shared metadata
-    atoms = load_atoms(dir, FHIaimsCSCOperator)
-    sparsity = RealCSCSparsity(dir, FHIaimsCSCOperator)
-    basisset = BasisSetMetadata(dir, atoms, FHIaimsCSCOperator)
-
-    # TODO: dictionary is not really necessary when the kind is present in the operator itself
-    # operators = Dict{OperatorKind, FHIaimsCSCOperator}()
-    operators = []
-    for kind in operatorkinds
-        spinsset = SpinsMetadata(kind, basisset, FHIaimsCSCOperator)
-        metadata = FHIaimsCSCMetadata(atoms, sparsity, basisset, spinsset)
-        push!(operators, FHIaimsCSCOperator(dir, kind, metadata))
-    end
-
-    return operators
-end
-
-# TODO: Not sure if I'll keep this function, it could be useful to have if
-# we want to use load_operator_metadata in quoll/bin
-function load_operator_metadata(dir::AbstractString, kind::OperatorKind, ::Type{FHIaimsCSCOperator})
-    return FHIaimsCSCMetadata(dir, kind) 
-end
-
-function FHIaimsCSCMetadata(dir::AbstractString, kind::OperatorKind)
-    atoms = load_atoms(dir, FHIaimsCSCOperator)
-    sparsity = RealCSCSparsity(dir, FHIaimsCSCOperator)
-    basisset = BasisSetMetadata(dir, atoms, FHIaimsCSCOperator)
-    spins = SpinsMetadata(kind, basisset, FHIaimsCSCOperator)
-    return FHIaimsCSCMetadata(atoms, sparsity, basisset, spins)
-end
-
-function FHIaimsCSCOperator(dir::AbstractString, operatorkind::OperatorKind, metadata::FHIaimsCSCMetadata)
-    data = load_operator_data(dir, operatorkind, FHIaimsCSCOperator)
-    return FHIaimsCSCOperator(operatorkind, data, metadata)
+function FHIaimsCSCOperator(dir::AbstractString, kind::OperatorKind)
+    return FHIaimsCSCOperator(
+        kind,
+        load_operator_data(dir, kind, FHIaimsCSCOperator),
+        load_operator_metadata(dir, kind, FHIaimsCSCOperator)
+    )
 end
 
 function load_operator_data(dir::AbstractString, operatorkind::OperatorKind, ::Type{FHIaimsCSCOperator})
@@ -195,4 +166,35 @@ function load_operator_data(dir::AbstractString, operatorkind::OperatorKind, ::T
     else
         throw(error("Reading the file $(basename(p)) is unsupported"))
     end
+end
+
+function load_operator_metadata(dir::AbstractString, kind::OperatorKind, ::Type{FHIaimsCSCOperator})
+    return FHIaimsCSCMetadata(dir, kind) 
+end
+
+function FHIaimsCSCMetadata(dir::AbstractString, kind::OperatorKind)
+    atoms = load_atoms(dir, FHIaimsCSCOperator)
+    sparsity = RealCSCSparsity(dir, FHIaimsCSCOperator)
+    basisset = BasisSetMetadata(dir, atoms, FHIaimsCSCOperator)
+    spins = SpinsMetadata(kind, basisset, FHIaimsCSCOperator)
+    return FHIaimsCSCMetadata(atoms, sparsity, basisset, spins)
+end
+
+# Specialised load_operators for loading metadata once because we know that
+# all FHIaimsCSCOperators in a dir will share metadata to some extent
+function load_operators(dir::AbstractString, operatorkinds, ::Type{FHIaimsCSCOperator})
+    # Load shared metadata
+    atoms = load_atoms(dir, FHIaimsCSCOperator)
+    sparsity = RealCSCSparsity(dir, FHIaimsCSCOperator)
+    basisset = BasisSetMetadata(dir, atoms, FHIaimsCSCOperator)
+
+    operators = []
+    for kind in operatorkinds
+        data = load_operator_data(dir, kind, FHIaimsCSCOperator)
+        spinsset = SpinsMetadata(kind, basisset, FHIaimsCSCOperator)
+        metadata = FHIaimsCSCMetadata(atoms, sparsity, basisset, spinsset)
+        push!(operators, FHIaimsCSCOperator(kind, data, metadata))
+    end
+
+    return operators
 end

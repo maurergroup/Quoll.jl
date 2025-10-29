@@ -74,6 +74,10 @@ for idir in my_idirs
         @info "Converting operators into $(params.output.format) format"
 
         operators = convert_operators(operators, params.output.format; hermitian = params.output.hermitian)
+
+        @info "Writing operators"
+
+        # write_operators(params.output.directory, operators)
     end
 
 end

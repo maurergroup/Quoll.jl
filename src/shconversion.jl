@@ -69,7 +69,7 @@ end
 # so not sure if it's bad to overwrite this or not
 function Base.:(∘)(shconv2::T1, shconv1::T2) where {T1<:SHConversion, T2<:SHConversion}
     if shconv1.lmax != shconv2.lmax
-        @warn "lmax of two SH conventions do not match, setting lmax to the lower value"
+        @debug "lmax of two SH conventions do not match, setting lmax to the lower value"
         shconv1.lmax > shconv2.lmax ? (lmax = shconv2.lmax) : (lmax = shconv1.lmax)
     else
         lmax = shconv1.lmax

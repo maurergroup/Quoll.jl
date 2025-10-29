@@ -30,6 +30,7 @@ function convert_operator_data(out_metadata::DeepHMetadata, in_operator::RealBSp
     )
 end
 
+# Probably change indexing to use data instead of keydata (tuples seem to cause many allocations)
 function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_sparsity,
     out_type::Type{DeepHOperator}, in_type::Type{RealBSparseOperator}; float = Float64)
 
@@ -70,7 +71,7 @@ function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_sparsi
 
             block = Array{float, 2}(undef, Nb_dict[zi], Nb_dict[zj])
             if herm_nonherm_conv && (!ij_present || image ∉ in_sparsity.ij2images[(iat, jat)])
-                mt_image = Tuple(-image) # TODO: need to check allocations for this, maybe use view
+                mt_image = Tuple(-image)
                 for jb in axes(block, 2)
                     @inbounds for ib in axes(block, 1)
                         block[ib, jb] = in_keydata[(jat, iat)][

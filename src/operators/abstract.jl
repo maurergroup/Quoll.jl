@@ -60,9 +60,23 @@ function get_avail_filenames(operatorkind::OperatorKind, T::Type{<:AbstractOpera
     return get_avail_filenames(operatorkind, pairtypes..., T)
 end
 
-# Could implement basic versions of those like for convert_operator
-function load_operators end
-function write_operators end
+
+function write_operators(dir::AbstractString, operators)
+    return write_operator.(dir, operators)
+end
+
+# Here using a constructor as below would not make sense
+function write_operator end
+
+function load_operators(dir::AbstractString, operatorkinds, operator_format::Type{<:AbstractOperator})
+    return load_operator.(dir, operatorkinds, operator_format)
+end
+
+# TODO: if this is the API I am going for then I should define an appropriate constructor for FHIaims
+# even though I defined a custom `load_operators`
+function load_operator(dir::AbstractString, operatorkind::OperatorKind, ::Type{T}) where T<:AbstractOperator
+    return T(dir, operatorkind)
+end
 
 # Could be specialised for particular operator conversions if the conversion can be done in a more efficient way
 # e.g. if metadata is always shared between operators
