@@ -5,7 +5,6 @@ struct RealBSparseMetadata{A<:AbstractSystem, E} <: AbstractOperatorMetadata
     sparsity::RealBlockSparsity
     basisset::BasisSetMetadata{E}
     spins::Union{SpinsMetadata, Nothing}
-    z1z2_ij2interval::Dictionary{NTuple{2, ChemicalSpecies}, Dictionary{NTuple{2, Int}, UnitRange{Int}}}
     # TODO: add additional field with spin metadata? This is related to considerations of
     # the ability to add arbitrary element metadata to `keydata`, how could this be extendable?
     # Would any additional metadata in `keydata` elements would have to be added to RealBSparseMetadata as a field?
@@ -36,8 +35,6 @@ end
 
 get_float(operator::RealBSparseOperator) = typeof(operator).parameters[2]
 get_keydata(operator::RealBSparseOperator) = operator.keydata
-get_z1z2_ij2interval(operator::RealBSparseOperator) = operator.metadata.z1z2_ij2interval
-get_z1z2_ij2interval(metadata::RealBSparseMetadata) = metadata.z1z2_ij2interval
 
 # Constructor to initialize the operator with zero values
 # TODO: possibly split into smaller functions?
@@ -107,6 +104,9 @@ function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; 
 
     return RealBSparseOperator(kind, data, keydata, metadata)
 end
+
+get_z1z2_ij2interval(operator::RealBSparseOperator) = get_z1z2_ij2interval(get_atoms(operator), get_sparsity(operator))
+get_z1z2_ij2interval(metadata::RealBSparseMetadata) = get_z1z2_ij2interval(get_atoms(metadata), get_sparsity(metadata))
 
 function get_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSparsity)
     unique_species = unique(species(atoms, :))

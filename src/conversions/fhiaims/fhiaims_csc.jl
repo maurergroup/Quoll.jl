@@ -10,11 +10,8 @@ function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, h
     # Convert sparsity
     out_sparsity = convert_sparsity(in_metadata, radii, RealBlockSparsity, hermitian = hermitian)
 
-    # Compute z1z2_ij2interval
-    z1z2_ij2interval = get_z1z2_ij2interval(in_atoms, out_sparsity)
-
     # Construct metadata
-    out_metadata = RealBSparseMetadata(in_atoms, out_sparsity, in_basisset, in_spins, z1z2_ij2interval)
+    out_metadata = RealBSparseMetadata(in_atoms, out_sparsity, in_basisset, in_spins)
 
     # Initialize out_operator with zeros
     out_operator = RealBSparseOperator(in_kind, out_metadata; float = float)
