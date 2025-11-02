@@ -38,7 +38,8 @@ get_keydata(operator::RealBSparseOperator) = operator.keydata
 
 # Constructor to initialize the operator with zero values
 # TODO: possibly split into smaller functions?
-function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; float = Float64)
+# function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; float::Type{T} = Float64) where T
+function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata, ::Type{T}) where T
 
     z1z2_ij2interval = get_z1z2_ij2interval(metadata)
     basisset = get_basisset(metadata)
@@ -46,14 +47,14 @@ function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; 
     sparsity = get_sparsity(metadata)
 
     # Construct data
-    data = Dictionary{NTuple{2, ChemicalSpecies}, Array{float, 3}}()
+    data = Dictionary{NTuple{2, ChemicalSpecies}, Array{T, 3}}()
     species2nbasis = get_species2nbasis(basisset)
 
     for ((z1, z2), interval) in pairs(z1z2_ij2interval)
         insert!(
             data, (z1, z2),
             zeros(
-                float, species2nbasis[z1], species2nbasis[z2],
+                T, species2nbasis[z1], species2nbasis[z2],
                 # End interval value of the last (i, j) pair
                 interval[end][end] 
             )
@@ -133,4 +134,30 @@ function get_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSparsity
     end
 
     return z1z2_ij2interval
+end
+
+get_z1z2_ij2offset(operator::RealBSparseOperator) = get_z1z2_ij2offset(get_atoms(operator), get_sparsity(operator))
+get_z1z2_ij2offset(metadata::RealBSparseMetadata) = get_z1z2_ij2offset(get_atoms(metadata), get_sparsity(metadata))
+
+function get_z1z2_ij2offset(atoms::AbstractSystem, sparsity::RealBlockSparsity)
+    z1z2_ij2interval = get_z1z2_ij2interval(atoms, sparsity)
+    return get_z1z2_ij2offset(z1z2_ij2interval)
+end
+
+function get_z1z2_ij2offset(z1z2_ij2interval)
+    map(z1z2_ij2interval) do ij2interval
+        map(ij2interval) do interval
+            first(interval) - 1
+        end
+    end
+end
+
+# Slightly faster data structure in hot loops (fewer dict lookups)
+# TODO: test
+get_ij2offset(operator::RealBSparseOperator) = get_ij2offset(get_atoms(operator), get_sparsity(operator))
+get_ij2offset(metadata::RealBSparseMetadata) = get_ij2offset(get_atoms(metadata), get_sparsity(metadata))
+
+function get_ij2offset(atoms::AbstractSystem, sparsity::RealBlockSparsity)
+    z1z2_ij2offset = get_z1z2_ij2offset(atoms, sparsity)
+    return merge(z1z2_ij2offset...)
 end

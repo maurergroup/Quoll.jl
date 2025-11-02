@@ -89,31 +89,51 @@ function Base.:(∘)(shconv2::T1, shconv1::T2) where {T1<:SHConversion, T2<:SHCo
     return SHConversion(orders, shifts, phases, lmax)
 end
 
-function get_shift(l, m, shconv::SHConversion)
-    return shconv.orders[l + 1][m] - m
-end
+get_shift(orbital::BasisMetadata, shconv::SHConversion) = get_shift(orbital.l, orbital.m, shconv)
+get_phase(orbital::BasisMetadata, shconv::SHConversion) = get_phase(orbital.l, orbital.m, shconv)
 
-function get_phase(l, m, shconv::SHConversion)
-    return shconv.phases[l + 1][m]
-end
+get_shift(l, m, shconv::SHConversion) = shconv.orders[l + 1][m] - m
+get_phase(l, m, shconv::SHConversion) = shconv.phases[l + 1][m]
 
-function get_shiftphase(basis::BasisMetadata, shconv::SHConversion)
-    return get_shift(basis.l, basis.m, shconv), get_phase(basis.l, basis.m, shconv)
-end
-
-function precompute_shiftphases(basisset::BasisSetMetadata, shconv::SHConversion)
+function precompute_shifts(basisset::BasisSetMetadata, shconv::SHConversion)
     shifts = Dictionary{ChemicalSpecies, Vector{Int}}()
-    phases = Dictionary{ChemicalSpecies, Vector{Int}}()
-
-    for z in unique(basisset.atom2species)
-        n_basis = length(basis_species(basisset, z))
-        insert!(shifts, z, Vector{Int}(undef, n_basis))
-        insert!(phases, z, Vector{Int}(undef, n_basis))
-
-        for (ib, orbital) in enumerate(basisset.basis[z])
-            shifts[z][ib], phases[z][ib] = get_shiftphase(orbital, shconv)
-        end
+    for z in get_unique_species(basisset)
+        insert!(shifts, z, get_shift.(basis_species(basisset, z), Ref(shconv)))
     end
+    return shifts
+end
 
-    return shifts, phases
+# Assuming indexing starts at 1
+function precompute_orders(basisset::BasisSetMetadata, shconv::SHConversion)
+    shifts = precompute_shifts(basisset, shconv)
+    orders = Dictionary{ChemicalSpecies, Vector{Int}}()
+    for z in get_unique_species(basisset)
+        nbasis = length(basis_species(basisset, z))
+        insert!(orders, z, collect(1:nbasis) .+ shifts[z])
+    end
+    return orders
+end
+
+function precompute_phases(basisset::BasisSetMetadata, shconv::SHConversion; DIM = 1)
+    phases = Dictionary{ChemicalSpecies, Vector{Int}}()
+    for z in get_unique_species(basisset)
+        insert!(phases, z, get_phase.(basis_species(basisset, z), Ref(shconv)))
+    end
+    precompute_phases!(phases, Val(DIM))
+end
+
+precompute_phases!(phases, ::Val{1}) = phases
+
+function precompute_phases!(phases, ::Val{2})
+    species_tuples = tuple.(keys(phases).values)
+
+    combine_tuples(t1, t2) = tuple(t1..., t2...)
+    outer_product = combine_tuples.(species_tuples, reshape(species_tuples, 1, :))
+
+    species_pair_keys = Indices(reshape(outer_product, :))
+
+    return map(species_pair_keys) do key
+        z1, z2 = key
+        phases[z1] * phases[z2]'
+    end
 end

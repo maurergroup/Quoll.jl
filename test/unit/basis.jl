@@ -23,19 +23,24 @@ const basisset = BasisSetMetadata(
     [ChemicalSpecies(:H1), ChemicalSpecies(:H2), ChemicalSpecies(:H2), ChemicalSpecies(:H1)]
 )
 
+@testset "get_unique_species" begin
+    ref_unique_species = [ChemicalSpecies(:H1), ChemicalSpecies(:H2)]
+    @test ref_unique_species = Quoll.get_unique_species(basisset)
+end
+
 @testset "get_atom2nbasis" begin
     ref_atom2nbasis = [5, 4, 4, 5]
-    @test ref_atom2nbasis == get_atom2nbasis(basisset)
+    @test ref_atom2nbasis == Quoll.get_atom2nbasis(basisset)
 end
 
 @testset "get_atom2basis" begin
     ref_atom2basis = [1:5, 6:9, 10:14, 15:18]
-    @test ref_atom2basis == get_atom2basis(basisset)
+    @test ref_atom2basis == Quoll.get_atom2basis(basisset)
 end
 
 @testset "get_basis2atom" begin
     ref_basis2atom = [1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4]
-    @test ref_basis2atom == get_basis2atom(basisset)
+    @test ref_basis2atom == Quoll.get_basis2atom(basisset)
 end
 
 @testset "get_species2nbasis" begin
@@ -97,7 +102,7 @@ end
     @test Quoll.basis_species(basisset, a) == basis_species_a
 end
 
-@testset "get_offsets" begin
-    ref_offsets = [0, 5, 9, 14]
-    @test ref_offsets == Quoll.get_offsets(basisset)
+@testset "get_atom2offset" begin
+    ref_atom2offset = [0, 5, 9, 14]
+    @test ref_atom2offset == Quoll.get_atom2offset(basisset)
 end

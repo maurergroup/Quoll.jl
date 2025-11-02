@@ -60,12 +60,35 @@ using Test
         ])
     ])
 
+    ref_z1z2_ij2offset = dictionary([
+        (a, a) => dictionary([
+            (1, 1) => 0
+            (1, 2) => 3
+            (2, 2) => 5
+        ]),
+        (a, b) => dictionary([
+            (1, 3) => 0
+            (2, 3) => 2
+            (2, 4) => 5
+        ]),
+        (b, b) => dictionary([
+            (3, 4) => 0
+            (4, 4) => 3
+        ])
+    ])
+
     z1z2_ij2interval = Quoll.get_z1z2_ij2interval(atoms, sparsity)
+
     @test keys(z1z2_ij2interval) == keys(ref_z1z2_ij2interval)
+    @test keys(z1z2_ij2offset) == keys(ref_z1z2_ij2offset)
+
     for z1z2 in keys(ref_z1z2_ij2interval)
         @test keys(z1z2_ij2interval[z1z2]) == keys(ref_z1z2_ij2interval[z1z2])
+        @test keys(z1z2_ij2offset[z1z2]) == keys(ref_z1z2_ij2offset[z1z2])
+
         for ij in keys(ref_z1z2_ij2interval[z1z2])
             @test z1z2_ij2interval[z1z2][ij] == ref_z1z2_ij2interval[z1z2][ij]
+            @test z1z2_ij2offset[z1z2][ij] == ref_z1z2_ij2offset[z1z2][ij]
         end
     end
 end

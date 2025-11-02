@@ -183,20 +183,45 @@ end
 
 # A map from image indices in `images` to local image indices in `ij2images` for a given ij
 function get_iglobal2ilocal(sparsity::RealBlockSparsity)
-    return Dictionary(
-        keys(sparsity.ij2images),
-        [indexin(sparsity.images, images_local) for images_local in sparsity.ij2images],
-    )
+    return get_iexternal2ilocal(sparsity.images, sparsity)
+end
+
+function get_iexternal2ilocal(images, sparsity::RealBlockSparsity)
+    return map(sparsity.ij2images) do images_local
+        indexin(images, images_local)
+    end
+end
+
+function get_iexternal2imlocal(images, sparsity::RealBlockSparsity)
+    return map(sparsity.ij2images) do images_local
+        indexin(images, -images_local)
+    end
 end
 
 # Assuming sparsity.ij2images[(i, j)] for i == j will contain
 # redundant images even when sparsity.hermitian == true
-function get_onsite_ilocal2milocal(sparsity::RealBlockSparsity)
+# => returned values are never of type Nothing
+function get_onsite_ilocal2imlocal(sparsity::RealBlockSparsity)
     return Dictionary(
         [iat for (iat, jat) in keys(sparsity.ij2images) if iat == jat],
         [indexin(images_local, -images_local)
         for ((iat, jat), images_local) in pairs(sparsity.ij2images)
         if iat == jat]
+    )
+end
+
+# For a given iR in ij2images[ij] that corresponds to some image R,
+# return miR in ij2images[ji] that corresponds to -R.
+# Valid only if non-hermitian, otherwise all (iat, jat) pairs where
+# iat ≠ jat will yield Nothing arrays
+function get_ilocal2imlocal(sparsity::RealBlockSparsity)
+    return Dictionary(
+        keys(sparsity.ij2images),
+        [indexin(
+            sparsity.ij2images[(iat, jat)],
+            -1 * get(() -> SVector{3, Int}[], sparsity.ij2images[], (jat, iat))
+        )
+        for (iat, jat) in keys(sparsity.ij2images)]
     )
 end
 

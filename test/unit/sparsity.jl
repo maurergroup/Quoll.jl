@@ -91,11 +91,11 @@ using Test
 
 end
 
-@testset "get_iglobal2ilocal" begin
+@testset "get_iexternal2ilocal" begin
     ij2images = dictionary([
         (1, 1) => [SA[0, 0, 1], SA[0, 0, -1], SA[0, 0, 0], SA[-1, 1, 0], SA[1, -1, 0]],
         (1, 2) => [SA[0, 0, 1], SA[0, 0, 0]],
-        (2, 1) => [SA[0, 0, -1], SA[0, 0, 0]],
+        (2, 1) => [SA[0, 0, 0], SA[0, 0, -1]],
         (2, 2) => [SA[0, 0, 1], SA[0, 0, -1], SA[0, 0, 0], SA[-1, 1, 0], SA[1, -1, 0]],
     ])
     images = [
@@ -107,27 +107,39 @@ end
     ]
     hermitian = true
     sparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
-
     n = nothing
-    ref_iglobal2ilocal = dictionary([
+
+    ref_iexternal2ilocal = dictionary([
         (1, 1) => [3, 1, 2, 4, 5],
         (1, 2) => [2, 1, n, n, n],
-        (2, 1) => [2, n, 1, n, n],
+        (2, 1) => [1, n, 2, n, n],
         (2, 2) => [3, 1, 2, 4, 5],
     ])
+    iexternal2ilocal = Quoll.get_iexternal2ilocal(images, sparsity)
+    @test sort(keys(iexternal2ilocal)) == sort(keys(ref_iexternal2ilocal))
+    for ij in keys(ref_iexternal2ilocal)
+        @test iexternal2ilocal[ij] == ref_iexternal2ilocal[ij]
+    end
 
-    iglobal2ilocal = Quoll.get_iglobal2ilocal(sparsity)
-    @test sort(keys(iglobal2ilocal)) == sort(keys(ref_iglobal2ilocal))
-    for ij in keys(ref_iglobal2ilocal)
-        @test iglobal2ilocal[ij] == ref_iglobal2ilocal[ij]
+    ref_iexternal2imlocal = dictionary([
+        (1, 1) => [3, 2, 1, 5, 4],
+        (1, 2) => [1, 2, n, n, n],
+        (2, 1) => [2, n, 1, n ,n],
+        (2, 2) => [3, 2, 1, 5, 4],
+    ])
+
+    iexternal2imlocal = Quoll.get_iexternal2imlocal(images, sparsity)
+    @test sort(keys(iexternal2ilocal)) == sort(keys(ref_iexternal2ilocal))
+    for ij in keys(ref_iexternal2ilocal)
+        @test iexternal2ilocal[ij] == ref_iexternal2ilocal[ij]
     end
 end
 
-@testset "get_onsite_ilocal2milocal" begin
-    ij2images = dictionary([
+@testset "get_ilocal2imlocal" begin
+    nhij2images = dictionary([
         (1, 1) => [SA[0, 0, 1], SA[0, 0, -1], SA[0, 0, 0], SA[-1, 1, 0], SA[1, -1, 0]],
         (1, 2) => [SA[0, 0, 1], SA[0, 0, 0]],
-        (2, 1) => [SA[0, 0, -1], SA[0, 0, 0]],
+        (2, 1) => [SA[0, 0, 0], SA[0, 0, -1]],
         (2, 2) => [SA[0, 0, 1], SA[0, 0, 0], SA[-1, 1, 0], SA[1, -1, 0], SA[0, 0, -1]],
     ])
     images = [
@@ -137,20 +149,37 @@ end
         SA[-1,  1,  0],
         SA[ 1, -1,  0],
     ]
-    hermitian = true
-    sparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
-
+    nhsparsity = Quoll.RealBlockSparsity(nhij2images, images, false)
     n = nothing
-    ref_onsite_ilocal2milocal = dictionary([
-        1 => [2, 1, 3, 5, 4],
-        2 => [5, 2, 4, 3, 1],
-    ])
 
-    onsite_ilocal2milocal = Quoll.get_onsite_ilocal2milocal(sparsity)
-    @test sort(keys(onsite_ilocal2milocal)) == sort(keys(ref_onsite_ilocal2milocal))
-    for iat in keys(ref_onsite_ilocal2milocal)
-        @test onsite_ilocal2milocal[iat] == ref_onsite_ilocal2milocal[iat]
+    @testset "Onsite" begin
+        ref_onsite_ilocal2imlocal = dictionary([
+            1 => [2, 1, 3, 5, 4],
+            2 => [5, 2, 4, 3, 1],
+        ])
+
+        onsite_ilocal2imlocal = Quoll.get_onsite_ilocal2imlocal(nhsparsity)
+        @test sort(keys(onsite_ilocal2imlocal)) == sort(keys(ref_onsite_ilocal2imlocal))
+        for iat in keys(ref_onsite_ilocal2imlocal)
+            @test onsite_ilocal2imlocal[iat] == ref_onsite_ilocal2imlocal[iat]
+        end
     end
+
+    @testset "General non-hermitian" begin
+        ref_ilocal2imlocal = dictionary([
+            (1, 1) => [2, 1, 3, 5, 4],
+            (1, 2) => [2, 1],
+            (2, 1) => [2, 1],
+            (2, 2) => [5, 2, 4, 3, 1],
+        ])
+
+        ilocal2imlocal = Quoll.get_ilocal2imlocal(nhsparsity)
+        @test sort(keys(ilocal2imlocal)) == sort(keys(ref_ilocal2imlocal))
+        for iat in keys(ref_ilocal2imlocal)
+            @test ilocal2imlocal[iat] == ref_ilocal2imlocal[iat]
+        end
+    end
+
 end
 
 @testset "convert_to_hermitian" begin

@@ -35,6 +35,7 @@ end
 # Whereas basis2atom describes regions of that 3D array which belong
 # to particular atoms.
 
+get_unique_species(basisset::BasisSetMetadata) = unique(basisset.atom2species)
 
 get_atom2nbasis(basisset::BasisSetMetadata) = get_atom2nbasis(basisset.basis, basisset.atom2species)
 get_atom2nbasis(basis, atom2species) = [length(basis[z]) for z in atom2species]
@@ -82,10 +83,10 @@ function basis_species(basisset::BasisSetMetadata, species::ChemicalSpecies)
 end
 
 # Get a number of basis functions belonging to atoms with a lower index for every atom
-function get_offsets(basisset::BasisSetMetadata)
+function get_atom2offset(basisset::BasisSetMetadata)
     atom2basis = get_atom2basis(basisset)
-    return get_offsets(atom2basis)
+    return get_atom2offset(atom2basis)
 end
 
-get_offsets(atom2basis) = [interval[begin] - 1 for interval in atom2basis]
+get_atom2offset(atom2basis) = [first(interval) - 1 for interval in atom2basis]
     
