@@ -30,3 +30,13 @@ function recentre(atoms::AbstractSystem)
     )
     return recentered_atoms
 end
+
+# Given a dictionary z1z2... return an array ij...,
+# leading to a dense data structure but with faster access (no hashing)
+function speciesdict_to_atomarray(d::Dictionary, atom2species; DIM)
+    concat = outer_concatenate(atom2species, Val(DIM))
+    return get.(Ref(d), concat, missing)
+end
+
+outer_concatenate(vec, ::Val{1}) = vec
+outer_concatenate(vec, ::Val{2}) = tuple.(vec, reshape(vec, 1, :))

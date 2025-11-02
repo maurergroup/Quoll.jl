@@ -219,7 +219,7 @@ function get_ilocal2imlocal(sparsity::RealBlockSparsity)
         keys(sparsity.ij2images),
         [indexin(
             sparsity.ij2images[(iat, jat)],
-            -1 * get(() -> SVector{3, Int}[], sparsity.ij2images[], (jat, iat))
+            -1 * get(() -> SVector{3, Int}[], sparsity.ij2images, (jat, iat))
         )
         for (iat, jat) in keys(sparsity.ij2images)]
     )
@@ -289,7 +289,7 @@ function convert_to_hermitian(sparsity::RealBlockSparsity)
         i, j = ij
         i ≤ j
     end
-    hermitian_ij2images = Dictionary(view(sparsity.ij2images, unique_sorted_ij))
+    hermitian_ij2images = getindices(sparsity.ij2images, unique_sorted_ij)
 
     return RealBlockSparsity(hermitian_ij2images, sparsity.images, true)
 end

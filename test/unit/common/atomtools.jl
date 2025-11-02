@@ -1,4 +1,5 @@
 using Quoll
+using Dictionaries
 using StaticArrays
 using AtomsBase
 using Unitful
@@ -46,4 +47,40 @@ using Main.TestUtils
         @test_throws ArgumentError recentre(atoms)
     end
 
+end
+
+@testset "speciesdict_to_atomarray" begin
+    z1 = ChemicalSpecies(:H1)
+    z2 = ChemicalSpecies(:H2)
+    atom2species = [z2, z1, z2, z1]
+
+    vz1 = [5, 6]
+    vz2 = [7, 8]
+
+    d = dictionary([
+        z1 => vz1,
+        z2 => vz2,
+    ])
+    ref = [vz2, vz1, vz2, vz1]
+
+    @test isequal(Quoll.speciesdict_to_atomarray(d, atom2species, DIM = 1), ref)
+
+    vz1z1 = [10, 20]
+    vz1z2 = [30, 40]
+    vz2z1 = missing
+    vz2z2 = [50, 60, 70]
+
+    d = dictionary([
+        (z1, z1) => vz1z1,
+        (z1, z2) => vz1z2,
+        (z2, z2) => vz2z2,
+    ])
+    ref = reshape([
+        vz2z2, vz1z2, vz2z2, vz1z2,
+        vz2z1, vz1z1, vz2z1, vz1z1,
+        vz2z2, vz1z2, vz2z2, vz1z2,
+        vz2z1, vz1z1, vz2z1, vz1z1,
+    ], 4, 4)
+
+    @test isequal(Quoll.speciesdict_to_atomarray(d, atom2species, DIM = 2), ref)
 end

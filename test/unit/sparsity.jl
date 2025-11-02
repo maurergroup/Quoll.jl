@@ -78,9 +78,8 @@ using Test
            #(2, 1) => [SA[0, 0, 0], SA[0, 0, 1]              ]
             (2, 2) => [SA[0, 0, 0]                           ]
         ])
-        hermitian = true
 
-        block_sparsity = Quoll.RealBlockSparsity(colcellptr, rowval, images, basis2atom, hermitian)
+        block_sparsity = Quoll.RealBlockSparsity(colcellptr, rowval, images, basis2atom)
         @test block_sparsity.hermitian == true
         @test sort(block_sparsity.images) == sort(ref_images)
         @test sort(block_sparsity.ij2images[(1, 1)]) == sort(ref_ij2images[(1, 1)])
