@@ -19,9 +19,9 @@ end
 # spin up and spin down. However, can we tell which basis function would have which spin?
 # That would depend on electronic structure method (in which case SpinsMetadata constructor
 # could be additionally dispatched on Type{AbstractOperator}).
-struct BasisSetMetadata{E}
-    basis::Dictionary{ChemicalSpecies, Vector{BasisMetadata{E}}}
-    atom2species::Vector{ChemicalSpecies}
+struct BasisSetMetadata{E, B<:SpeciesDict{BasisMetadata{E}, 1}, A<:AbstractVector{ChemicalSpecies}}
+    basis::B
+    atom2species::A
 end
 # 1) Which basis functions belong to which atom? basis
 # 2) which basis function INDICES belong to which atom? basis2atom

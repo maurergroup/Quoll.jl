@@ -1,10 +1,10 @@
 using StructArrays
 
-struct RealBSparseMetadata{A<:AbstractSystem, E} <: AbstractOperatorMetadata
+struct RealBSparseMetadata{A<:AbstractSystem, S<:RealBlockSparsity, B<:BasisSetMetadata, P<:Union{SpinsMetadata, Nothing}} <: AbstractBSparseMetadata{A, S, B, P}
     atoms::A
-    sparsity::RealBlockSparsity
-    basisset::BasisSetMetadata{E}
-    spins::Union{SpinsMetadata, Nothing}
+    sparsity::S
+    basisset::B
+    spins::P
     # TODO: add additional field with spin metadata? This is related to considerations of
     # the ability to add arbitrary element metadata to `keydata`, how could this be extendable?
     # Would any additional metadata in `keydata` elements would have to be added to RealBSparseMetadata as a field?
@@ -15,22 +15,13 @@ struct RealBSparseMetadata{A<:AbstractSystem, E} <: AbstractOperatorMetadata
     # is parametric with respect to KT, but that's possible without copies)
 end
 
-# TODO: for now assume each (i, j) pair maps to a 2D slice,
-# but eventually this could break, e.g. in the case of gradients
-# (assuming we treat gradients as a type of operatorkind instead
-# of defining a separate struct).
-# Right now I assume N = 3 in all methods, but I could modify this
-# type by making it parametric on N and then modifying the methods
-# which I could modify based on OperatorKind instead of N
-# because a particular OperatorKind immediately implies particular N
-# 
 # I will usually work with the case where metadata in keydata are named tuples
 # i.e. KT == Tuple{Vector{@NamedTuple{basisf::BasisMetadata{E}, spin::SpinMetadata}}, ...}
-struct RealBSparseOperator{O<:OperatorKind, T<:AbstractFloat, A<:AbstractSystem, E, AT, KT} <: AbstractBSparseOperator
+struct RealBSparseOperator{O<:OperatorKind, T<:Real, D<:SpeciesPairDict{T}, M<:AbstractBSparseMetadata, KD<:AtomPairKeyedArray} <: AbstractBSparseOperator{O, T, D, M, KD}
     kind::O
-    data::Dictionary{NTuple{2, ChemicalSpecies}, Array{T, 3}}
-    keydata::Dictionary{NTuple{2, Int}, KeyedArray{T, 3, AT, KT}}
-    metadata::RealBSparseMetadata{A, E}
+    data::D
+    metadata::M
+    keydata::KD
 end
 
 get_float(operator::RealBSparseOperator) = typeof(operator).parameters[2]
@@ -103,7 +94,7 @@ function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata, 
     end
     keydata = Dictionary{NTuple{2, Int}, typeof(first(keydata_values))}(ij_contiguous, keydata_values)
 
-    return RealBSparseOperator(kind, data, keydata, metadata)
+    return RealBSparseOperator(kind, data, metadata, keydata)
 end
 
 get_z1z2_ij2interval(operator::RealBSparseOperator) = get_z1z2_ij2interval(get_atoms(operator), get_sparsity(operator))

@@ -13,75 +13,12 @@ end
 # Assuming 'U' hermicity
 struct RealBlockSparsity <: AbstractSparsity
     ij2images::Dictionary{Tuple{Int, Int}, Vector{SVector{3, Int}}}
+    # ij2images::Matrix{Vector{SVector{3, Int}}}
     images::Vector{SVector{3, Int}}
     hermitian::Bool
 end
 
-# General conversion constructor, for it to work properly one needs to define
-# (::Type{T1})(in_metadata::AbstractOperatorMetadata)
-# where get_sparsity(in_metadata)::T2
-# and T1 ≠ T2
-#
-# in_metadata is passed instead of in_sparsity because sometimes sparsity conversions require more
-# metadata than what is present in the sparsity alone, e.g. RealBlockSparsity requires basis2atom
-#
-# This method is not intended to be used directly by users
-# TODO: This method is ambiguous with respect to default constructor. It would not be contiguous if 
-# ::Type{T} was replaced by explicit type
-# Possibly could rename to a function name like convert_sparsity
-
-function convert_sparsity(in_metadata::AbstractOperatorMetadata, radii::Dict{ChemicalSpecies}, T::Type{<:AbstractSparsity}; hermitian = false)
-    @debug "Computing sparsity manually from radii"
-    return T(get_atoms(in_metadata), radii, hermitian = hermitian)
-end
-
-function convert_sparsity(in_metadata::AbstractOperatorMetadata, ::Nothing, out_sparsity_type::Type{<:AbstractSparsity}; hermitian = false)
-    @debug "Converting sparsity"
-    return convert_sparsity(in_metadata, out_sparsity_type, hermitian = hermitian)
-end
-
-# Works out of the box for in_sparsity_type == out_sparsity_type. Also would work for sparsity conversions
-# which define convert_sparsity(::AbstractSparsity, ::Type{<:AbstractSparsity}; hermitian).
-# However for some sparsity conversions in_sparsity is not enough to convert to out_sparsity.
-# In that case this method needs to be specialised for the OperatorMetadata in question.
-function convert_sparsity(in_metadata::AbstractOperatorMetadata, out_sparsity_type::Type{<:AbstractSparsity}; hermitian = false)
-    in_sparsity = get_sparsity(in_metadata)
-    return convert_sparsity(in_sparsity, out_sparsity_type, hermitian = hermitian)
-end
-
-# Handles in_sparsity == out_sparsity conversions, only hermicity needs to be changed in such cases
-function convert_sparsity(in_sparsity::T, ::Type{T}; hermitian = false) where T<:AbstractSparsity
-    if hermitian
-        return convert_to_hermitian(in_sparsity)
-    else
-        return convert_to_nonhermitian(in_sparsity)
-    end
-end
-
-### TODO: remove later, this leads to method ambiguity with default constructors
-# function (::Type{T})(in_metadata::AbstractOperatorMetadata, radii::Dict{ChemicalSpecies}; hermitian = false) where T<:AbstractSparsity
-#     @debug "Computing sparsity manually from radii"
-#     return T(get_atoms(in_metadata), radii, hermitian = hermitian)
-# end
-# function (::Type{T})(in_metadata::AbstractOperatorMetadata, ::Nothing; hermitian = false) where T<:AbstractSparsity
-#     @debug "Converting sparsity"
-#     return T(in_metadata, hermitian = hermitian)
-# end
-# # Handles in_sparsity == out_sparsity conversions
-# function (::Type{T})(in_metadata::AbstractOperatorMetadata; hermitian = false) where T<:AbstractSparsity
-#     in_sparsity = get_sparsity(in_metadata)
-
-#     # Generally throws an error if sparsity conversion
-#     # for in_sparsity ≠ out_sparsity is not defined
-#     return T(in_sparsity, hermitian = hermitian)
-# end
-# function (::Type{T})(sparsity::T; hermitian = false) where T<:AbstractSparsity
-#     if hermitian
-#         return convert_to_hermitian(sparsity)
-#     else
-#         return convert_to_nonhermitian(sparsity)
-#     end
-# end
+# TODO: sentinel value for Vector{SVector{3, Int}}? Probably just an empty array
 
 # assumes fractional coordinates of all atoms are [0.0, 1.0)
 # if T is unitless assumes angstrom
@@ -130,58 +67,6 @@ function RealBlockSparsity(atoms::AbstractSystem, nlist::PairList, maxedges::Dic
     end
 
     return RealBlockSparsity(ij2images, unique(nlist.S), hermitian)
-end
-
-function convert_sparsity(in_sparsity::RealCSCSparsity, basisset::BasisSetMetadata, out_sparsity_type::Type{RealBlockSparsity};
-    hermitian = true)
-    basis2atom = get_basis2atom(basisset)
-    out_sparsity = RealBlockSparsity(in_sparsity.colcellptr, in_sparsity.rowval, in_sparsity.images, basis2atom)
-    return convert_sparsity(out_sparsity, out_sparsity_type, hermitian = hermitian)
-end
-
-function RealBlockSparsity(colcellptr::Array{T, 3}, rowval::Vector{T}, images, basis2atom::Vector{T}) where T<:Integer
-    # TODO: Clean up
-    natoms = maximum(basis2atom)
-    ij2images_tmp = [Set{SVector{3, Int}}() for _ in 1:natoms, _ in 1:natoms]
-
-    # TODO: could define csc iteration, but i_atom_col would have to be evaluated in inner loop
-    for i_cell in axes(colcellptr, 2)
-        image = images[i_cell]
-
-        for i_basis_col in axes(colcellptr, 3)
-            i_atom_col = basis2atom[i_basis_col]
-
-            i_index_first = colcellptr[1, i_cell, i_basis_col]
-            i_index_last = colcellptr[2, i_cell, i_basis_col]
-
-            for i_index in i_index_first:i_index_last
-                i_basis_row = rowval[i_index]
-                i_atom_row = basis2atom[i_basis_row]
-
-                # If ij doesn't exist in ij2images create an empty array
-                # ij = (i_atom_row, i_atom_col)
-                # haskey(ij2images, ij) || insert!(ij2images, ij, SVector{3, Int}[])
-
-                # If the image doesn't exist in ij2images[ij] then push the image inside
-                # image ∈ ij2images[ij] || push!(ij2images[ij], image)
-                # image ∈ ij2images_tmp[i_atom_row, i_atom_col] || push!(ij2images_tmp[i_atom_row, i_atom_col], image)
-
-                # TODO: pushing into a set continuously, can become expensive
-                push!(ij2images_tmp[i_atom_row, i_atom_col], image)
-            end
-        end
-    end
-
-    ij2images = Dictionary{Tuple{Int, Int}, Vector{SVector{3, Int}}}(
-        [(i, j) for i in 1:natoms for j in 1:natoms],
-        [collect(ij2images_tmp[i, j]) for i in 1:natoms for j in 1:natoms],
-    )
-    ij2images = filter(x -> length(x) !== 0, ij2images)
-
-    # Make on-site blocks non-hermitian even when hermitian == true
-    make_onsite_hermitian!(ij2images, maximum(basis2atom))
-    
-    return RealBlockSparsity(ij2images, images, true)
 end
 
 function get_maxedges(radii::Dict{ChemicalSpecies, T}) where T<:Number
@@ -313,4 +198,65 @@ function make_onsite_hermitian!(ij2images, n_atoms)
         ij2images[(iat, iat)] = union(ii_images, -ii_images)
     end
     return ij2images
+end
+
+# Handles in_sparsity == out_sparsity conversions, only hermicity needs to be changed in such cases
+function convert_sparsity(in_sparsity::T, ::Type{T}; hermitian = false) where T<:AbstractSparsity
+    if hermitian
+        return convert_to_hermitian(in_sparsity)
+    else
+        return convert_to_nonhermitian(in_sparsity)
+    end
+end
+
+function convert_sparsity(in_sparsity::RealCSCSparsity, basisset::BasisSetMetadata, out_sparsity_type::Type{RealBlockSparsity};
+    hermitian = true)
+    basis2atom = get_basis2atom(basisset)
+    out_sparsity = RealBlockSparsity(in_sparsity.colcellptr, in_sparsity.rowval, in_sparsity.images, basis2atom)
+    return convert_sparsity(out_sparsity, out_sparsity_type, hermitian = hermitian)
+end
+
+function RealBlockSparsity(colcellptr::Array{T, 3}, rowval::Vector{T}, images, basis2atom::Vector{T}) where T<:Integer
+    # TODO: Clean up
+    natoms = maximum(basis2atom)
+    ij2images_tmp = [Set{SVector{3, Int}}() for _ in 1:natoms, _ in 1:natoms]
+
+    # TODO: could define csc iteration, but i_atom_col would have to be evaluated in inner loop
+    for i_cell in axes(colcellptr, 2)
+        image = images[i_cell]
+
+        for i_basis_col in axes(colcellptr, 3)
+            i_atom_col = basis2atom[i_basis_col]
+
+            i_index_first = colcellptr[1, i_cell, i_basis_col]
+            i_index_last = colcellptr[2, i_cell, i_basis_col]
+
+            for i_index in i_index_first:i_index_last
+                i_basis_row = rowval[i_index]
+                i_atom_row = basis2atom[i_basis_row]
+
+                # If ij doesn't exist in ij2images create an empty array
+                # ij = (i_atom_row, i_atom_col)
+                # haskey(ij2images, ij) || insert!(ij2images, ij, SVector{3, Int}[])
+
+                # If the image doesn't exist in ij2images[ij] then push the image inside
+                # image ∈ ij2images[ij] || push!(ij2images[ij], image)
+                # image ∈ ij2images_tmp[i_atom_row, i_atom_col] || push!(ij2images_tmp[i_atom_row, i_atom_col], image)
+
+                # TODO: pushing into a set continuously, can become expensive
+                push!(ij2images_tmp[i_atom_row, i_atom_col], image)
+            end
+        end
+    end
+
+    ij2images = Dictionary{Tuple{Int, Int}, Vector{SVector{3, Int}}}(
+        [(i, j) for i in 1:natoms for j in 1:natoms],
+        [collect(ij2images_tmp[i, j]) for i in 1:natoms for j in 1:natoms],
+    )
+    ij2images = filter(x -> length(x) !== 0, ij2images)
+
+    # Make on-site blocks non-hermitian even when hermitian == true
+    make_onsite_hermitian!(ij2images, maximum(basis2atom))
+    
+    return RealBlockSparsity(ij2images, images, true)
 end

@@ -13,6 +13,7 @@ using ArgCheck
 # Common tools
 
 export recentre
+include("common/constants.jl")
 include("common/mpitools.jl")
 include("common/atomtools.jl")
 
@@ -20,12 +21,6 @@ include("common/atomtools.jl")
 
 export Overlap, Hamiltonian
 include("operatorkind.jl")
-
-export load_atoms, find_operatorkinds
-export load_operator, load_operators
-export convert_operator, convert_operators
-export write_operator, write_operators
-include("operators/abstract.jl")
 
 export BasisMetadata
 include("basis.jl")
@@ -37,6 +32,12 @@ include("shconversion.jl")
 
 # Operator formats and their IO routines
 # (Assuming no dependencies between different format types in each file)
+
+export load_atoms
+export load_operator, load_operators
+export write_operator, write_operators
+export find_operatorkinds
+include("operators/interface.jl")
 
 export RealBSparseOperator
 include("operators/canonical/abstract.jl")
@@ -50,6 +51,9 @@ include("operators/fhiaims/abstract.jl")
 include("operators/fhiaims/fhiaims_csc.jl")
 
 # Operator format conversions
+
+export convert_operator, convert_operators
+include("conversions/interface.jl")
 
 include("conversions/fhiaims/fhiaims_csc.jl")
 include("conversions/deeph/deeph.jl")

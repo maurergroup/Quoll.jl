@@ -1,17 +1,17 @@
-struct DeepHMetadata{A<:AbstractSystem, E} <: AbstractOperatorMetadata
+const DeepHDict{T, N} = AbstractAnyDict{NTuple{5, Int}, <:AbstractArray{T, N}}
+
+struct DeepHMetadata{A<:AbstractSystem, S<:RealBlockSparsity, B<:BasisSetMetadata, P<:Union{SpinsMetadata, Nothing}} <: AbstractOperatorMetadata{A, S, B, P}
     atoms::A
-    sparsity::RealBlockSparsity
-    basisset::BasisSetMetadata{E}
-    spins::Union{SpinsMetadata, Nothing}
+    sparsity::S
+    basisset::B
+    spins::P
 end
 
-struct DeepHOperator{O<:OperatorKind, T<:AbstractFloat, A<:AbstractSystem, E} <: AbstractOperator
+struct DeepHOperator{O<:OperatorKind, T<:Number, D<:DeepHDict{T}, M<:DeepHMetadata} <: AbstractOperator{O, T, D, M}
     kind::O
-    data::Dictionary{NTuple{5, Int}, Array{T, 2}}
-    metadata::DeepHMetadata{A, E}
+    data::D
+    metadata::M
 end
-
-get_float(operator::DeepHOperator) = typeof(operator).parameters[2]
 
 # TODO: write
 # - R_list.dat

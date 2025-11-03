@@ -1,7 +1,12 @@
 using Base
 
-abstract type AbstractCanonicalOperator <: AbstractOperator end
-abstract type AbstractBSparseOperator <: AbstractCanonicalOperator end
+const AtomPairKeyedArray{T, N, AT, KT} = AbstractArray{<:KeyedArray{T, N, AT, KT}, 2}
+
+abstract type AbstractCanonicalMetadata{A, S, B, P} <: AbstractOperatorMetadata{A, S, B, P} end
+abstract type AbstractCanonicalOperator{O, T, D, M} <: AbstractOperator{O, T, D, M} end
+
+abstract type AbstractBSparseMetadata{A, S, B, P} <: AbstractCanonicalMetadata{A, S, B, P} end
+abstract type AbstractBSparseOperator{O, T, D, M, KD} <: AbstractCanonicalOperator{O, T, D, M} end
 
 function Base.getindex(operator::AbstractBSparseOperator, key::NTuple{2, ChemicalSpecies})
     return getindex(operator.data, key)

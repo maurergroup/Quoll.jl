@@ -13,20 +13,18 @@ using DelimitedFiles: readdlm
 # the dimension of space and Unitful quantities which, for example, would not
 # change for different atoms in a dataset
 
-struct FHIaimsCSCMetadata{A<:AbstractSystem, E} <: AbstractFHIaimsMetadata
+struct FHIaimsCSCMetadata{A<:AbstractSystem, S<:RealCSCSparsity, B<:BasisSetMetadata, P<:Union{SpinsMetadata, Nothing}} <: AbstractFHIaimsMetadata{A, S, B, P}
     atoms::A
-    sparsity::RealCSCSparsity
-    basisset::BasisSetMetadata{E}
-    spins::Union{SpinsMetadata, Nothing}
+    sparsity::S
+    basisset::B
+    spins::P
 end
 
-struct FHIaimsCSCOperator{O<:OperatorKind, T<:AbstractFloat, A<:AbstractSystem, E} <: AbstractFHIaimsOperator
+struct FHIaimsCSCOperator{O<:OperatorKind, T<:Number, D<:AbstractVector{T}, M<:FHIaimsCSCMetadata} <: AbstractFHIaimsOperator{O, T, D, M}
     kind::O
-    data::Vector{T}
-    metadata::FHIaimsCSCMetadata{A, E}
+    data::D
+    metadata::M
 end
-
-get_float(operator::FHIaimsCSCOperator) = typeof(operator).parameters[2]
 
 get_readformat(::Val{:fhiaims}) = FHIaimsCSCOperator
 

@@ -1,5 +1,5 @@
-abstract type AbstractFHIaimsOperator <: AbstractOperator end
-abstract type AbstractFHIaimsMetadata <: AbstractOperatorMetadata end
+abstract type AbstractFHIaimsOperator{O, T, D, M} <: AbstractOperator{O, T, D, M} end
+abstract type AbstractFHIaimsMetadata{A, S, B, P} <: AbstractOperatorMetadata{A, S, B, P} end
 
 # Same order as wiki
 # For m > 0 opposite CS phase
