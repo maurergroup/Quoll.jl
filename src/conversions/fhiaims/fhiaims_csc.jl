@@ -1,4 +1,5 @@
 
+# 130 ms, where is the extra time coming from?
 function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermitian = true, float::Type{T} = Float64) where T
 # function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermitian = true, float = Float64)
 
@@ -9,6 +10,7 @@ function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, h
     in_kind = get_kind(in_operator)
 
     # Convert sparsity
+    # 130 ms
     out_sparsity = convert_sparsity(in_metadata, radii, RealBlockSparsity, hermitian = hermitian)
 
     # Construct metadata
@@ -16,9 +18,11 @@ function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, h
 
     # Initialize out_operator with zeros
     # out_operator = RealBSparseOperator(in_kind, out_metadata; float = float)
-    out_operator = RealBSparseOperator(in_kind, out_metadata, float)
+    # 1 ms
+    out_operator = RealBSparseOperator(in_kind, out_metadata, T)
 
     # Populate out_operator with values from the in_operator
+    # 5 ms
     populate!(out_operator, in_operator)
 
     return out_operator
@@ -27,8 +31,8 @@ end
 # Probably shouldn't be used directly because this assumes appropriately converted metadata
 function populate!(out_operator::RealBSparseOperator, in_operator::FHIaimsCSCOperator)
     return populate!(
-        get_data(out_operator),
-        get_atoms(out_operator),
+        get_keydata(out_operator),
+        # get_atoms(out_operator),
         get_sparsity(out_operator),
         get_basisset(out_operator),
         get_data(in_operator),
@@ -39,7 +43,8 @@ function populate!(out_operator::RealBSparseOperator, in_operator::FHIaimsCSCOpe
 end
 
 # Loop over the CSC sparsity and occupy appropriate values based on block sparsity
-function populate!(out_data, out_atoms, out_sparsity, out_basisset, in_data, in_sparsity,
+# function populate!(out_keydata, out_atoms, out_sparsity, out_basisset, in_data, in_sparsity,
+function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity,
     out_type::Type{RealBSparseOperator}, in_type::Type{FHIaimsCSCOperator})
     # TODO: We could perform hermitian to hermitian populate! and afterwards perform
     # RealBSparseOperator hermitian -> RealBSparseOperator non-hermitian conversion.
@@ -52,7 +57,7 @@ function populate!(out_data, out_atoms, out_sparsity, out_basisset, in_data, in_
     atom2offset = get_atom2offset(out_basisset)
     basis2atom = get_basis2atom(out_basisset)
     iglobal2ilocal = get_iglobal2ilocal(out_sparsity)
-    ij2offset = get_ij2offset(out_atoms, out_sparsity)
+    # ij2offset = get_ij2offset(out_atoms, out_sparsity)
 
     shconv = SHConversion(out_type) ∘ inv(SHConversion(in_type))
 
@@ -73,15 +78,29 @@ function populate!(out_data, out_atoms, out_sparsity, out_basisset, in_data, in_
     # as long as computing them is less computationally expensive than the loop with dicts
     # which is probably always going to be the case.
 
-    # Dicts which will always be small (usually not that many z1z2 pairs)
-    out_data_view = Base.ImmutableDict(collect(pairs(out_data))...)
-    orders_view = Base.ImmutableDict(collect(pairs(orders))...)
-    phases_view = Base.ImmutableDict(collect(pairs(phases))...)
+    # # Dicts which will always be small (usually not that many z1z2 pairs)
+    # out_data_view = Base.ImmutableDict(collect(pairs(out_data))...)
+    # orders_view = Base.ImmutableDict(collect(pairs(orders))...)
+    # phases_view = Base.ImmutableDict(collect(pairs(phases))...)
 
-    # Persistent is slower than Dictionaries dict when I'm benchmarking with 2 atoms
-    # but in theory it should be faster for larger dicts (more atoms)
-    ij2offset_view = Base.PersistentDict(collect(pairs(ij2offset))...)
-    iglobal2ilocal_view = Base.PersistentDict(collect(pairs(iglobal2ilocal))...)
+    # # Persistent is slower than Dictionaries dict when I'm benchmarking with 2 atoms
+    # # but in theory it should be faster for larger dicts (more atoms)
+    # ij2offset_view = Base.PersistentDict(collect(pairs(ij2offset))...)
+    # iglobal2ilocal_view = Base.PersistentDict(collect(pairs(iglobal2ilocal))...)
+
+    natoms = length(atom2species)
+    ijmatrix = tuple.(collect(1:natoms), collect(1:natoms)')
+    speciesmatrix = tuple.(atom2species, reshape(atom2species, 1, :))
+
+    keydata_nothing = view(Array{Float64, 3}(undef, 1, 1, 1), :, :, 1:1)
+    out_keydata_view = get.(
+        Ref(map(x -> getproperty(getproperty(x, :data), :data), out_keydata)),
+        ijmatrix,
+        Ref(keydata_nothing)
+    )
+    iglobal2ilocal_view::Matrix{Vector{Union{Nothing, Int}}} = get.(Ref(iglobal2ilocal), ijmatrix, Ref([0]))
+    orders_view::Vector{Vector{Int}} = get.(Ref(orders), atom2species, 0)
+    phases_view::Matrix{Matrix{Int}} = get.(Ref(phases), speciesmatrix, 0)
 
     for iR in axes(colcellptr, 2)
         R = in_images[iR]
@@ -89,10 +108,11 @@ function populate!(out_data, out_atoms, out_sparsity, out_basisset, in_data, in_
 
         for jb in axes(colcellptr, 3)
             jat = basis2atom[jb]
-            zj = atom2species[jat]
+            # zj = atom2species[jat]
             jb_local = jb - atom2offset[jat]
 
-            orders_zj = orders_view[zj]
+            # orders_zj = orders_view[zj]
+            orders_zj = orders_view[jat]
 
             i_index_first = colcellptr[1, iR, jb]
             i_index_last = colcellptr[2, iR, jb]
@@ -101,20 +121,25 @@ function populate!(out_data, out_atoms, out_sparsity, out_basisset, in_data, in_
                 ib = rowval[i_index]
 
                 iat = basis2atom[ib]
-                zi = atom2species[iat]
+                # zi = atom2species[iat]
                 ib_local = ib - atom2offset[iat]
 
-                orders_zi = orders_view[zi]
+                # orders_zi = orders_view[zi]
+                orders_zi = orders_view[iat]
 
-                iR_local = iglobal2ilocal_view[(iat, jat)][iR]
+                # iR_local = iglobal2ilocal_view[(iat, jat)][iR]
+                iR_local = iglobal2ilocal_view[iat, jat][iR]
                 !isnothing(iR_local) || continue
-                iR_offset = ij2offset_view[(iat, jat)]
+                # iR_offset = ij2offset_view[(iat, jat)]
 
-                out_data_view[(zi, zj)][
+                # out_data_view[(zi, zj)][
+                out_keydata_view[iat, jat][
                     orders_zi[ib_local],
                     orders_zj[jb_local],
-                    iR_local + iR_offset
-                ] = in_data[i_index] * phases_view[(zi, zj)][ib_local, jb_local]
+                    # iR_local + iR_offset
+                    iR_local
+                # ] = in_data[i_index] * phases_view[(zi, zj)][ib_local, jb_local]
+                ] = in_data[i_index] * phases_view[iat, jat][ib_local, jb_local]
             end
         end
     end
@@ -126,19 +151,23 @@ function populate!(out_data, out_atoms, out_sparsity, out_basisset, in_data, in_
     for iat in 1:n_atoms
         z = atom2species[iat]
         nbasis = species2nbasis[z]
-        out_data_z = out_data[(z, z)]
+        # out_data_z = out_data[(z, z)]
+        out_keydata_iat = out_keydata_view[iat, iat]
 
-        iR_offset = ij2offset_view[(iat, iat)]
+        # iR_offset = ij2offset_view[(iat, iat)]
         for iR in axes(out_sparsity.ij2images[(iat, iat)], 1)
             imR = onsite_ilocal2imlocal[iat][iR]
 
-            out_iR = iR + iR_offset
-            out_imR = imR + iR_offset
+            # out_iR = iR + iR_offset
+            # out_imR = imR + iR_offset
+            out_iR = iR
+            out_imR = imR
 
             for jb in 1:nbasis
                 @inbounds for ib in nbasis
                     jb > ib || continue
-                    out_data_z[jb, ib, out_imR] = out_data_z[ib, jb, out_iR]
+                    # out_data_z[jb, ib, out_imR] = out_data_z[ib, jb, out_iR]
+                    out_keydata_iat[jb, ib, out_imR] = out_keydata_iat[ib, jb, out_iR]
                 end
             end
 

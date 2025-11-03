@@ -33,7 +33,10 @@ end
 
 # Given a dictionary z1z2... return an array ij...,
 # leading to a dense data structure but with faster access (no hashing)
-function speciesdict_to_atomarray(d::Dictionary, atom2species; DIM)
+function speciesdict_to_atomarray(d, atom2species)
+    firstkey = first(keys(d))
+    firstkey isa ChemicalSpecies ? DIM = 1 : DIM = length(firstkey)
+
     concat = outer_concatenate(atom2species, Val(DIM))
     return get.(Ref(d), concat, missing)
 end

@@ -132,14 +132,17 @@ function RealBlockSparsity(atoms::AbstractSystem, nlist::PairList, maxedges::Dic
     return RealBlockSparsity(ij2images, unique(nlist.S), hermitian)
 end
 
-function convert_sparsity(in_sparsity::RealCSCSparsity, basisset::BasisSetMetadata, out_sparsity_type::Type{RealBlockSparsity}; hermitian = true)
+function convert_sparsity(in_sparsity::RealCSCSparsity, basisset::BasisSetMetadata, out_sparsity_type::Type{RealBlockSparsity};
+    hermitian = true)
     basis2atom = get_basis2atom(basisset)
     out_sparsity = RealBlockSparsity(in_sparsity.colcellptr, in_sparsity.rowval, in_sparsity.images, basis2atom)
     return convert_sparsity(out_sparsity, out_sparsity_type, hermitian = hermitian)
 end
 
 function RealBlockSparsity(colcellptr::Array{T, 3}, rowval::Vector{T}, images, basis2atom::Vector{T}) where T<:Integer
-    ij2images = Dictionary{Tuple{Int, Int}, Vector{SVector{3, Int}}}()
+    # TODO: Clean up
+    natoms = maximum(basis2atom)
+    ij2images_tmp = [Set{SVector{3, Int}}() for _ in 1:natoms, _ in 1:natoms]
 
     # TODO: could define csc iteration, but i_atom_col would have to be evaluated in inner loop
     for i_cell in axes(colcellptr, 2)
@@ -156,14 +159,24 @@ function RealBlockSparsity(colcellptr::Array{T, 3}, rowval::Vector{T}, images, b
                 i_atom_row = basis2atom[i_basis_row]
 
                 # If ij doesn't exist in ij2images create an empty array
-                ij = (i_atom_row, i_atom_col)
-                haskey(ij2images, ij) || insert!(ij2images, ij, SVector{3, Int}[])
+                # ij = (i_atom_row, i_atom_col)
+                # haskey(ij2images, ij) || insert!(ij2images, ij, SVector{3, Int}[])
 
                 # If the image doesn't exist in ij2images[ij] then push the image inside
-                image ∈ ij2images[ij] || push!(ij2images[ij], image)
+                # image ∈ ij2images[ij] || push!(ij2images[ij], image)
+                # image ∈ ij2images_tmp[i_atom_row, i_atom_col] || push!(ij2images_tmp[i_atom_row, i_atom_col], image)
+
+                # TODO: pushing into a set continuously, can become expensive
+                push!(ij2images_tmp[i_atom_row, i_atom_col], image)
             end
         end
     end
+
+    ij2images = Dictionary{Tuple{Int, Int}, Vector{SVector{3, Int}}}(
+        [(i, j) for i in 1:natoms for j in 1:natoms],
+        [collect(ij2images_tmp[i, j]) for i in 1:natoms for j in 1:natoms],
+    )
+    ij2images = filter(x -> length(x) !== 0, ij2images)
 
     # Make on-site blocks non-hermitian even when hermitian == true
     make_onsite_hermitian!(ij2images, maximum(basis2atom))

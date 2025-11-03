@@ -63,7 +63,7 @@ end
     ])
     ref = [vz2, vz1, vz2, vz1]
 
-    @test isequal(Quoll.speciesdict_to_atomarray(d, atom2species, DIM = 1), ref)
+    @test isequal(Quoll.speciesdict_to_atomarray(d, atom2species), ref)
 
     vz1z1 = [10, 20]
     vz1z2 = [30, 40]
@@ -82,5 +82,5 @@ end
         vz2z1, vz1z1, vz2z1, vz1z1,
     ], 4, 4)
 
-    @test isequal(Quoll.speciesdict_to_atomarray(d, atom2species, DIM = 2), ref)
+    @test isequal(Quoll.speciesdict_to_atomarray(d, atom2species), ref)
 end
