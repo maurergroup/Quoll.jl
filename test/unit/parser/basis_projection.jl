@@ -9,7 +9,8 @@ using Main.TestUtils
     @test collect(Quoll.Parser.parse_basismetadata(
         "C(1, 0, 0)"
     )) == [
-        BasisMetadata(ChemicalSpecies(:C), 1, 0, 0, Dict())
+        # BasisMetadata(ChemicalSpecies(:C), 1, 0, 0, Base.ImmutableDict{String, String}())
+        BasisMetadata(ChemicalSpecies(:C), 1, 0, 0, Dict{String, String}())
     ]
     @test collect(Quoll.Parser.parse_basismetadata(
         "C(1, 0, 0) type = atomic"

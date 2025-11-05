@@ -4,10 +4,12 @@ using Reexport
 using LinearAlgebra
 using StaticArrays
 using Dictionaries
+using AutoHashEquals
 using AxisKeys
 using Unitful
 using HDF5
 using AtomsBase
+using NeighbourLists
 using ArgCheck
 
 # Common tools
@@ -16,6 +18,7 @@ export recentre
 include("common/constants.jl")
 include("common/mpitools.jl")
 include("common/atomtools.jl")
+include("common/fastlookup.jl")
 
 # Core types and their methods
 

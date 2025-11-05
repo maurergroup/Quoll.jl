@@ -248,7 +248,7 @@ end
             z1 => [1, 1, -1, 1]
             z2 => [1]
         ])
-        phases = Quoll.precompute_phases(basisset, shconv, DIM = 1)
+        phases = Quoll.precompute_phases(basisset, shconv, DIM = Val(1))
         @test Set(keys(phases)) == Set(keys(ref))
         for key in keys(ref)
             @test phases[key] == ref[key]
@@ -274,7 +274,7 @@ end
                 1;;
             ]
         ])
-        phases = Quoll.precompute_phases(basisset, shconv, DIM = 2)
+        phases = Quoll.precompute_phases(basisset, shconv, DIM = Val(2))
         @test Set(keys(phases)) == Set(keys(ref))
         for key in keys(ref)
             @test phases[key] == ref[key]

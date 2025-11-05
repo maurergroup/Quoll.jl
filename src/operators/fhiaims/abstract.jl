@@ -26,10 +26,10 @@ function BasisSetMetadata(dir::AbstractString, atoms::AbstractSystem, ::Type{<:A
     @argcheck ispath(p)
 
     atom2species = species(atoms, :)
-    basis = dictionary(
-        species => BasisMetadata{Dict{String, String}}[]
+    basis = Base.ImmutableDict((
+        species => BasisMetadata{Base.ImmutableDict{String, String}}[]
         for species in unique(atom2species)
-    )
+    )...)
 
     f = open(p, "r")
 
@@ -49,7 +49,7 @@ function BasisSetMetadata(dir::AbstractString, atoms::AbstractSystem, ::Type{<:A
         if iat == species2firstatom[atom2species[iat]]
             push!(
                 basis[atom2species[iat]],
-                BasisMetadata(atom2species[iat], n, l, m, Dict{String, String}("type" => type))
+                BasisMetadata(atom2species[iat], n, l, m, Base.ImmutableDict("type" => type))
             )
         end
 

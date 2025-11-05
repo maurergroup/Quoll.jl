@@ -19,7 +19,7 @@ end
 # spin up and spin down. However, can we tell which basis function would have which spin?
 # That would depend on electronic structure method (in which case SpinsMetadata constructor
 # could be additionally dispatched on Type{AbstractOperator}).
-struct BasisSetMetadata{E, B<:SpeciesDict{BasisMetadata{E}, 1}, A<:AbstractVector{ChemicalSpecies}}
+struct BasisSetMetadata{B<:SpeciesAnyDict, A<:AbstractVector{ChemicalSpecies}}
     basis::B
     atom2species::A
 end
@@ -67,10 +67,16 @@ get_basis2atom(atom2nbasis) = reduce(vcat, [fill(iat, nbasis) for (iat, nbasis) 
 
 # Get a number of basis functions for a given chemical species
 function get_species2nbasis(basisset::BasisSetMetadata)
-    return dictionary([
+    # TODO: return frozen little dict instead
+    # return dictionary([
+    #     z => length(basis_species(basisset, z))
+    #     for z in keys(basisset.basis)
+    # ])
+    d = Base.ImmutableDict((
         z => length(basis_species(basisset, z))
         for z in keys(basisset.basis)
-    ])
+    )...)
+    return d
 end
 
 # TODO: Alternatively (or additionally) could implement Base.getindex for Int and ChemicalSpecies

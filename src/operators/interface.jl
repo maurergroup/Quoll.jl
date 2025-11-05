@@ -63,33 +63,29 @@ function SpinsMetadata(kind::OperatorKind, basisset::BasisSetMetadata, format::T
     return SpinsMetadata(kind, basisset.basis, format)
 end
 
-function SpinsMetadata(kind::Hamiltonian, basis::Dictionary{ChemicalSpecies}, format::Type{<:AbstractOperator})
+function SpinsMetadata(kind::Hamiltonian, basis::SpeciesAnyDict, format::Type{<:AbstractOperator})
     return SpinsMetadata(kind, Val(kind.spin), basis, format)
 end
 
-function SpinsMetadata(::Hamiltonian, ::Val{:up}, basis::Dictionary{ChemicalSpecies}, ::Type{<:AbstractOperator})
-    return SpinsMetadata(
-        Dictionary(
-            keys(basis),
-            [fill(⬆, length(atom_basis)) for atom_basis in basis]
-        ),
-        false,
-    )
+function SpinsMetadata(::Hamiltonian, ::Val{:up}, basis::SpeciesAnyDict, ::Type{<:AbstractOperator})
+    spins_dict = Base.ImmutableDict((
+        z => fill(⬆, length(atom_basis))
+        for (z, atom_basis) in pairs(basis)
+    )...)
+    return SpinsMetadata(spins_dict, false)
 end
 
-function SpinsMetadata(::Hamiltonian, ::Val{:down}, basis::Dictionary{ChemicalSpecies}, ::Type{<:AbstractOperator})
-    return SpinsMetadata(
-        Dictionary(
-            keys(basis),
-            [fill(⬇, length(atom_basis)) for atom_basis in basis]
-        ),
-        false,
-    )
+function SpinsMetadata(::Hamiltonian, ::Val{:down}, basis::SpeciesAnyDict, ::Type{<:AbstractOperator})
+    spins_dict = Base.ImmutableDict((
+        z => fill(⬇, length(atom_basis))
+        for (z, atom_basis) in pairs(basis)
+    )...)
+    return SpinsMetadata(spins_dict, false)
 end
 
-SpinsMetadata(::Hamiltonian, ::Val{:none}, ::Dictionary{ChemicalSpecies}, ::Type{<:AbstractOperator}) = nothing
+SpinsMetadata(::Hamiltonian, ::Val{:none}, ::SpeciesAnyDict, ::Type{<:AbstractOperator}) = nothing
 
-SpinsMetadata(::Overlap, ::Dictionary{ChemicalSpecies}, ::Type{<:AbstractOperator}) = nothing
+SpinsMetadata(::Overlap, ::SpeciesAnyDict, ::Type{<:AbstractOperator}) = nothing
 
 ### PARSING INTERFACE ###
 

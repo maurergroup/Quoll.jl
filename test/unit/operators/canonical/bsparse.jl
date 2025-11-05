@@ -2,10 +2,11 @@ using Quoll
 using AtomsBase
 using Dictionaries
 using StaticArrays
+using Unitful
 
 using Test
+using Main.TestUtils
 
-# function get_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSparsity)
 @testset "get_z1z2_ij2interval" begin
     cellvecs = SA[
         SA[1.0,   0.0,   0.0],
@@ -33,6 +34,7 @@ using Test
         (3, 4) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]] # b, b
         (4, 4) => [SA[0, 0, 0], SA[0, 0, -1]]              # b, b
     ])
+    
     images = [
         SA[ 0,  0,  0],
         SA[ 1,  0,  0],
@@ -78,15 +80,16 @@ using Test
     ])
 
     z1z2_ij2interval = Quoll.get_z1z2_ij2interval(atoms, sparsity)
+    z1z2_ij2offset = Quoll.get_z1z2_ij2offset(atoms, sparsity)
 
-    @test keys(z1z2_ij2interval) == keys(ref_z1z2_ij2interval)
-    @test keys(z1z2_ij2offset) == keys(ref_z1z2_ij2offset)
+    @test Set(keys(z1z2_ij2interval)) == Set(keys(ref_z1z2_ij2interval))
+    @test Set(keys(z1z2_ij2offset)) == Set(keys(ref_z1z2_ij2offset))
 
-    for z1z2 in keys(ref_z1z2_ij2interval)
-        @test keys(z1z2_ij2interval[z1z2]) == keys(ref_z1z2_ij2interval[z1z2])
-        @test keys(z1z2_ij2offset[z1z2]) == keys(ref_z1z2_ij2offset[z1z2])
+    for z1z2 in Set(keys(ref_z1z2_ij2interval))
+        @test Set(keys(z1z2_ij2interval[z1z2])) == Set(keys(ref_z1z2_ij2interval[z1z2]))
+        @test Set(keys(z1z2_ij2offset[z1z2])) == Set(keys(ref_z1z2_ij2offset[z1z2]))
 
-        for ij in keys(ref_z1z2_ij2interval[z1z2])
+        for ij in Set(keys(ref_z1z2_ij2interval[z1z2]))
             @test z1z2_ij2interval[z1z2][ij] == ref_z1z2_ij2interval[z1z2][ij]
             @test z1z2_ij2offset[z1z2][ij] == ref_z1z2_ij2offset[z1z2][ij]
         end

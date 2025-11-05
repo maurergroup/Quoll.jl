@@ -4,28 +4,32 @@ using AtomsBase
 
 using Test
 
-const basisset = BasisSetMetadata(
-    dictionary([
-        ChemicalSpecies(:H1) => [
-            Quoll.BasisMetadata(a, 1, 0, 0, nothing)
-            Quoll.BasisMetadata(a, 2, 0, 0, nothing)
-            Quoll.BasisMetadata(a, 2, 1,-1, nothing)
-            Quoll.BasisMetadata(a, 2, 1, 0, nothing)
-            Quoll.BasisMetadata(a, 2, 1, 1, nothing)
-        ],
-        ChemicalSpecies(:H2) => [
-            Quoll.BasisMetadata(b, 2, 0, 0, nothing)
-            Quoll.BasisMetadata(b, 2, 1,-1, nothing)
-            Quoll.BasisMetadata(b, 2, 1, 0, nothing)
-            Quoll.BasisMetadata(b, 2, 1, 1, nothing)
-        ]
-    ]),
-    [ChemicalSpecies(:H1), ChemicalSpecies(:H2), ChemicalSpecies(:H2), ChemicalSpecies(:H1)]
-)
+const basisset = begin
+    a = ChemicalSpecies(:H1)
+    b = ChemicalSpecies(:H2)
+    Quoll.BasisSetMetadata(
+        dictionary([
+            a => [
+                BasisMetadata(a, 1, 0, 0, nothing)
+                BasisMetadata(a, 2, 0, 0, nothing)
+                BasisMetadata(a, 2, 1,-1, nothing)
+                BasisMetadata(a, 2, 1, 0, nothing)
+                BasisMetadata(a, 2, 1, 1, nothing)
+            ],
+            b => [
+                BasisMetadata(b, 2, 0, 0, nothing)
+                BasisMetadata(b, 2, 1,-1, nothing)
+                BasisMetadata(b, 2, 1, 0, nothing)
+                BasisMetadata(b, 2, 1, 1, nothing)
+            ]
+        ]),
+        [a, b, b, a]
+    )
+end
 
 @testset "get_unique_species" begin
     ref_unique_species = [ChemicalSpecies(:H1), ChemicalSpecies(:H2)]
-    @test ref_unique_species = Quoll.get_unique_species(basisset)
+    @test ref_unique_species == Quoll.get_unique_species(basisset)
 end
 
 @testset "get_atom2nbasis" begin
@@ -34,12 +38,12 @@ end
 end
 
 @testset "get_atom2basis" begin
-    ref_atom2basis = [1:5, 6:9, 10:14, 15:18]
+    ref_atom2basis = [1:5, 6:9, 10:13, 14:18]
     @test ref_atom2basis == Quoll.get_atom2basis(basisset)
 end
 
 @testset "get_basis2atom" begin
-    ref_basis2atom = [1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4]
+    ref_basis2atom = [1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4]
     @test ref_basis2atom == Quoll.get_basis2atom(basisset)
 end
 
@@ -47,7 +51,7 @@ end
     a = ChemicalSpecies(:H1)
     b = ChemicalSpecies(:H2)
 
-    ref_species2nbasis = dictionary([a => 5, b => 4])
+    ref_species2nbasis = Base.ImmutableDict(a => 5, b => 4)
     species2nbasis = Quoll.get_species2nbasis(basisset)
 
     @test keys(species2nbasis) == keys(ref_species2nbasis)
@@ -59,7 +63,6 @@ end
 @testset "basis_atom" begin
     a = ChemicalSpecies(:H1)
     b = ChemicalSpecies(:H2)
-    basisset = basisset
 
     basis_atom3 = [
         Quoll.BasisMetadata(b, 2, 0, 0, nothing)
@@ -82,7 +85,6 @@ end
 @testset "basis_species" begin
     a = ChemicalSpecies(:H1)
     b = ChemicalSpecies(:H2)
-    basisset = basisset
 
     basis_species_b = [
         Quoll.BasisMetadata(b, 2, 0, 0, nothing)
@@ -103,6 +105,6 @@ end
 end
 
 @testset "get_atom2offset" begin
-    ref_atom2offset = [0, 5, 9, 14]
+    ref_atom2offset = [0, 5, 9, 13]
     @test ref_atom2offset == Quoll.get_atom2offset(basisset)
 end

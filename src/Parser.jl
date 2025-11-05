@@ -17,7 +17,7 @@ using ..Quoll:
     get_writeformat
 import ..Quoll: find_operatorkinds
 using ..Projections
-using ..Projections: AbstractBasisProjection, basis_projection
+using ..Projections: AbstractBasisProjection, get_basis_projection
 using ..Postprocessing
 using ..Postprocessing: SmearingFunction, get_smearing
 

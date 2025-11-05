@@ -1,7 +1,5 @@
 using Base
 
-const AtomPairKeyedArray{T, N, AT, KT} = AbstractArray{<:KeyedArray{T, N, AT, KT}, 2}
-
 abstract type AbstractCanonicalMetadata{A, S, B, P} <: AbstractOperatorMetadata{A, S, B, P} end
 abstract type AbstractCanonicalOperator{O, T, D, M} <: AbstractOperator{O, T, D, M} end
 

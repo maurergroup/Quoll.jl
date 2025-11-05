@@ -4,8 +4,9 @@ using Tar
 using CodecZlib
 using Logging
 using LoggingExtras
+using Dictionaries
 
-export create_temptree, setupteardown_tmp, with_nowarn_logger
+export create_temptree, setupteardown_tmp, with_nowarn_logger, populate_from_dict!
 
 """
     create_temptree(files)
@@ -61,6 +62,14 @@ end
 function with_nowarn_logger(f)
     error_only_logger = MinLevelLogger(current_logger(), Logging.Error)
     return with_logger(f, error_only_logger)
+end
+
+function populate_from_dict!(arr::AbstractArray, d::AbstractDictionary)
+    setindex!(arr, collect(values(d)), CartesianIndex.(collect(keys(d))))
+end
+
+function populate_from_dict!(v::AbstractVector, d::AbstractDictionary)
+    setindex!(v, collect(values(d)), collect(keys(d)))
 end
 
 end

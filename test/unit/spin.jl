@@ -4,41 +4,55 @@ using AtomsBase
 
 using Test
 
-struct DummyFormat <: Quoll.AbstractOperator end
+struct DummyFormat{O, T, D, M} <: Quoll.AbstractOperator{O, T, D, M} end
 
 # TODO: at the time of writing this these methods are not even in spin.jl
 # so I should consider moving them out where they belong
 
 @testset "SpinsMetadata" begin
-    basis = dictionary([
-        ChemicalSpecies(:C) => [10, 20, 30, 40],
-        ChemicalSpecies(:Si) => [10, 20, 30, 40, 50, 60],
-    ])
+    a = ChemicalSpecies(:C)
+    b = ChemicalSpecies(:Si)
+    basis = Base.ImmutableDict(
+        a => [
+            BasisMetadata(a, 1, 0, 0, nothing),
+            BasisMetadata(a, 2, 1,-1, nothing),
+            BasisMetadata(a, 2, 1, 0, nothing),
+            BasisMetadata(a, 2, 1, 1, nothing),
+        ],
+        b => [
+            BasisMetadata(b, 1, 0, 0, nothing),
+            BasisMetadata(b, 2, 0, 0, nothing),
+            BasisMetadata(b, 3, 0, 0, nothing),
+            BasisMetadata(b, 2, 1,-1, nothing),
+            BasisMetadata(b, 2, 1, 0, nothing),
+            BasisMetadata(b, 2, 1, 1, nothing),
+        ],
+    )
 
     @testset "Spin none" begin
-        spinset = Quoll.SpinMetadata(Hamiltonian(:foo, :none), Val(:none), basis, DummyFormat)
-        @test spinset === nothing
+        spins = Quoll.SpinsMetadata(Hamiltonian(source = :foo, spin = :none), Val(:none), basis, DummyFormat)
+        @test spins === nothing
 
-        spinset = Quoll.SpinMetadata(Overlap(:foo), basis, DummyFormat)
-        @test spinset === nothing
+        spins = Quoll.SpinsMetadata(Overlap(source = :foo), basis, DummyFormat)
+        @test spins === nothing
     end
 
     @testset "Spin up" begin
-        spinset = Quoll.SpinMetadata(Hamiltonian(:foo, :up), Val(:up), basis, DummyFormat)
-        @test spinset.soc == false
-        @test spinset.spins == dictionary([
+        spins = Quoll.SpinsMetadata(Hamiltonian(source = :foo, spin = :up), Val(:up), basis, DummyFormat)
+        @test spins.soc == false
+        @test spins.spins == Base.ImmutableDict(
             ChemicalSpecies(:C) => fill(⬆, 4),
             ChemicalSpecies(:Si) => fill(⬆, 6),
-        ])
+        )
     end
     
     @testset "Spin down" begin
-        spinset = Quoll.SpinSetMetadata(Hamiltonian(:foo, :down), Val(:down), basis, DummyFormat)
-        @test spinset.soc == false
-        @test spinset.spins == dictionary([
+        spins = Quoll.SpinsMetadata(Hamiltonian(source = :foo, spin = :down), Val(:down), basis, DummyFormat)
+        @test spins.soc == false
+        @test spins.spins == Base.ImmutableDict(
             ChemicalSpecies(:C) => fill(⬇, 4),
             ChemicalSpecies(:Si) => fill(⬇, 6),
-        ])
+        )
     end
 
 end

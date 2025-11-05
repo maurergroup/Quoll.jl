@@ -100,7 +100,7 @@ function precompute_shifts(basisset::BasisSetMetadata, shconv::SHConversion)
     for z in get_unique_species(basisset)
         insert!(shifts, z, get_shift.(basis_species(basisset, z), Ref(shconv)))
     end
-    return shifts
+    return Base.ImmutableDict(pairs(shifts)...)
 end
 
 # Assuming indexing starts at 1
@@ -111,29 +111,31 @@ function precompute_orders(basisset::BasisSetMetadata, shconv::SHConversion)
         nbasis = length(basis_species(basisset, z))
         insert!(orders, z, collect(1:nbasis) .+ shifts[z])
     end
-    return orders
+    return Base.ImmutableDict(pairs(orders)...)
 end
 
-function precompute_phases(basisset::BasisSetMetadata, shconv::SHConversion; DIM = 1)
-    phases = Dictionary{ChemicalSpecies, Vector{Int}}()
+# Also optionally convert to type T, useful when used in tight loops
+function precompute_phases(basisset::BasisSetMetadata, shconv::SHConversion; DIM::Val{D} = Val(1), float::Type{T} = Float64) where {T, D}
+    phases = Dictionary{ChemicalSpecies, Vector{T}}()
     for z in get_unique_species(basisset)
         insert!(phases, z, get_phase.(basis_species(basisset, z), Ref(shconv)))
     end
-    precompute_phases!(phases, Val(DIM))
+    precompute_phases!(phases, Val(D))
 end
 
-precompute_phases!(phases, ::Val{1}) = phases
+precompute_phases!(phases::AbstractDictionary, ::Val{1}) = Base.ImmutableDict(pairs(phases)...)
 
-function precompute_phases!(phases, ::Val{2})
+function precompute_phases!(phases::AbstractDictionary, ::Val{2})
     species_tuples = tuple.(keys(phases).values)
 
     combine_tuples(t1, t2) = tuple(t1..., t2...)
     outer_product = combine_tuples.(species_tuples, reshape(species_tuples, 1, :))
 
     species_pair_keys = Indices(reshape(outer_product, :))
-
-    return map(species_pair_keys) do key
+    phases_pairs = map(species_pair_keys) do key
         z1, z2 = key
         phases[z1] * phases[z2]'
     end
+
+    return Base.ImmutableDict(pairs(phases_pairs)...)
 end

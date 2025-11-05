@@ -18,79 +18,59 @@ function DeepHOperator(in_operator::RealBSparseOperator; radii = nothing, hermit
     return DeepHOperator(in_kind, out_data, out_metadata)
 end
 
-# TODO: This is a bit redundant now
 function convert_operator_data(out_metadata::DeepHMetadata, in_operator::RealBSparseOperator; float = Float64)
     return convert_operator_data(
         get_sparsity(out_metadata),
         get_basisset(out_metadata),
-        get_data(in_operator),
+        get_keydata(in_operator),
         get_atoms(in_operator),
         get_sparsity(in_operator),
         DeepHOperator,
         RealBSparseOperator,
-        float = float,
+        float,
     )
 end
 
-# Might be faster to make it hermitian first in the case of herm_nonherm_conv
-# and then simply add additional blocks
-function convert_operator_data(out_sparsity, out_basisset, in_data, in_atoms, in_sparsity,
-    out_type::Type{DeepHOperator}, in_type::Type{RealBSparseOperator}; float::Type{T} = Float64) where T
+function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_atoms, in_sparsity,
+    out_type::Type{DeepHOperator}, in_type::Type{RealBSparseOperator}, ::Type{T} = Float64) where T
 
     herm_nonherm_conv = in_sparsity.hermitian && !out_sparsity.hermitian
-
     species2nbasis = get_species2nbasis(out_basisset)
-    z1z2_ij2offset = get_z1z2_ij2offset(in_atoms, in_sparsity) # This is zeros for SiC, I think I need a harder example for regression tests
 
     shconv = SHConversion(out_type) ∘ inv(SHConversion(in_type))
     orders = precompute_orders(out_basisset, shconv)
-    phases = precompute_phases(out_basisset, shconv, DIM = 2)
+    phases = precompute_phases(out_basisset, shconv, DIM = Val(2))
 
     out_keys = NTuple{5, Int}[]
     out_blocks = Array{T, 2}[]
-
-    # Converting to hermitian locally because then it works for all cases
-    # - hermitian -> hermitian: the types of hermicities are different and then it's gg
-    # This would be alleviated if we normalize hermicity
-    # But if we normalize hermicity that means we need to change the operator itself as well
-    # But that might work ok for RealBSparseOperator
-    # "@assert convert_to_hermitian(out_sparsity) == in_sparsity"
-    # TODO:
-    # Case: we assume i ≤ j in hermicity which works out of the box if we convert from FHIaimsCSCOperator
-    #       but there might be conversions where the RealBSparsity is different. What then?
-    #       We can either:
-    #       - Map values to ji-R during conversion if i ≥ j (more efficient)
-    #       - Provide a method which would convert the operator into correct sparsity type
-    # Also I did not consider the case when cutoff radii don't match
-    # That would be easy to alleviate because we would simply fill the block with zeros
-    # if that ijR is not present in the in_sparsity
 
     for ((iat, jat), out_images_ij) in pairs(convert_to_hermitian(out_sparsity).ij2images)
         zi = out_basisset.atom2species[iat]
         zj = out_basisset.atom2species[jat]
 
         # Index with chemical species before entering hot loops
-        in_data_zizj = in_data[(zi, zj)]
+        in_keydata_zizj = in_keydata[(iat, jat)]
         orders_zi = orders[zi]
         orders_zj = orders[zj]
         phases_zizj = phases[(zi, zj)]
         
         # Find the mapping between input and output image indices
         in_images_ij = in_sparsity.ij2images[(iat, jat)]
-        ilocalout_to_ilocalin_ij::Vector{Int} = indexin(out_images_ij, in_images_ij)
+        ilocalout_to_ilocalin_ij = indexin(out_images_ij, in_images_ij)
 
-        # Find the offset for i_image caused by other ij pairs in the same array
-        R_offset = z1z2_ij2offset[(zi, zj)][(iat, jat)]
-
-        for (out_i_image, out_image) in enumerate(out_images_ij)
-            push!(out_keys, (out_image..., iat, jat))
+        for (out_iR, out_R) in enumerate(out_images_ij)
+            push!(out_keys, (out_R..., iat, jat))
 
             block = Array{T, 2}(undef, species2nbasis[zi], species2nbasis[zj])
-            i_image = ilocalout_to_ilocalin_ij[out_i_image] + R_offset
+            in_iR = ilocalout_to_ilocalin_ij[out_iR]
             
-            for jb in axes(block, 2)
-                @inbounds for ib in axes(block, 1)
-                    block[ib, jb] = in_data_zizj[orders_zi[ib], orders_zj[jb], i_image] * phases_zizj[ib, jb]
+            # in_iR can be nothing if in_sparsity is sparser,
+            # e.g. obtained from small radii
+            if !isnothing(in_iR)
+                for jb in axes(block, 2)
+                    @inbounds for ib in axes(block, 1)
+                        block[ib, jb] = in_keydata_zizj[orders_zi[ib], orders_zj[jb], in_iR] * phases_zizj[ib, jb]
+                    end
                 end
             end
             push!(out_blocks, block)

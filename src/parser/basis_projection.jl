@@ -1,5 +1,5 @@
 @option struct BasisProjectionParams <: AbstractQuollParams
-    projected_basis::Vector{BasisMetadata{Dict{String, String}}}
+    projected_basis::Vector{BasisMetadata{Base.ImmutableDict{String, String}}}
     method::Type{<:AbstractBasisProjection}
 end
 
@@ -18,23 +18,31 @@ function parse_basismetadata(basisfunc::AbstractString)
 
     extras_begin = match_znlm.offsets[5] + 1
     eachmatch_extras = eachmatch(re_extras, basisfunc[extras_begin:end])
-    extras = Dict{String, String}(
+
+    extras_pairs = (
         convert(String, match.captures[1]) => convert(String, match.captures[2])
         for match in eachmatch_extras
     )
 
-    return (BasisMetadata(z, n, l, m, extras) for m in ms)
+    extras_dict_start = Base.ImmutableDict{String, String}()
+    if isempty(extras_pairs)
+        extras_dict = extras_dict_start
+    else
+        extras_dict = Base.ImmutableDict(extras_dict_start, extras_pairs...)
+    end
+
+    return (BasisMetadata(z, n, l, m, extras_dict) for m in ms)
 end
 
 function Configurations.from_dict(
     ::Type{BasisProjectionParams},
     ::OptionField{:projected_basis},
-    ::Type{Vector{BasisMetadata{Dict{String, String}}}},
+    ::Type{Vector{BasisMetadata{Base.ImmutableDict{String, String}}}},
     projected_basis_str,
 )
     @argcheck isa(projected_basis_str, Vector{String}) "`projected_basis` field must be an array of strings"
 
-    projected_basis = BasisMetadata{Dict{String, String}}[]
+    projected_basis = BasisMetadata{Base.ImmutableDict{String, String}}[]
     for basisfunc in projected_basis_str
         push!(projected_basis, parse_basismetadata(basisfunc)...)
     end
@@ -51,7 +59,7 @@ function Configurations.from_dict(
     @argcheck isa(s, String)
     
     symbol = Symbol(normalize_comparison(s))
-    @argcheck hasmethod(basis_projection, Tuple{Val{symbol}}) "Basis projection $s is unavailable or doesn't exist"
+    @argcheck hasmethod(get_basis_projection, Tuple{Val{symbol}}) "Basis projection $s is unavailable or doesn't exist"
 
-    return basis_projection(Val(symbol))
+    return get_basis_projection(Val(symbol))
 end

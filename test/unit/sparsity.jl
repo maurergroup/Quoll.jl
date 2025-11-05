@@ -5,6 +5,7 @@ using AtomsBase
 using Unitful
 
 using Test
+using Main.TestUtils
 
 @testset "RealBlockSparsity" begin
 
@@ -16,6 +17,7 @@ using Test
             SA[0.0, 100.0,   0.0],
             SA[0.0,   0.0, 100.0],
         ]u"Å"
+
         atoms = periodic_system(
             [
                 ChemicalSpecies(:H) => SA[0.05, 1.00, 1.00]u"Å",
@@ -26,41 +28,56 @@ using Test
         )
         radii = Dict(ChemicalSpecies(:H) => 0.11u"Å")
 
-        ref_images = [SA[0, 0, 0], SA[-1, 0, 0], SA[1, 0, 0]]
-        ref_ij2images = dictionary([
-            (1, 1) => [SA[0, 0, 0]                           ],
-            (1, 2) => [SA[0, 0, 0]                           ],
-            (1, 3) => [             SA[-1, 0, 0]             ],
-            (2, 1) => [SA[0, 0, 0]                           ],
-            (2, 2) => [SA[0, 0, 0]                           ],
-           #(2, 3) => [],
-            (3, 1) => [                           SA[1, 0, 0]],
-           #(3, 2) => [],
-            (3, 3) => [SA[0, 0, 0]                           ],
-        ])
+        @testset "Non-hermitian" begin
+            ref_images = [SA[0, 0, 0], SA[-1, 0, 0], SA[1, 0, 0]]
 
-        block_sparsity = Quoll.RealBlockSparsity(atoms, radii, hermitian = false)
-        @test sort(block_sparsity.images) == sort(ref_images)
-        @test sort(block_sparsity.ij2images[(1, 1)]) == sort(ref_ij2images[(1, 1)])
-        @test sort(block_sparsity.ij2images[(1, 2)]) == sort(ref_ij2images[(1, 2)])
-        @test sort(block_sparsity.ij2images[(1, 3)]) == sort(ref_ij2images[(1, 3)])
-        @test sort(block_sparsity.ij2images[(2, 1)]) == sort(ref_ij2images[(2, 1)])
-        @test sort(block_sparsity.ij2images[(2, 2)]) == sort(ref_ij2images[(2, 2)])
-        @test (2, 3) ∉ keys(block_sparsity.ij2images)
-        @test sort(block_sparsity.ij2images[(3, 1)]) == sort(ref_ij2images[(3, 1)])
-        @test (3, 2) ∉ keys(block_sparsity.ij2images)
-        @test sort(block_sparsity.ij2images[(3, 3)]) == sort(ref_ij2images[(3, 3)])
+            ref_ij2images = dictionary([
+                (1, 1) => [SA[0, 0, 0]                           ],
+                (1, 2) => [SA[0, 0, 0]                           ],
+                (1, 3) => [             SA[-1, 0, 0]             ],
+                (2, 1) => [SA[0, 0, 0]                           ],
+                (2, 2) => [SA[0, 0, 0]                           ],
+               #(2, 3) => [                                      ],
+                (3, 1) => [                           SA[1, 0, 0]],
+               #(3, 2) => [                                      ],
+                (3, 3) => [SA[0, 0, 0]                           ],
+            ])
 
-        block_sparsity = Quoll.RealBlockSparsity(atoms, radii, hermitian = true)
-        @test sort(block_sparsity.ij2images[(1, 1)]) == sort(ref_ij2images[(1, 1)])
-        @test sort(block_sparsity.ij2images[(1, 2)]) == sort(ref_ij2images[(1, 2)])
-        @test sort(block_sparsity.ij2images[(1, 3)]) == sort(ref_ij2images[(1, 3)])
-        @test (2, 1) ∉ keys(block_sparsity.ij2images)
-        @test sort(block_sparsity.ij2images[(2, 2)]) == sort(ref_ij2images[(2, 2)])
-        @test (2, 3) ∉ keys(block_sparsity.ij2images)
-        @test (3, 1) ∉ keys(block_sparsity.ij2images)
-        @test (3, 2) ∉ keys(block_sparsity.ij2images)
-        @test sort(block_sparsity.ij2images[(3, 3)]) == sort(ref_ij2images[(3, 3)])
+            block_sparsity = Quoll.RealBlockSparsity(atoms, radii, hermitian = false)
+
+            @test sort(block_sparsity.images) == sort(ref_images)
+            @test sort(keys(block_sparsity.ij2images)) == sort(keys(ref_ij2images))
+            for i = 1:3, j = 1:3
+                (i, j) ∈ keys(ref_ij2images) || continue
+                @test sort(block_sparsity.ij2images[(i, j)]) == sort(ref_ij2images[(i, j)])
+            end
+        end
+
+        @testset "Hermitian" begin
+            ref_images = [SA[0, 0, 0], SA[-1, 0, 0], SA[1, 0, 0]]
+
+            ref_ij2images = dictionary([
+                (1, 1) => [SA[0, 0, 0]                           ],
+                (1, 2) => [SA[0, 0, 0]                           ],
+                (1, 3) => [             SA[-1, 0, 0]             ],
+               #(2, 1) => [                                      ],
+                (2, 2) => [SA[0, 0, 0]                           ],
+               #(2, 3) => [                                      ],
+               #(3, 1) => [                                      ],
+               #(3, 2) => [                                      ],
+                (3, 3) => [SA[0, 0, 0]                           ],
+            ])
+
+            block_sparsity = Quoll.RealBlockSparsity(atoms, radii, hermitian = true)
+
+            @test sort(block_sparsity.images) == sort(ref_images)
+            @test sort(keys(block_sparsity.ij2images)) == sort(keys(ref_ij2images))
+            for i = 1:3, j = 1:3
+                (i, j) ∈ keys(ref_ij2images) || continue
+                @test sort(block_sparsity.ij2images[(i, j)]) == sort(ref_ij2images[(i, j)])
+            end
+        end
+
     end
 
     @testset "From RealCSCSparsity" begin
@@ -72,20 +89,25 @@ using Test
         basis2atom = [1, 2]
 
         ref_images = [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]]
+
         ref_ij2images = dictionary([
-            (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]]
-            (1, 2) => [SA[0, 0, 0],              SA[0, 0, -1]]
-           #(2, 1) => [SA[0, 0, 0], SA[0, 0, 1]              ]
-            (2, 2) => [SA[0, 0, 0]                           ]
+            (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]],
+            (1, 2) => [SA[0, 0, 0],              SA[0, 0, -1]],
+           #(2, 1) => [                                      ],
+            (2, 2) => [SA[0, 0, 0]                           ],
         ])
 
         block_sparsity = Quoll.RealBlockSparsity(colcellptr, rowval, images, basis2atom)
+
         @test block_sparsity.hermitian == true
         @test sort(block_sparsity.images) == sort(ref_images)
-        @test sort(block_sparsity.ij2images[(1, 1)]) == sort(ref_ij2images[(1, 1)])
-        @test sort(block_sparsity.ij2images[(1, 2)]) == sort(ref_ij2images[(1, 2)])
-        @test (2, 1) ∉ keys(block_sparsity.ij2images)
-        @test sort(block_sparsity.ij2images[(2, 2)]) == sort(ref_ij2images[(2, 2)])
+        @test sort(keys(block_sparsity.ij2images)) == sort(keys(ref_ij2images))
+
+        for i in 1:2, j in 1:2
+            (i, j) ∈ keys(ref_ij2images) || continue
+            @test sort(block_sparsity.ij2images[(i, j)]) == sort(ref_ij2images[(i, j)])
+        end
+
     end
 
 end
@@ -104,7 +126,8 @@ end
         SA[-1,  1,  0],
         SA[ 1, -1,  0],
     ]
-    hermitian = true
+    hermitian = false
+
     sparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
     n = nothing
 
@@ -114,10 +137,12 @@ end
         (2, 1) => [1, n, 2, n, n],
         (2, 2) => [3, 1, 2, 4, 5],
     ])
+
     iexternal2ilocal = Quoll.get_iexternal2ilocal(images, sparsity)
     @test sort(keys(iexternal2ilocal)) == sort(keys(ref_iexternal2ilocal))
-    for ij in keys(ref_iexternal2ilocal)
-        @test iexternal2ilocal[ij] == ref_iexternal2ilocal[ij]
+    for i in 1:2, j in 1:2
+        (i, j) ∈ keys(ref_iexternal2ilocal) || continue
+        @test iexternal2ilocal[(i, j)] == ref_iexternal2ilocal[(i, j)]
     end
 
     ref_iexternal2imlocal = dictionary([
@@ -129,8 +154,9 @@ end
 
     iexternal2imlocal = Quoll.get_iexternal2imlocal(images, sparsity)
     @test sort(keys(iexternal2ilocal)) == sort(keys(ref_iexternal2ilocal))
-    for ij in keys(ref_iexternal2ilocal)
-        @test iexternal2ilocal[ij] == ref_iexternal2ilocal[ij]
+    for i in 1:2, j in 1:2
+        (i, j) ∈ keys(ref_iexternal2ilocal) || continue
+        @test iexternal2ilocal[(i, j)] == ref_iexternal2ilocal[(i, j)]
     end
 end
 
@@ -148,6 +174,7 @@ end
         SA[-1,  1,  0],
         SA[ 1, -1,  0],
     ]
+
     nhsparsity = Quoll.RealBlockSparsity(nhij2images, images, false)
     n = nothing
 
@@ -159,12 +186,12 @@ end
 
         onsite_ilocal2imlocal = Quoll.get_onsite_ilocal2imlocal(nhsparsity)
         @test sort(keys(onsite_ilocal2imlocal)) == sort(keys(ref_onsite_ilocal2imlocal))
-        for iat in keys(ref_onsite_ilocal2imlocal)
-            @test onsite_ilocal2imlocal[iat] == ref_onsite_ilocal2imlocal[iat]
+        for i in keys(ref_onsite_ilocal2imlocal)
+            @test onsite_ilocal2imlocal[i] == ref_onsite_ilocal2imlocal[i]
         end
     end
 
-    @testset "General non-hermitian" begin
+    @testset "Non-hermitian" begin
         ref_ilocal2imlocal = dictionary([
             (1, 1) => [2, 1, 3, 5, 4],
             (1, 2) => [2, 1],
@@ -174,8 +201,8 @@ end
 
         ilocal2imlocal = Quoll.get_ilocal2imlocal(nhsparsity)
         @test sort(keys(ilocal2imlocal)) == sort(keys(ref_ilocal2imlocal))
-        for iat in keys(ref_ilocal2imlocal)
-            @test ilocal2imlocal[iat] == ref_ilocal2imlocal[iat]
+        for ij in keys(ref_ilocal2imlocal)
+            @test ilocal2imlocal[ij] == ref_ilocal2imlocal[ij]
         end
     end
 
@@ -196,16 +223,19 @@ end
         SA[0, -1,  0],
     ]
     hermitian = false
+
     nhsparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
     hsparsity = Quoll.convert_to_hermitian(nhsparsity)
 
     ref_ij2images = dictionary([
         (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
         (1, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0]],
+       #(2, 1) => [],
         (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
     ])
-    @test sort(keys(hsparsity.ij2images)) == sort(keys(ref_ij2images))
+
     @test sort(hsparsity.images) == sort(images)
+    @test sort(keys(hsparsity.ij2images)) == sort(keys(ref_ij2images))
     for ij in keys(ref_ij2images)
         @test sort(hsparsity.ij2images[ij]) == sort(ref_ij2images[ij])
     end
@@ -213,67 +243,69 @@ end
 
 @testset "convert_to_nonhermitian" begin
 
-    @testset "Missing pair" begin
-        ij2images = dictionary([
-            (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
-            (1, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0]],
-            (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
-        ])
-        images = [
-            SA[0,  0,  0],
-            SA[0,  0,  1],
-            SA[0,  1,  0],
-            SA[0,  0, -1],
-            SA[0, -1,  0],
-        ]
-        hermitian = true
-        hsparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
-        nhsparsity = Quoll.convert_to_nonhermitian(hsparsity)
+    ij2images = dictionary([
+        (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
+        (1, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0]],
+       #(2, 1) => [],
+        (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
+    ])
+    images = [
+        SA[0,  0,  0],
+        SA[0,  0,  1],
+        SA[0,  1,  0],
+        SA[0,  0, -1],
+        SA[0, -1,  0],
+    ]
+    hermitian = true
 
-        ref_ij2images = dictionary([
-            (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
-            (1, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0]],
-            (2, 1) => [SA[0, 0, 0], SA[0, 0, -1], SA[0, -1, 0]],
-            (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
-        ])
-        @test sort(keys(nhsparsity.ij2images)) == sort(keys(ref_ij2images))
-        @test sort(nhsparsity.images) == sort(images)
-        for ij in keys(ref_ij2images)
-            @test sort(nhsparsity.ij2images[ij]) == sort(ref_ij2images[ij])
-        end
+    hsparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
+    nhsparsity = Quoll.convert_to_nonhermitian(hsparsity)
+
+    ref_ij2images = dictionary([
+        (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
+        (1, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0]],
+        (2, 1) => [SA[0, 0, 0], SA[0, 0, -1], SA[0, -1, 0]],
+        (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
+    ])
+
+    @test sort(keys(nhsparsity.ij2images)) == sort(keys(ref_ij2images))
+    for ij in keys(ref_ij2images)
+        @test sort(nhsparsity.ij2images[ij]) == sort(ref_ij2images[ij])
     end
 
-    @testset "Mixed" begin
-        ij2images = dictionary([
-            (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
-            (1, 2) => [SA[0, 0, 0], SA[0, 0, 1]],
-            (2, 1) => [SA[0, 0, 0], SA[0, -1, 0]],
-            (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
-        ])
-        images = [
-            SA[0,  0,  0],
-            SA[0,  0,  1],
-            SA[0,  1,  0],
-            SA[0,  0, -1],
-            SA[0, -1,  0],
-        ]
-        hermitian = true
-        hsparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
-        nhsparsity = Quoll.convert_to_nonhermitian(hsparsity)
+    # Tests for other hermicity types. Now we just assume that the hermicity
+    # implies i ≤ j
+    # @testset "Mixed" begin
+    #     ij2images = dictionary([
+    #         (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
+    #         (1, 2) => [SA[0, 0, 0], SA[0, 0, 1]],
+    #         (2, 1) => [SA[0, 0, 0], SA[0, -1, 0]],
+    #         (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
+    #     ])
+    #     images = [
+    #         SA[0,  0,  0],
+    #         SA[0,  0,  1],
+    #         SA[0,  1,  0],
+    #         SA[0,  0, -1],
+    #         SA[0, -1,  0],
+    #     ]
+    #     hermitian = true
+    #     hsparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
+    #     nhsparsity = Quoll.convert_to_nonhermitian(hsparsity)
 
-        # On-site still contain redundant images
-        ref_ij2images = dictionary([
-            (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
-            (1, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0]],
-            (2, 1) => [SA[0, 0, 0], SA[0, 0, -1], SA[0, -1, 0]],
-            (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
-        ])
-        @test sort(keys(nhsparsity.ij2images)) == sort(keys(ref_ij2images))
-        @test sort(nhsparsity.images) == sort(images)
-        for ij in keys(ref_ij2images)
-            @test sort(nhsparsity.ij2images[ij]) == sort(ref_ij2images[ij])
-        end
-    end
+    #     # On-site still contain redundant images
+    #     ref_ij2images = dictionary([
+    #         (1, 1) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
+    #         (1, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0]],
+    #         (2, 1) => [SA[0, 0, 0], SA[0, 0, -1], SA[0, -1, 0]],
+    #         (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 1, 0], SA[0, 0, -1], SA[0, -1, 0]],
+    #     ])
+    #     @test sort(keys(nhsparsity.ij2images)) == sort(keys(ref_ij2images))
+    #     @test sort(nhsparsity.images) == sort(images)
+    #     for ij in keys(ref_ij2images)
+    #         @test sort(nhsparsity.ij2images[ij]) == sort(ref_ij2images[ij])
+    #     end
+    # end
 
 end
 
@@ -281,17 +313,19 @@ end
     ij2images = dictionary([
         (1, 1) => [SA[0, 0, 0], SA[1, 0, 0]],
         (1, 2) => [SA[0, 0, 0], SA[1, 0, 0]],
+       #(2, 1) => [],
         (2, 2) => [SA[0, 0, 0], SA[0, 0, 1]],
     ])
-    n_atoms = 2
 
-    ij2images_ref = dictionary([
+    ref_ij2images = dictionary([
         (1, 1) => [SA[0, 0, 0], SA[1, 0, 0], SA[-1, 0, 0]],
         (1, 2) => [SA[0, 0, 0], SA[1, 0, 0]],
+       #(2, 1) => [],
         (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]],
     ])
 
-    Quoll.make_onsite_hermitian!(ij2images, n_atoms)
-    @test sort(ij2images[(1, 1)]) == sort(ij2images_ref[(1, 1)])
-    @test sort(ij2images[(2, 2)]) == sort(ij2images_ref[(2, 2)])
+    Quoll.make_onsite_hermitian!(ij2images)
+    for i in 1:2
+        @test sort(ij2images[(i, i)]) == sort(ref_ij2images[(i, i)])
+    end
 end

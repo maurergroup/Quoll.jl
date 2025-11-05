@@ -12,7 +12,31 @@ using SafeTestsets
 
 end
 
+@safetestset "basis.jl" begin
+    include("basis.jl")
+end
+
+@safetestset "shconversion.jl" begin
+    include("shconversion.jl")
+end
+
+@safetestset "sparsity.jl" begin
+    include("sparsity.jl")
+end
+
+@safetestset "spin.jl" begin
+    include("spin.jl")
+end
+
 @safetestset "operators" begin
+
+    @safetestset "canonical" begin
+    
+        @safetestset "bsparse.jl" begin
+            include("operators/canonical/bsparse.jl")
+        end
+
+    end
 
     @safetestset "fhiaims" begin
     

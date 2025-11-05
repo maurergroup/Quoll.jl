@@ -8,7 +8,8 @@ function convert_operators(in_operators, out_operator_type::Type{<:AbstractOpera
 end
 
 # Requires defining appropriate constructor for T2.
-# This function is just an alias for the constructor
+# This function is an alias for the constructor, but also
+# selects appropriate kwargs based on T1 at runtime
 function convert_operator(in_operator::T1, ::Type{T2};
     radii = nothing, hermitian = nothing, float = nothing) where {T1<:AbstractOperator, T2<:AbstractOperator}
 
@@ -20,7 +21,7 @@ end
 
 ### SPARSITY CONVERSION INTERFACE ###
 
-function convert_sparsity(in_metadata::AbstractOperatorMetadata, radii::Dict{ChemicalSpecies}, T::Type{<:AbstractSparsity}; hermitian = false)
+function convert_sparsity(in_metadata::AbstractOperatorMetadata, radii::SpeciesAnyDict, T::Type{<:AbstractSparsity}; hermitian = false)
     @debug "Computing sparsity manually from radii"
     return T(get_atoms(in_metadata), radii, hermitian = hermitian)
 end
