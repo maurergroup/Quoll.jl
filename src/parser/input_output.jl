@@ -1,20 +1,20 @@
 @option struct InputParams <: AbstractQuollParams
     format::Type{<:AbstractOperator}
-    directories::Vector{String}
+    directory::Vector{String}
     operators::Vector{OperatorKind} = get_avail_operatorkinds(format)
     radii::Union{Dict{ChemicalSpecies, Quantity{Float64, Unitful.𝐋, typeof(u"Å")}}, Nothing} = nothing
 
-    function InputParams(format, directories, operators, radii)
-        # Convert `dirs` to absolute paths
-        directories = abspath.(directories)
+    function InputParams(format, directory, operators, radii)
+        # Convert to absolute paths
+        directory = abspath.(directory)
 
-        # Check if directories exist
-        @argcheck all(isdir.(directories)) "Some of the supplied input directories do not exist"
+        # Check if root directories exist
+        @argcheck all(isdir.(directory)) "Some of the supplied input directories do not exist"
 
-        # Walk the directories to obtain all the paths
-        directories = vcat(find_leafdirs.(directories)...)
+        # Check if root directories are not the same
+        @argcheck allunique(directory)
 
-        new(format, directories, operators, radii)
+        new(format, directory, operators, radii)
     end
 end
 
@@ -59,7 +59,7 @@ end
 
 function Configurations.from_dict(
     ::Type{InputParams},
-    ::OptionField{:directories},
+    ::OptionField{:directory},
     ::Type{Vector{String}},
     dirs,
 )

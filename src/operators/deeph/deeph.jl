@@ -13,6 +13,13 @@ struct DeepHOperator{O<:OperatorKind, T<:Number, D<:DeepHDict{T}, M<:DeepHMetada
     metadata::M
 end
 
+const DeepHSHConversion = SHConversion(
+    [[1], [3, 1, 2], [3, 5, 1, 4, 2], [4, 5, 3, 6, 2, 7, 1]],
+    [[1], [1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]],
+)
+
+SHConversion(::Type{DeepHOperator}) = DeepHSHConversion
+
 # TODO: write
 # - R_list.dat
 # - element.dat
@@ -23,12 +30,13 @@ end
 # - rlat.dat
 # - site_positions.dat
 
-const DeepHSHConversion = SHConversion(
-    [[1], [3, 1, 2], [3, 5, 1, 4, 2], [4, 5, 3, 6, 2, 7, 1]],
-    [[1], [1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]],
-)
+### WRITE METHODS ###
 
-SHConversion(::Type{DeepHOperator}) = DeepHSHConversion
+# TODO: Need to figure out the directory first
+function write_operator(dir::AbstractString, operator::DeepHOperator)
+end
+
+### APP-RELATED METHODS ###
 
 get_writeformat(::Val{:deeph}) = DeepHOperator
 

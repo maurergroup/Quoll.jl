@@ -45,21 +45,21 @@ global_logger(
 
 input_filepath = "/home/chem/phrpwt/Jobs/Data_Pipeline/Quoll_Workspace/Quoll/examples/SiC/input_file.toml"
 # input_filepath = abspath(ARGS[1])
-params = from_toml(Quoll.Parser.QuollParams, input_filepath)
+params, input_dirs, output_dirs = Quoll.parse_inputfile(input_filepath)
 
 @info "Splitting configurations across MPI tasks"
 
-N_dirs = length(params.input.directories)
-my_idirs = Quoll.split_work(N_dirs, global_comm, Quoll.DefaultSplit())
+ndirs = length(input_dirs)
+my_idirs = Quoll.split_work(ndirs, global_comm, Quoll.DefaultSplit())
 
 for idir in my_idirs
-    dir = params.input.directories[idir]
+    input_dir = input_dirs[idir]
 
-    @info "Starting configuration $(basename(dir))"
+    @info "Starting configuration $(basename(input_dir))"
     @info "Loading operators"
     
-    operatorkinds = find_operatorkinds(dir, params)
-    operators = load_operators(dir, operatorkinds, params.input.format)
+    operatorkinds = find_operatorkinds(input_dir, params)
+    operators = load_operators(input_dir, operatorkinds, params.input.format)
 
     # TODO: in the future could allow for <other canonical formats/shortcut conversions>
     @info "Converting operators into RealBSparseOperator format"
@@ -77,7 +77,7 @@ for idir in my_idirs
 
         @info "Writing operators"
 
-        # write_operators(params.output.directory, operators)
+        # write_operators(output_dirs[idir], operators)
     end
 
 end

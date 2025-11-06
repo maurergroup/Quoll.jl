@@ -65,6 +65,6 @@ include("parser/kpoint_grid.jl")
 end
 
 # Methods that either require all subparameter types or QuollParams itself
-include("parser/validation.jl")
+include("parser/methods.jl")
 
 end

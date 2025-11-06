@@ -37,7 +37,7 @@ end
         directories, _ = create_temptree([])
 
         @testset "Nominal case" begin
-            d = Dict("format" => "FHI-aims", "directories" => directories, "operators" => "H_ref")
+            d = Dict("format" => "FHI-aims", "directory" => directories, "operators" => "H_ref")
             params = from_dict(Quoll.Parser.InputParams, d)
 
             @test Set(params.operators) == Set([
@@ -47,7 +47,7 @@ end
                 Hamiltonian(source = :ref, spin = :down),
             ])
 
-            d = Dict("format" => "FHI-aims", "directories" => directories, "operators" => ["H_ref"])
+            d = Dict("format" => "FHI-aims", "directory" => directories, "operators" => ["H_ref"])
             params = from_dict(Quoll.Parser.InputParams, d)
 
             @test Set(params.operators) == Set([
@@ -59,7 +59,7 @@ end
         end
 
         @testset "Incorrect kind" begin
-            d = Dict("format" => "FHI-aims", "directories" => directories, "operators" => ["foo", "bar"])
+            d = Dict("format" => "FHI-aims", "directory" => directories, "operators" => ["foo", "bar"])
 
             @test_throws ArgumentError params = from_dict(Quoll.Parser.InputParams, d)
         end
@@ -70,70 +70,41 @@ end
         directories, _ = create_temptree([])
 
         @testset "Nominal case" begin
-            d = Dict("format" => "FHI-aims", "directories" => directories)
+            d = Dict("format" => "FHI-aims", "directory" => directories)
             params = from_dict(Quoll.Parser.InputParams, d)
 
             @test params.format == Quoll.FHIaimsCSCOperator
         end
 
         @testset "Incorrect format" begin
-            d = Dict("format" => "foo", "directories" => directories)
+            d = Dict("format" => "foo", "directory" => directories)
 
             @test_throws ArgumentError from_dict(Quoll.Parser.InputParams, d)
         end
     end
 
     @testset "directories" begin
+        absroot, _ = create_temptree([])
 
-        @testset "Single directory" begin
-            absroot, _ = create_temptree([])
+        @testset "Absolute path" begin
+            directories = absroot
+            reference = [absroot]
 
-            @testset "Absolute path" begin
-                directories = absroot
-                reference = [absroot]
+            d = Dict("format" => "FHI-aims", "directory" => directories)
+            params = from_dict(Quoll.Parser.InputParams, d)
 
-                d = Dict("format" => "FHI-aims", "directories" => directories)
-                params = from_dict(Quoll.Parser.InputParams, d)
-
-                @test params.directories == reference
-            end
-
-            @testset "Relative path" begin
-                directories = relpath(absroot)
-                reference = [absroot]
-
-                d = Dict("format" => "FHI-aims", "directories" => directories)
-                params = from_dict(Quoll.Parser.InputParams, d)
-
-                @test params.directories == reference
-            end
-
+            @test params.directory == reference
         end
 
-        @testset "Multiple directories" begin
-            absroot, abspaths =
-                create_temptree([joinpath("dir", "dir1"), joinpath("dir", "dir2")])
+        @testset "Relative path" begin
+            directories = relpath(absroot)
+            reference = [absroot]
 
-            @testset "Absolute paths" begin
-                directories, reference = absroot, abspaths
+            d = Dict("format" => "FHI-aims", "directory" => directories)
+            params = from_dict(Quoll.Parser.InputParams, d)
 
-                d = Dict("format" => "FHI-aims", "directories" => directories)
-                params = from_dict(Quoll.Parser.InputParams, d)
-
-                @test params.directories == reference
-            end
-
-            @testset "Relative paths" begin
-                directories, reference = relpath(absroot), abspaths
-
-                d = Dict("format" => "FHI-aims", "directories" => directories)
-                params = from_dict(Quoll.Parser.InputParams, d)
-
-                @test params.directories == reference
-            end
-
+            @test params.directory == reference
         end
-
     end
 
     @testset "radii" begin
@@ -141,7 +112,7 @@ end
     
         @testset "Nominal case" begin
             radii = ["Si 12.0 ang", "C 10.0 ang"]
-            d = Dict("format" => "FHI-aims", "directories" => directories, "radii" => radii)
+            d = Dict("format" => "FHI-aims", "directory" => directories, "radii" => radii)
             params = from_dict(Quoll.Parser.InputParams, d)
             @test params.radii == Dict(
                 ChemicalSpecies(:Si) => 12.0u"Å",

@@ -20,6 +20,6 @@ end
     include("parser/postprocessing.jl")
 end
 
-@safetestset "QuollParams" begin
-    include("parser/quollparams.jl")
+@safetestset "methods" begin
+    include("parser/methods.jl")
 end

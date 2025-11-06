@@ -17,7 +17,7 @@ in `files`. Returns the root and the resulting absolute paths of the created fil
 function create_temptree(paths)
     root = mktempdir(; cleanup = true)
 
-    abspaths = []
+    abspaths = String[]
     for p in paths
         push!(abspaths, mkpath(joinpath(root, p)))
     end
