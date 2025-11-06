@@ -1,24 +1,12 @@
-# Files
-# - Input file paths
-# - Output file directory
 [input]
 format = "FHI-aims"
-directories = ["SiC_FHIaims"]
+directory = ["SiC_FHIaims"]
 operators = ["H", "S"]
-# radii = [
-#     "C 12.0 ang",
-#     "Si 12.0 ang",
-# ]
+# radii = ["C 12.0 ang", "Si 12.0 ang"]
 
-# Convert
-# - Output format
-#   - DeepH
-#   - (Universal)
-#   - ...
 [output]
 format = "DeepH"
-directory = "output"
-
+directory = "SiC_DeepH_output"
 
 # Should also allow different types,
 # i.e. Monkhorst-Pack and even possibly different shifts
@@ -26,12 +14,6 @@ directory = "output"
 grid = [10, 10, 10]
 density = 8.0
 
-
-# Core projection
-# - Basis functions to project
-# - Method
-#   - FC99+V
-#   - ...
 [basis_projection]
 projected_basis = [
     "C  (1, 0, 0) type = atomic",
@@ -41,13 +23,6 @@ projected_basis = [
 ]
 method = "FC99V"
 
-
-# Postprocessing
-# - Fermi level
-# - DOS
-#   - Occupation function
-#   - Discretisation
-# - Band structures
 [postprocessing]
 fermi_level = true
 dos = true
@@ -63,20 +38,12 @@ energy_end = 10.0
 energy_begin = -10.0
 n_points = 1000
 
-# By default band paths would be computed using Brillouin
 [postprocessing.band_structure_params]
 bands = [
     "0.0  0.0  0.0 -0.5 -0.5 -0.5 20 G X",
     "0.5  0.0  0.0  0.0  0.0  0.0 20 Y G",
 ]
 
-
-# Model validation
-# - MAE
-# - Eigenvalue error
-# - Electronic entropy error
-# For MAE, I should probably assume that both predicted and true
-# hamiltonian matrices are present in the same directory
 [error_metrics]
 mae = false
 eigenvalue_error = false
@@ -93,10 +60,3 @@ temperature = 1000
 # entropy for different smearing functions
 smearing_function = "fermi_dirac"
 temperature = 1000
-
-
-# Plotting
-# (some should be plotted automatically if available)
-# - DOS
-# - Band structures
-# - ...
