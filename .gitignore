@@ -12,5 +12,8 @@
 /**/*.log
 /**/*.sh
 
-/examples/**/_*
+/examples/**/*
+!/examples/*/*.tar.gz
+!/examples/*/*.toml
+
 /tmp

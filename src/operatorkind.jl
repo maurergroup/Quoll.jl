@@ -7,7 +7,7 @@
     end
 end
 
-function OperatorKind{K}(pairs::Vararg{<:Pair}) where K
+function OperatorKind{K}(pairs::Vararg{P}) where {K, P<:Pair}
     return OperatorKind{K}(dictionary(pairs))
 end
 

@@ -74,14 +74,14 @@ function write_info(dir::AbstractString, operator::DeepHOperator)
 end
 
 function write_lat(dir::AbstractString, operator::DeepHOperator)
-    lat = ustrip(hcat(cell_vectors(get_atoms(operator))...))
+    lat = ustrip.(hcat(cell_vectors(get_atoms(operator))...))
     writedlm(joinpath(dir, "lat.dat"), lat)
 end
 
 # TODO: rlat will be needed elsewhere as well so move
 # its construction into a separate function
 function write_rlat(dir::AbstractString, operator::DeepHOperator)
-    lat = ustrip(hcat(cell_vectors(get_atoms(operator))...))
+    lat = ustrip.(hcat(cell_vectors(get_atoms(operator))...))
     rlat = transpose(lat) \ (2π * I(3))
     writedlm(joinpath(dir, "rlat.dat"), rlat)
 end
@@ -96,7 +96,7 @@ function write_orbital_types(dir::AbstractString, operator::DeepHOperator)
 end
 
 function write_site_positions(dir::AbstractString, operator::DeepHOperator)
-    positions = ustrip(hcat(position(get_atoms(operator), :)...))
+    positions = ustrip.(hcat(position(get_atoms(operator), :)...))
     writedlm(joinpath(dir, "site_positions.dat"), positions)
 end
 

@@ -6,6 +6,4 @@ Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 LoggingExtras = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
 Quoll = "9d051eb3-b680-40d1-9fd2-1a9acedfca1f"
-
-[extras]
 MPIPreferences = "3da0fdf6-3ccc-4f1b-acd9-58baa6c99267"

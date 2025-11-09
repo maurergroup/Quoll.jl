@@ -5,8 +5,11 @@ using CodecZlib
 using Logging
 using LoggingExtras
 using Dictionaries
+using MPI
 
-export create_temptree, setupteardown_tmp, with_nowarn_logger, populate_from_dict!
+export create_temptree
+export populate_from_dict!
+export setupteardown_tmp, with_nowarn_logger, mpiexec_quollapp
 
 """
     create_temptree(files)
@@ -26,12 +29,11 @@ function create_temptree(paths)
 end
 
 # Setup:
-# - create temporary directory,
-# - go to that directory,
-# - copy tarballs into that directory
-# - extract tarballs
+# - create temporary directory /tmp/<...>
+# - go to that directory
+# - extract each tarball in /tmp/<...>/<tarball_name>
 # Teardown:
-# - move back to original directory
+# - move back to the original directory
 function setupteardown_tmp(f; tarballs = [])
     starting_dir = pwd()
     tarballs = abspath.(tarballs)
@@ -70,6 +72,10 @@ end
 
 function populate_from_dict!(v::AbstractVector, d::AbstractDictionary)
     setindex!(v, collect(values(d)), collect(keys(d)))
+end
+
+function mpiexec_quollapp(app, project, inputfile; np, nt = 1)
+    `$(mpiexec()) -n $np $(Base.julia_cmd()) -t $nt --startup-file=no --project=$project $app $inputfile`
 end
 
 end
