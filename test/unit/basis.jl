@@ -27,6 +27,13 @@ const basisset = begin
     )
 end
 
+@testset "get_angular_momenta" begin
+    ref_ells_a = [0, 0, 1]
+    ref_ells_b = [0, 1]
+    @test Quoll.get_angular_momenta(Quoll.basis_species(basisset, ChemicalSpecies(:H1))) == ref_ells_a
+    @test Quoll.get_angular_momenta(Quoll.basis_species(basisset, ChemicalSpecies(:H2))) == ref_ells_b
+end
+
 @testset "get_unique_species" begin
     ref_unique_species = [ChemicalSpecies(:H1), ChemicalSpecies(:H2)]
     @test ref_unique_species == Quoll.get_unique_species(basisset)

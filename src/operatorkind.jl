@@ -1,5 +1,3 @@
-using Base
-
 @auto_hash_equals struct OperatorKind{K}
     tags::Dictionary{Symbol, Symbol}
 

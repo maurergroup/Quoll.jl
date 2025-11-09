@@ -45,7 +45,7 @@ global_logger(
 
 input_filepath = "/home/chem/phrpwt/Jobs/Data_Pipeline/Quoll_Workspace/Quoll/examples/SiC/input_file.toml"
 # input_filepath = abspath(ARGS[1])
-params, input_dirs, output_dirs = Quoll.parse_inputfile(input_filepath)
+params, input_dirs, output_dirs = Quoll.Parser.parse_inputfile(input_filepath)
 
 @info "Splitting configurations across MPI tasks"
 
@@ -77,7 +77,7 @@ for idir in my_idirs
 
         @info "Writing operators"
 
-        # write_operators(output_dirs[idir], operators)
+        write_operators(output_dirs[idir], operators)
     end
 
 end

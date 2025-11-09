@@ -101,7 +101,7 @@ function get_output_dirs(output_root, input_roots, input_eachroot)
             rel_leaves = joinpath.(input_root_basename, rel_leaves)
         end
 
-        push!(output_dirs, joinpath.(output_root, rel_leaves)...)
+        push!(output_dirs, normpath.(joinpath.(output_root, rel_leaves))...)
     end
 
     return output_dirs
@@ -118,7 +118,7 @@ function find_leafdirs(rootdir::T) where {T}
     leafdirs = T[]
     for (root, dirs, _) in walkdir(rootdir)
         if isempty(dirs)
-            push!(leafdirs, joinpath(rootdir, root))
+            push!(leafdirs, normpath(joinpath(rootdir, root)))
         end
     end
     return leafdirs

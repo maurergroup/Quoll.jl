@@ -1,5 +1,3 @@
-using Base
-
 @enum Spin begin
     ⬆ = 1
     ⬇ = -1

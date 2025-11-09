@@ -94,7 +94,7 @@ function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity
                     orders_iat[ib_local],
                     orders_jat[jb_local],
                     iR_local
-                ] = in_data[i_index] * phases_atomarray[iat, jat][ib_local, jb_local]
+                ] = in_data[i_index] * phases_atomarray[iat, jat][ib_local, jb_local] * HARTREE_CODATA_2002
             end
         end
     end
@@ -113,7 +113,7 @@ function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity
             for jb in 1:nbasis
                 @inbounds for ib in nbasis
                     jb > ib || continue
-                    out_keydata_iat[jb, ib, imR] = out_data_iat[ib, jb, iR]
+                    out_keydata_iat[jb, ib, imR] = out_keydata_iat[ib, jb, iR]
                 end
             end
 

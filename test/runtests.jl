@@ -12,6 +12,10 @@ end
     include("unit/unittests.jl")
 end
 
-@safetestset "Regression tests" begin
-    include("regression/regressiontests.jl")
+const JULIA_QUOLL_TEST_REGRESSION = parse(Bool, get(ENV, "JULIA_QUOLL_TEST_REGRESSION", "true"))
+
+if JULIA_QUOLL_TEST_REGRESSION
+    @safetestset "Regression tests" begin
+        include("regression/regressiontests.jl")
+    end
 end

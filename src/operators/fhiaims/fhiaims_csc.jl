@@ -1,5 +1,3 @@
-using DelimitedFiles: readdlm
-
 # TODO: What about atoms, should they be attached to the operator metadata?
 # Some atom information is already present in metadata,
 # e.g. BasisSetMetadata contains chemical species and atom indices.
@@ -170,29 +168,68 @@ get_avail_operatorkinds(::Type{FHIaimsCSCOperator}) = [
     Overlap(source = :ref),
 ]
 
-get_avail_filenames(
+function get_avail_filenames(operatorkind::OperatorKind, pairtypes::Tuple, T::Type{FHIaimsCSCOperator})
+    return [get_avail_filename(operatorkind, pairtypes..., Val(output), T) for output in (:hdf5, :plain)]
+end
+
+get_avail_filename(
     ::Hamiltonian,
     ::Pair{Val{:source}, Val{:ref}},
     ::Pair{Val{:spin}, Val{:none}},
+    ::Val{:hdf5},
     ::Type{FHIaimsCSCOperator}
-) = ["rs_hamiltonian.h5", "rs_hamiltonian.out"]
+) = "rs_hamiltonian.h5"
 
-get_avail_filenames(
+get_avail_filename(
+    ::Hamiltonian,
+    ::Pair{Val{:source}, Val{:ref}},
+    ::Pair{Val{:spin}, Val{:none}},
+    ::Val{:plain},
+    ::Type{FHIaimsCSCOperator}
+) = "rs_hamiltonian.out"
+
+get_avail_filename(
     ::Hamiltonian,
     ::Pair{Val{:source}, Val{:ref}},
     ::Pair{Val{:spin}, Val{:up}},
+    ::Val{:hdf5},
     ::Type{FHIaimsCSCOperator}
-) = ["rs_hamiltonian_up.h5", "rs_hamiltonian_up.out"]
+) = "rs_hamiltonian_up.h5"
 
-get_avail_filenames(
+get_avail_filename(
+    ::Hamiltonian,
+    ::Pair{Val{:source}, Val{:ref}},
+    ::Pair{Val{:spin}, Val{:up}},
+    ::Val{:plain},
+    ::Type{FHIaimsCSCOperator}
+) = "rs_hamiltonian_up.out"
+
+get_avail_filename(
     ::Hamiltonian,
     ::Pair{Val{:source}, Val{:ref}},
     ::Pair{Val{:spin}, Val{:down}},
+    ::Val{:hdf5},
     ::Type{FHIaimsCSCOperator}
-) = ["rs_hamiltonian_down.h5", "rs_hamiltonian_dn.out"]
+) = "rs_hamiltonian_down.h5"
 
-get_avail_filenames(
+get_avail_filename(
+    ::Hamiltonian,
+    ::Pair{Val{:source}, Val{:ref}},
+    ::Pair{Val{:spin}, Val{:down}},
+    ::Val{:plain},
+    ::Type{FHIaimsCSCOperator}
+) = "rs_hamiltonian_dn.out"
+
+get_avail_filename(
     ::Overlap,
     ::Pair{Val{:source}, Val{:ref}},
+    ::Val{:hdf5},
     ::Type{FHIaimsCSCOperator}
-) = ["rs_overlap.h5", "rs_overlap.out"]
+) = "rs_overlap.h5"
+
+get_avail_filename(
+    ::Overlap,
+    ::Pair{Val{:source}, Val{:ref}},
+    ::Val{:plain},
+    ::Type{FHIaimsCSCOperator}
+) = "rs_overlap.out"

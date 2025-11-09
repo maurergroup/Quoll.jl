@@ -1,5 +1,3 @@
-using MPI
-
 # TODO: some notes, move somewhere else
 # GLOBAL COMMUNICATOR
 # comm

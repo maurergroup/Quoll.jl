@@ -1,5 +1,3 @@
-using AtomsIOPython
-
 function recentre(atoms::AbstractSystem)
     # Currently the following function does not support recentering
     # for systems with open boundary conditions

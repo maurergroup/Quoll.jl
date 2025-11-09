@@ -1,5 +1,3 @@
-using Base
-
 ### METADATA INTERFACE ###
 
 abstract type AbstractOperatorMetadata{A, S, B, P} end
@@ -34,6 +32,7 @@ get_float(::AbstractOperator{O, T}) where {O, T} = T
 ### WRITE INTERFACE ###
 
 function write_operators(dir::AbstractString, operators)
+    ispath(dir) || mkpath(dir)
     return write_operator.(dir, operators)
 end
 
@@ -109,6 +108,16 @@ function find_operatorkinds(dir::AbstractString, format::Type{<:AbstractOperator
 end
 
 function get_avail_filenames(operatorkind::OperatorKind, T::Type{<:AbstractOperator})
+    pairtypes = Tuple(Pair(Val(pair[1]), Val(pair[2])) for pair in pairs(operatorkind.tags))
+    return get_avail_filenames(operatorkind, pairtypes, T)
+end
+
+function get_avail_filenames(operatorkind::OperatorKind, pairtypes::Tuple, T::Type{<:AbstractOperator})
+    return [get_avail_filename(operatorkind, pairtypes..., T)]
+end
+
+function get_avail_filename(operator::T) where T<:AbstractOperator
+    operatorkind = get_kind(operator)
     pairtypes = (Pair(Val(pair[1]), Val(pair[2])) for pair in pairs(operatorkind.tags))
-    return get_avail_filenames(operatorkind, pairtypes..., T)
+    return get_avail_filename(operatorkind, pairtypes..., T)
 end

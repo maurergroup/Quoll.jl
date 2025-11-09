@@ -12,7 +12,5 @@
 /**/*.log
 /**/*.sh
 
-/examples/SiC/SiC_FHIaims
-/examples/SiC/SiC_DeepH
-/examples/SiC/SiC_ACEh.h5
+/examples/**/_*
 /tmp

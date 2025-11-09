@@ -1,6 +1,3 @@
-using Base
-using AutoHashEquals
-
 @auto_hash_equals struct BasisMetadata{E}
     z::ChemicalSpecies
     n::Int
@@ -35,7 +32,15 @@ end
 # Whereas basis2atom describes regions of that 3D array which belong
 # to particular atoms.
 
+basis_atom(basisset::BasisSetMetadata, iat::Int) = basisset.basis[basisset.atom2species[iat]]
+basis_species(basisset::BasisSetMetadata, species::ChemicalSpecies) = basisset.basis[species]
+
 get_unique_species(basisset::BasisSetMetadata) = unique(basisset.atom2species)
+
+# Assuming ms that belong to a given l are next to each other
+function get_angular_momenta(basis::Vector{T}) where T<:BasisMetadata
+    return getfield.(filter(orbital -> orbital.l == orbital.m, basis), :l)
+end
 
 get_atom2nbasis(basisset::BasisSetMetadata) = get_atom2nbasis(basisset.basis, basisset.atom2species)
 get_atom2nbasis(basis, atom2species) = [length(basis[z]) for z in atom2species]
@@ -67,25 +72,11 @@ get_basis2atom(atom2nbasis) = reduce(vcat, [fill(iat, nbasis) for (iat, nbasis) 
 
 # Get a number of basis functions for a given chemical species
 function get_species2nbasis(basisset::BasisSetMetadata)
-    # TODO: return frozen little dict instead
-    # return dictionary([
-    #     z => length(basis_species(basisset, z))
-    #     for z in keys(basisset.basis)
-    # ])
     d = Base.ImmutableDict((
         z => length(basis_species(basisset, z))
         for z in keys(basisset.basis)
     )...)
     return d
-end
-
-# TODO: Alternatively (or additionally) could implement Base.getindex for Int and ChemicalSpecies
-function basis_atom(basisset::BasisSetMetadata, iat::Int)
-    return basisset.basis[basisset.atom2species[iat]]
-end
-
-function basis_species(basisset::BasisSetMetadata, species::ChemicalSpecies)
-    return basisset.basis[species]
 end
 
 # Get a number of basis functions belonging to atoms with a lower index for every atom
@@ -95,4 +86,3 @@ function get_atom2offset(basisset::BasisSetMetadata)
 end
 
 get_atom2offset(atom2basis) = [first(interval) - 1 for interval in atom2basis]
-    
