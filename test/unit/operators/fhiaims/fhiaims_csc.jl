@@ -75,7 +75,7 @@ end
                 writedlm(io, rs_hamiltonian)
             end
             operator_data = Quoll.load_operator_data(pwd(), Hamiltonian(source = :ref, spin = :none), FHIaimsCSCOperator)
-            @test operator_data ≈ rs_hamiltonian[begin:end-1]
+            @test operator_data ≈ rs_hamiltonian[begin:end-1] * Quoll.HARTREE_CODATA_2002
         end
     end
 
@@ -86,7 +86,7 @@ end
                 write(dset, rs_hamiltonian)
             end
             operator_data = Quoll.load_operator_data(pwd(), Hamiltonian(source = :ref, spin = :none), FHIaimsCSCOperator)
-            @test operator_data ≈ rs_hamiltonian[begin:end-1]
+            @test operator_data ≈ rs_hamiltonian[begin:end-1] * Quoll.HARTREE_CODATA_2002
         end
 
     end

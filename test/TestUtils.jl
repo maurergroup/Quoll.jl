@@ -9,6 +9,7 @@ using MPI
 
 export create_temptree
 export populate_from_dict!
+export get_translation_invariant
 export setupteardown_tmp, with_nowarn_logger, mpiexec_quollapp
 
 """
@@ -74,8 +75,40 @@ function populate_from_dict!(v::AbstractVector, d::AbstractDictionary)
     setindex!(v, collect(values(d)), collect(keys(d)))
 end
 
-function mpiexec_quollapp(app, project, inputfile; np, nt = 1)
-    `$(mpiexec()) -n $np $(Base.julia_cmd()) -t $nt --startup-file=no --project=$project $app $inputfile`
+# TODO: Instantiation is technically needed only for the CI pipeline.
+# Instead of defaulting to true, instantiate could be changed based on
+# whether it's CI call or not. Furthermore, it only needs to be called once
+# for all regression tests. Nonetheless, I could keep this here as a duplicate
+# because initially I wrote this because of possible race conditions during
+# precompilation when using multiple MPI tasks, but if I understand correctly
+# this might have been fixed in Base Julia already
+function mpiexec_quollapp(app, project, inputfile; np, nt = 1, instantiate = true)
+    cmd_list = Cmd[]
+    if instantiate
+        push!(cmd_list, `$(Base.julia_cmd()) --project=$project -e 'using Pkg; Pkg.instantiate()'`)
+        push!(cmd_list, `$(Base.julia_cmd()) --project=$project -e 'using Pkg; Pkg.precompile()'`)
+    end
+    cmd_mpiexec = `
+        $(mpiexec()) -n $np
+        $(Base.julia_cmd()) -t $nt
+        --startup-file=no
+        --project=$project
+        $app $inputfile
+    `
+    push!(cmd_list, cmd_mpiexec)
+    return cmd_list
+end
+
+# Assuming 3 x N matrix
+function get_translation_invariant(coords::AbstractMatrix)
+    centroid = get_centroid(coords)
+    return coords .- centroid
+end
+
+# Assuming 3 x N matrix -> 3 x 1 matrix
+function get_centroid(coords::AbstractMatrix)
+    norm = 1 / size(coords, 2)
+    return norm * sum(coords, dims = 2)
 end
 
 end

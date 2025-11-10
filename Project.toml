@@ -61,6 +61,8 @@ LoggingExtras = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
+MPIPreferences = "3da0fdf6-3ccc-4f1b-acd9-58baa6c99267"
 
 [targets]
-test = ["Aqua", "LoggingExtras", "AtomsBaseTesting", "Test", "SafeTestsets", "Tar", "CodecZlib"]
+test = ["Aqua", "LoggingExtras", "AtomsBaseTesting", "Test", "SafeTestsets", "Tar", "CodecZlib", "MPI", "MPIPreferences"]

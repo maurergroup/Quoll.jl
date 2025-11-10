@@ -12,6 +12,7 @@ end
     include("unit/unittests.jl")
 end
 
+# TODO: This could be changed to Pkg.test() julia ARG instead
 const JULIA_QUOLL_TEST_REGRESSION = parse(Bool, get(ENV, "JULIA_QUOLL_TEST_REGRESSION", "true"))
 
 if JULIA_QUOLL_TEST_REGRESSION

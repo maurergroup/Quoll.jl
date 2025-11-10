@@ -34,7 +34,7 @@ function FHIaimsCSCOperator(dir::AbstractString, kind::OperatorKind)
     )
 end
 
-function load_operator_data(dir::AbstractString, operatorkind::OperatorKind, ::Type{FHIaimsCSCOperator})
+function load_operator_data(dir::AbstractString, operatorkind::OperatorKind{K}, ::Type{FHIaimsCSCOperator}) where K
     ps = joinpath.(dir, get_avail_filenames(operatorkind, FHIaimsCSCOperator))
     ps = ps[ispath.(ps)]
     @argcheck !isempty(ps)
@@ -52,7 +52,6 @@ function load_operator_data(dir::AbstractString, operatorkind::OperatorKind, ::T
 
         # Ignore the last element (which is always zero)
         pop!(data)
-        return data
     elseif ext == ".out"
         data = readdlm(p)
 
@@ -60,10 +59,15 @@ function load_operator_data(dir::AbstractString, operatorkind::OperatorKind, ::T
         # and ignore the last element (which is always zero)
         data = reshape(data, :)
         pop!(data)
-        return data
     else
         throw(error("Reading the file $(basename(p)) is unsupported"))
     end
+
+    if K == :Hamiltonian
+        data *= HARTREE_CODATA_2002
+    end
+
+    return data
 end
 
 function load_operator_metadata(dir::AbstractString, kind::OperatorKind, ::Type{FHIaimsCSCOperator})
