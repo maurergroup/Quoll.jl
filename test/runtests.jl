@@ -4,18 +4,19 @@ using SafeTestsets
 # across separate test files via `using Main.TestUtils`
 include("TestUtils.jl")
 
-@safetestset "Code quality" begin
-    include("code_quality.jl")
+if "--quality" in ARGS
+    @safetestset "Code quality" begin
+        include("code_quality.jl")
+    end
 end
 
-@safetestset "Unit tests" begin
-    include("unit/unittests.jl")
+if "--unit" in ARGS
+    @safetestset "Unit tests" begin
+        include("unit/unittests.jl")
+    end
 end
 
-# TODO: This could be changed to Pkg.test() julia ARG instead
-const JULIA_QUOLL_TEST_REGRESSION = parse(Bool, get(ENV, "JULIA_QUOLL_TEST_REGRESSION", "true"))
-
-if JULIA_QUOLL_TEST_REGRESSION
+if "--regression" in ARGS
     @safetestset "Regression tests" begin
         include("regression/regressiontests.jl")
     end

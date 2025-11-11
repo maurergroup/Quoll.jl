@@ -75,16 +75,12 @@ function populate_from_dict!(v::AbstractVector, d::AbstractDictionary)
     setindex!(v, collect(values(d)), collect(keys(d)))
 end
 
-# TODO: Instantiation is technically needed only for the CI pipeline.
-# Instead of defaulting to true, instantiate could be changed based on
-# whether it's CI call or not. Furthermore, it only needs to be called once
-# for all regression tests. Nonetheless, I could keep this here as a duplicate
-# because initially I wrote this because of possible race conditions during
-# precompilation when using multiple MPI tasks, but if I understand correctly
-# this might have been fixed in Base Julia already
-function mpiexec_quollapp(app, project, inputfile; np, nt = 1, instantiate = true)
+# Precompile = true could alleviate race conditions during precompilation
+# if there are any (MPI.jl known issue, but if I understand correctly
+# it might have been fixed in Base Julia already)
+function mpiexec_quollapp(app, project, inputfile; np, nt = 1, precompile = false)
     cmd_list = Cmd[]
-    if instantiate
+    if precompile
         push!(cmd_list, `$(Base.julia_cmd()) --project=$project -e 'using Pkg; Pkg.instantiate()'`)
         push!(cmd_list, `$(Base.julia_cmd()) --project=$project -e 'using Pkg; Pkg.precompile()'`)
     end
