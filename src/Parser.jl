@@ -2,6 +2,7 @@ module Parser
 
 using Configurations
 using StaticArrays
+using DelimitedFiles
 using Unitful
 using UnitfulAtomic
 using AtomsBase
