@@ -2,7 +2,7 @@
     format::Type{<:AbstractOperator}
     directory::Vector{String}
     operators::Vector{OperatorKind} = get_avail_operatorkinds(format)
-    radii::Union{Dict{ChemicalSpecies, Quantity{Float64, Unitful.𝐋, typeof(u"Å")}}, Nothing} = nothing
+    radii::Maybe{Dict{ChemicalSpecies, Quantity{Float64, Unitful.𝐋, typeof(u"Å")}}} = nothing
 
     function InputParams(format, directory, operators, radii)
         # Convert to absolute paths

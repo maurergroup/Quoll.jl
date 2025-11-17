@@ -27,7 +27,7 @@ end
     # TODO: Should convert bands to a KPath from Brillouin
     # so that I can use utilities like interpolate and plotting
     # once I have atoms information
-    bands::Union{Vector{KPathParams}, Nothing} = nothing
+    bands::Maybe{Vector{KPathParams}} = nothing
     density::Float64 = 30.0
 
     function BandStructureParams(bands, band_density)

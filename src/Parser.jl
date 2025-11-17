@@ -31,18 +31,20 @@ include("parser/postprocessing.jl")
 include("parser/basis_projection.jl")
 include("parser/error_metrics.jl")
 include("parser/kpoint_grid.jl")
+include("parser/symmetry.jl")
 
 @option struct QuollParams
     input::InputParams
 
     # Optional parameter sets
-    output::Union{OutputParams,Nothing} = nothing
-    basis_projection::Union{BasisProjectionParams,Nothing} = nothing
+    output::Maybe{OutputParams} = nothing
+    basis_projection::Maybe{BasisProjectionParams} = nothing
 
     # Optional parameter sets with existing defaults
     kpoint_grid::KPointGridParams = KPointGridParams()
     postprocessing::PostprocessParams = PostprocessParams()
     error_metrics::ErrorMetricParams = ErrorMetricParams()
+    symmetry::SymmetryParams = SymmetryParams()
 
     function QuollParams(
         input,
@@ -51,6 +53,7 @@ include("parser/kpoint_grid.jl")
         kpoint_grid,
         postprocessing,
         error_metrics,
+        symmetry,
     )
         # Check if input operators are appropriate for the task
         validate_operatorkinds(
@@ -61,7 +64,7 @@ include("parser/kpoint_grid.jl")
             error_metrics,
         )
         search_clashes(basis_projection, error_metrics)
-        new(input, output, basis_projection, kpoint_grid, postprocessing, error_metrics)
+        new(input, output, basis_projection, kpoint_grid, postprocessing, error_metrics, symmetry)
     end
 end
 
