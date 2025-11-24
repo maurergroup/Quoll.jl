@@ -62,9 +62,9 @@ for idir in my_idirs
     operators = load_operators(input_dir, operatorkinds, params.input.format)
 
     # TODO: in the future could allow for <other canonical formats/shortcut conversions>
-    @info "Converting operators into RealBSparseOperator format"
+    @info "Converting operators into BSparseOperator format"
 
-    operators = convert_operators(operators, RealBSparseOperator)
+    operators = convert_operators(operators, BSparseOperator)
 
     if Quoll.Parser.requires_kpoint_grid(params)
         @info "Initialising k-point grid"

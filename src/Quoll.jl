@@ -54,7 +54,7 @@ export write_operator, write_operators
 export find_operatorkinds
 include("operators/interface.jl")
 
-export RealBSparseOperator
+export BSparseOperator
 include("operators/canonical/abstract.jl")
 include("operators/canonical/bsparse.jl")
 

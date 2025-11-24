@@ -1,5 +1,5 @@
 
-function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermitian = true, float = Float64)
+function BSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermitian = true, float = Float64)
 
     in_metadata = get_metadata(in_operator)
     in_atoms = get_atoms(in_operator)
@@ -14,7 +14,7 @@ function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, h
     out_metadata = RealBSparseMetadata(in_atoms, out_sparsity, in_basisset, in_spins)
 
     # Initialize out_operator with zeros
-    out_operator = RealBSparseOperator(in_kind, out_metadata; float = float)
+    out_operator = BSparseOperator(in_kind, out_metadata; float = float)
 
     # Populate out_operator with values from the in_operator
     populate!(out_operator, in_operator)
@@ -23,25 +23,25 @@ function RealBSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, h
 end
 
 # Probably shouldn't be used directly because this assumes appropriately converted metadata
-function populate!(out_operator::RealBSparseOperator, in_operator::FHIaimsCSCOperator)
+function populate!(out_operator::BSparseOperator, in_operator::FHIaimsCSCOperator)
     return populate!(
         get_keydata(out_operator),
         get_sparsity(out_operator),
         get_basisset(out_operator),
         get_data(in_operator),
         get_sparsity(in_operator),
-        RealBSparseOperator,
+        BSparseOperator,
         FHIaimsCSCOperator,
     )
 end
 
 # Loop over the CSC sparsity and occupy appropriate values based on block sparsity
 function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity,
-    out_type::Type{RealBSparseOperator}, in_type::Type{FHIaimsCSCOperator})
+    out_type::Type{BSparseOperator}, in_type::Type{FHIaimsCSCOperator})
 
     # TODO: We could perform hermitian to hermitian populate! and afterwards perform
-    # RealBSparseOperator hermitian -> RealBSparseOperator non-hermitian conversion.
-    # However, one would have to modify RealBSparseOperator(::FHIaimsCSCOperator)
+    # BSparseOperator hermitian -> BSparseOperator non-hermitian conversion.
+    # However, one would have to modify BSparseOperator(::FHIaimsCSCOperator)
     # by computing non-hermitian sparsity and metadata after populate! and initiating
     # the conversion.
     herm_to_nonherm = in_sparsity.hermitian && !out_sparsity.hermitian

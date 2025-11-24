@@ -2,11 +2,11 @@ using StructArrays
 
 # TODO: add additional field with spin metadata? This is related to considerations of
 # the ability to add arbitrary element metadata to `keydata`, how could this be extendable?
-# Would any additional metadata in `keydata` elements would have to be added to RealBSparseMetadata as a field?
+# Would any additional metadata in `keydata` elements would have to be added to BSparseMetadata as a field?
 # This can be achieved by creating a function which would take relevant information such as basisf and spin from
 # RealBSparseMetadata but would also allow to add custom metadata (no need for an extra struct)
 # It would also be nice to be able to change metadata on `keydata` once RealBSparseOperator has been
-# defined already (however this wouldn't be possible without creating a new instance because RealBSparseOperator
+# defined already (however this wouldn't be possible without creating a new instance because BSparseOperator
 # is parametric with respect to KT, but that's possible without copies)
 
 struct RealBSparseMetadata{A<:AbstractSystem, S<:RealBlockSparsity, B<:BasisSetMetadata, P<:Union{SpinsMetadata, Nothing}} <: AbstractBSparseMetadata{A, S, B, P}
@@ -16,23 +16,30 @@ struct RealBSparseMetadata{A<:AbstractSystem, S<:RealBlockSparsity, B<:BasisSetM
     spins::P
 end
 
+struct RecipBSparseMetadata{A<:AbstractSystem, S<:RecipBlockSparsity, B<:BasisSetMetadata, P<:Union{SpinsMetadata, Nothing}} <: AbstractBSparseMetadata{A, S, B, P}
+    atoms::A
+    sparsity::S
+    basisset::B
+    spins::P
+    kpoint::SVector{3, Float64}
+end
+
 # I will usually work with the case where metadata in keydata are named tuples
 # i.e. KT == Tuple{Vector{@NamedTuple{basisf::BasisMetadata{E}, spin::SpinMetadata}}, ...}
 # TODO: Consider changing <:SpeciesPairAnyDict{<:AbstractArray{T}}
-struct RealBSparseOperator{O<:OperatorKind, T<:Real, D<:SpeciesPairAnyDict{<:AbstractArray{T}}, M<:AbstractBSparseMetadata, KD<:AtomPairAnyDict} <: AbstractBSparseOperator{O, T, D, M, KD}
+struct BSparseOperator{O<:OperatorKind, T<:Number, D<:SpeciesPairAnyDict{<:AbstractArray{T}}, M<:AbstractBSparseMetadata, KD<:AtomPairAnyDict} <: AbstractBSparseOperator{O, T, D, M, KD}
     kind::O
     data::D
     metadata::M
     keydata::KD
 end
 
-get_float(operator::RealBSparseOperator) = typeof(operator).parameters[2]
-get_keydata(operator::RealBSparseOperator) = operator.keydata
+get_keydata(operator::BSparseOperator) = operator.keydata
 
 # Constructor to initialize the operator with zero values
 # TODO: possibly split into smaller functions? Also this function could accept
 # additional metadata to go into keydata
-function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; float::Type{T} = Float64) where T
+function BSparseOperator(kind::OperatorKind, metadata::AbstractBSparseMetadata; float::Type{T} = Float64) where T
 
     z1z2_ij2interval = get_z1z2_ij2interval(metadata)
     basisset = get_basisset(metadata)
@@ -97,11 +104,11 @@ function RealBSparseOperator(kind::OperatorKind, metadata::RealBSparseMetadata; 
     end
     keydata = Dictionary{NTuple{2, Int}, typeof(first(keydata_values))}(ij_contiguous, keydata_values)
 
-    return RealBSparseOperator(kind, data, metadata, keydata)
+    return BSparseOperator(kind, data, metadata, keydata)
 end
 
-get_z1z2_ij2interval(operator::RealBSparseOperator) = get_z1z2_ij2interval(get_atoms(operator), get_sparsity(operator))
-get_z1z2_ij2interval(metadata::RealBSparseMetadata) = get_z1z2_ij2interval(get_atoms(metadata), get_sparsity(metadata))
+get_z1z2_ij2interval(operator::BSparseOperator) = get_z1z2_ij2interval(get_atoms(operator), get_sparsity(operator))
+get_z1z2_ij2interval(metadata::AbstractBSparseMetadata) = get_z1z2_ij2interval(get_atoms(metadata), get_sparsity(metadata))
 
 function get_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSparsity)
     unique_species = unique(species(atoms, :))
@@ -132,10 +139,10 @@ function get_z1z2_ij2interval(atoms::AbstractSystem, sparsity::RealBlockSparsity
     return Base.ImmutableDict(pairs(z1z2_ij2interval)...)
 end
 
-get_z1z2_ij2offset(operator::RealBSparseOperator) = get_z1z2_ij2offset(get_atoms(operator), get_sparsity(operator))
-get_z1z2_ij2offset(metadata::RealBSparseMetadata) = get_z1z2_ij2offset(get_atoms(metadata), get_sparsity(metadata))
+get_z1z2_ij2offset(operator::BSparseOperator) = get_z1z2_ij2offset(get_atoms(operator), get_sparsity(operator))
+get_z1z2_ij2offset(metadata::AbstractBSparseMetadata) = get_z1z2_ij2offset(get_atoms(metadata), get_sparsity(metadata))
 
-function get_z1z2_ij2offset(atoms::AbstractSystem, sparsity::RealBlockSparsity)
+function get_z1z2_ij2offset(atoms::AbstractSystem, sparsity::AbstractBlockSparsity)
     # Converting from Base.ImmutableDict to Dictionary
     z1z2_ij2interval = dictionary(get_z1z2_ij2interval(atoms, sparsity))
     return get_z1z2_ij2offset(z1z2_ij2interval)

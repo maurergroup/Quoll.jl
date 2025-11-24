@@ -1,4 +1,4 @@
-function DeepHOperator(in_operator::RealBSparseOperator; radii = nothing, hermitian = false, float = Float64)
+function DeepHOperator(in_operator::BSparseOperator; radii = nothing, hermitian = false, float = Float64)
 
     in_metadata = get_metadata(in_operator)
     in_atoms = get_atoms(in_operator)
@@ -18,7 +18,7 @@ function DeepHOperator(in_operator::RealBSparseOperator; radii = nothing, hermit
     return DeepHOperator(in_kind, out_data, out_metadata)
 end
 
-function convert_operator_data(out_metadata::DeepHMetadata, in_operator::RealBSparseOperator; float = Float64)
+function convert_operator_data(out_metadata::DeepHMetadata, in_operator::BSparseOperator; float = Float64)
     return convert_operator_data(
         get_sparsity(out_metadata),
         get_basisset(out_metadata),
@@ -26,13 +26,13 @@ function convert_operator_data(out_metadata::DeepHMetadata, in_operator::RealBSp
         get_atoms(in_operator),
         get_sparsity(in_operator),
         DeepHOperator,
-        RealBSparseOperator,
+        BSparseOperator,
         float,
     )
 end
 
 function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_atoms, in_sparsity,
-    out_type::Type{DeepHOperator}, in_type::Type{RealBSparseOperator}, ::Type{T} = Float64) where T
+    out_type::Type{DeepHOperator}, in_type::Type{BSparseOperator}, ::Type{T} = Float64) where T
 
     herm_nonherm_conv = in_sparsity.hermitian && !out_sparsity.hermitian
     species2nbasis = get_species2nbasis(out_basisset)

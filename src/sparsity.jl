@@ -1,6 +1,9 @@
 abstract type AbstractSparsity end
 
-struct RealCSCSparsity <: AbstractSparsity
+abstract type AbstractCSCSparsity <: AbstractSparsity end
+abstract type AbstractBlockSparsity <: AbstractSparsity end
+
+struct RealCSCSparsity <: AbstractCSCSparsity
     rowval::Vector{Int}
     colcellptr::Array{Int, 3}
     images::Vector{SVector{3, Int}}
@@ -9,9 +12,14 @@ end
 
 # In reciprocal space we could only have unique (i, j) pairs from `ij2images`
 # Assuming 'U' hermicity
-struct RealBlockSparsity <: AbstractSparsity
+struct RealBlockSparsity <: AbstractBlockSparsity
     ij2images::Dictionary{NTuple{2, Int}, Vector{SVector{3, Int}}}
     images::Vector{SVector{3, Int}}
+    hermitian::Bool
+end
+
+struct RecipBlockSparsity <: AbstractBlockSparsity
+    ij::Vector{NTuple{2, Int}}
     hermitian::Bool
 end
 
@@ -155,9 +163,9 @@ end
 # If converting from type 1 to nonhermitian sparsity then we will have new keys in ij2images.
 # Does that affect how we convert other properties during operator -> operator conversion?
 # This matters only for conversions where image order and (i, j) order matters in other operator
-# fields, e.g. 3rd axis in keydata in RealBSparseOperator contains some order of images
+# fields, e.g. 3rd axis in keydata in BSparseOperator contains some order of images
 # and by changing the sparsity the order would not be the same anymore.
-# This would make RealBSparseOperator -> RealBSparseOperator conversion a bit tricky
+# This would make BSparseOperator -> BSparseOperator conversion a bit tricky
 # but it's not something that would have to be done normally.
 function convert_to_nonhermitian(sparsity::RealBlockSparsity)
     !sparsity.hermitian && return sparsity
