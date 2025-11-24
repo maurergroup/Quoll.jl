@@ -68,12 +68,16 @@ for idir in my_idirs
 
     if Quoll.Parser.requires_kpoint_grid(params)
         @info "Initialising k-point grid"
+
+        # Assuming all operators in the directory are related to the same atoms
+        atoms = Quoll.get_atoms(first(operators))
+        kgrid = get_kgrid(atoms, params)
     end
 
     if !isnothing(params.output)
         @info "Converting operators into $(params.output.format) format"
 
-        operators = convert_operators(operators, params.output.format; hermitian = params.output.hermitian)
+        operators = convert_operators(operators, params.output.format, hermitian = params.output.hermitian)
 
         @info "Writing operators"
 

@@ -14,15 +14,20 @@ using JSON
 using AtomsBase
 using AtomsIOPython
 using NeighbourLists
+using Spglib
 using MPI
 
-# Common tools
+# Constants
+
+include("constants.jl")
+
+# Methods
 
 export recentre
-include("common/constants.jl")
-include("common/mpitools.jl")
-include("common/atomtools.jl")
-include("common/fastlookup.jl")
+include("methods/mpitools.jl")
+include("methods/atomtools.jl")
+include("methods/fastlookup.jl")
+include("methods/symmetry.jl")
 
 # Core types and their methods
 
@@ -36,6 +41,9 @@ export ⬆, ⬇
 include("spin.jl")
 include("sparsity.jl")
 include("shconversion.jl")
+
+export get_kgrid
+include("kgrid.jl")
 
 # Operator formats and their IO routines
 # (Assuming no dependencies between different format types in each file)

@@ -8,14 +8,14 @@ using Main.TestUtils
 @testset "KPointGridParams" begin
 
     @testset "From parameters" begin
-        d = Dict("grid" => [10, 10, 1])
+        d = Dict("mesh" => [10, 10, 1])
         params = from_dict(Quoll.Parser.KPointGridParams, d)
         @test params.kpoints === nothing
-        @test params.grid == SA[10, 10, 1]
+        @test params.mesh == SA[10, 10, 1]
 
         d = Dict("density" => 15.0)
         params = from_dict(Quoll.Parser.KPointGridParams, d)
-        @test params.grid === nothing
+        @test params.mesh === nothing
         @test params.kpoints === nothing
         @test params.density == 15.0
 
@@ -44,10 +44,10 @@ using Main.TestUtils
     end
 
     @testset "Invalid inputs" begin
-        d = Dict("grid" => [10, 10, -1])
+        d = Dict("mesh" => [10, 10, -1])
         @test_throws ArgumentError from_dict(Quoll.Parser.KPointGridParams, d)
 
-        d = Dict("grid" => [10, 10])
+        d = Dict("mesh" => [10, 10])
         @test_throws DimensionMismatch from_dict(Quoll.Parser.KPointGridParams, d)
 
         d = Dict("density" => -10.0)

@@ -25,6 +25,14 @@ end
 const Hamiltonian = OperatorKind{:Hamiltonian}
 const Overlap = OperatorKind{:Overlap}
 
+function allows_symmetry(operatorkinds)
+    return all(allows_symmetry, operatorkinds)
+end
+
+function allows_symmetry(operatorkind::OperatorKind)
+    return isequal(operatorkind.spin, :none)
+end
+
 # Technically eveything below is for parsing only
 # TODO: I should probably consider modifying the `operators` field in the input file
 # to explicitly accept tags so that we don't need to define `get_operatorkinds` for every case.

@@ -83,6 +83,73 @@ function requires_kpoint_grid(params)
     return requires
 end
 
+function validate_crystal_symmetry(input, basis_projection, symmetry)
+    allowed = allows_crystal_symmetry(input, basis_projection)
+    supplied = symmetry.crystal_symmetry
+
+    @argcheck !(isequal(supplied, true) && isequal(allowed, false))
+    return true
+end
+
+function validate_time_reversal(input, symmetry)
+    allowed = allows_time_reversal(input)
+    supplied = symmetry.time_reversal
+
+    @argcheck !(isequal(supplied, true) && isequal(allowed, false))
+    return true
+end
+
+function validate_symmetry(input, basis_projection, symmetry)
+    validate_time_reversal(input, symmetry)
+    validate_crystal_symmetry(input, basis_projection, symmetry)
+    return true
+end
+
+function allows_crystal_symmetry(input, basis_projection)
+    allows = true
+    allows &= isnothing(basis_projection)
+    allows &= allows_symmetry(input.operators)
+    return allows
+end
+allows_crystal_symmetry(params::QuollParams) = allows_crystal_symmetry(params.input, params.basis_projection)
+
+function allows_time_reversal(input)
+    allows = true
+    allows &= allows_symmetry(input.operators)
+    return allows
+end
+allows_time_reversal(params::QuollParams) = allows_time_reversal(params.input)
+
+### CONVENIENCE METHODS ###
+
+function get_time_reversal(params::QuollParams)
+    if !isnothing(params.symmetry.time_reversal)
+        return params.symmetry.time_reversal
+    else
+        return allows_time_reversal(params)
+    end
+end
+
+function get_crystal_symmetry(params::QuollParams)
+    if !isnothing(params.symmetry.crystal_symmetry)
+        return params.symmetry.crystal_symmetry
+    else
+        return allows_crystal_symmetry(params)
+    end
+end
+
+function get_kgrid(atoms::AbstractSystem, params::QuollParams)
+    return get_kgrid(
+        atoms,
+        density = params.kpoint_grid.density,
+        mesh = params.kpoint_grid.mesh,
+        shift = params.kpoint_grid.shift,
+        time_reversal = get_time_reversal(params),
+        crystal_symmetry = get_crystal_symmetry(params),
+        symprec = params.symmetry.symprec,
+    )
+end
+
 ### FILE HANDLING METHODS ###
 
 # Assuming all supplied paths are absolute

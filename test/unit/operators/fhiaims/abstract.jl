@@ -2,6 +2,7 @@ using Quoll
 using StaticArrays
 using AtomsBase
 using Unitful
+using UnitfulAtomic
 
 using Test
 using AtomsBaseTesting
@@ -29,8 +30,8 @@ using Main.TestUtils
     ]u"Å"
     recentered_atoms = periodic_system(
         [
-            ChemicalSpecies(:H) => SA[0.40 + 0.50, 50.0, 50.0]u"Å",
-            ChemicalSpecies(:H) => SA[0.55 - 0.50, 50.0, 50.0]u"Å",
+            Atom(:H, SA[0.40 + 0.50, 50.0, 50.0]u"Å", charge = 0u"e_au", magnetic_moment = 0),
+            Atom(:H, SA[0.55 - 0.50, 50.0, 50.0]u"Å", charge = 0u"e_au", magnetic_moment = 0),
         ],
         cell_vectors,
     )

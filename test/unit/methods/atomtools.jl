@@ -1,4 +1,5 @@
 using Quoll
+using LinearAlgebra
 using Dictionaries
 using StaticArrays
 using AtomsBase
@@ -49,38 +50,26 @@ using Main.TestUtils
 
 end
 
-@testset "speciesdict_to_atomarray" begin
-    z1 = ChemicalSpecies(:H1)
-    z2 = ChemicalSpecies(:H2)
-    atom2species = [z2, z1, z2, z1]
+@testset "get_recip_lattice" begin
+    real_lattice = collect(I(3))
+    recip_lattice = collect(2π * I(3))
+    @test Quoll.get_recip_lattice(real_lattice) == recip_lattice
+end
 
-    vz1 = [5, 6]
-    vz2 = [7, 8]
+@testset "get_frac_positions" begin
+    cellvecs = SA[
+        SA[10.0,  0.0,  0.0],
+        SA[ 0.0, 10.0,  0.0],
+        SA[ 0.0,  0.0, 10.0],
+    ]u"Å"
+    atoms = periodic_system(
+        [
+            ChemicalSpecies(:H1) => SA[0.50, 0.00, 0.00]u"Å",
+            ChemicalSpecies(:H2) => SA[2.00, 0.00, 0.00]u"Å",
+        ],
+        cellvecs,
+    )
 
-    d = dictionary([
-        z1 => vz1,
-        z2 => vz2,
-    ])
-    ref = [vz2, vz1, vz2, vz1]
-
-    @test isequal(Quoll.speciesdict_to_atomarray(d, atom2species), ref)
-
-    vz1z1 = [10, 20]
-    vz1z2 = [30, 40]
-    vz2z1 = missing
-    vz2z2 = [50, 60, 70]
-
-    d = dictionary([
-        (z1, z1) => vz1z1,
-        (z1, z2) => vz1z2,
-        (z2, z2) => vz2z2,
-    ])
-    ref = reshape([
-        vz2z2, vz1z2, vz2z2, vz1z2,
-        vz2z1, vz1z1, vz2z1, vz1z1,
-        vz2z2, vz1z2, vz2z2, vz1z2,
-        vz2z1, vz1z1, vz2z1, vz1z1,
-    ], 4, 4)
-
-    @test isequal(Quoll.speciesdict_to_atomarray(d, atom2species), ref)
+    frac_positions = [0.05 0.20; 0.00 0.00; 0.00 0.00]
+    @test Quoll.get_frac_positions(atoms) ≈ frac_positions
 end

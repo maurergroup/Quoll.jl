@@ -1,19 +1,35 @@
 using SafeTestsets
 
-@safetestset "common" begin
+@safetestset "methods" begin
 
     @safetestset "atomtools.jl" begin
-        include("common/atomtools.jl")
+        include("methods/atomtools.jl")
     end
 
     @safetestset "mpitools.jl" begin
-        include("common/mpitools.jl")
+        include("methods/mpitools.jl")
+    end
+
+    @safetestset "fastlookup.jl" begin
+        include("methods/fastlookup.jl")
+    end
+
+    @safetestset "symmetry.jl" begin
+        include("methods/symmetry.jl")
     end
 
 end
 
 @safetestset "basis.jl" begin
     include("basis.jl")
+end
+
+@safetestset "kgrid.jl" begin
+    include("kgrid.jl")
+end
+
+@safetestset "operatorkind.jl" begin
+    include("operatorkind.jl")
 end
 
 @safetestset "shconversion.jl" begin

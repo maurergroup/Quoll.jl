@@ -4,10 +4,6 @@ using SafeTestsets
     include("parser/common.jl")
 end
 
-@safetestset "input_output.jl" begin
-    include("parser/input_output.jl")
-end
-
 @safetestset "basis_projection.jl" begin
     include("parser/basis_projection.jl")
 end
@@ -16,10 +12,22 @@ end
     include("parser/error_metrics.jl")
 end
 
+@safetestset "input_output.jl" begin
+    include("parser/input_output.jl")
+end
+
+@safetestset "kpoint_grid.jl" begin
+    include("parser/kpoint_grid.jl")
+end
+
 @safetestset "postprocessing.jl" begin
     include("parser/postprocessing.jl")
 end
 
-@safetestset "methods" begin
+@safetestset "symmetry.jl" begin
+    include("parser/symmetry.jl")
+end
+
+@safetestset "methods.jl" begin
     include("parser/methods.jl")
 end

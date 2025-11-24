@@ -11,7 +11,7 @@ directory = "SiC_DeepH_converted"
 # Should also allow different types,
 # i.e. Monkhorst-Pack and even possibly different shifts
 [kpoint_grid]
-grid = [10, 10, 10]
+mesh = [10, 10, 10]
 density = 8.0
 
 [basis_projection]

@@ -1,16 +1,16 @@
 @option struct KPointGridParams <: AbstractQuollParams
-    grid::Maybe{SVector{3, Int}} = nothing
+    mesh::Maybe{SVector{3, Int}} = nothing
     density::Float64 = 10.0
     shift::SVector{3, Bool} = SA[false, false, false]
     kpoints::Maybe{Vector{SVector{4, Float64}}} = nothing
 
-    function KPointGridParams(grid, density, shift, kpoints)
+    function KPointGridParams(mesh, density, shift, kpoints)
 
         # Check if supplied arguments are appropriate
-        !isnothing(grid) && @argcheck all(grid .> 0)
+        !isnothing(mesh) && @argcheck all(mesh .> 0)
         @argcheck density > 0
 
-        new(grid, density, shift, kpoints)
+        new(mesh, density, shift, kpoints)
     end
 end
 
