@@ -1,4 +1,3 @@
-
 function BSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermitian = true, float = Float64)
 
     in_metadata = get_metadata(in_operator)
@@ -14,30 +13,22 @@ function BSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermi
     out_metadata = RealBSparseMetadata(in_atoms, out_sparsity, in_basisset, in_spins)
 
     # Initialize out_operator with zeros
-    out_operator = BSparseOperator(in_kind, out_metadata; float = float)
+    out_operator = build_operator(BSparseOperator, in_kind, out_metadata, uninit = false, value = zero(float))
 
     # Populate out_operator with values from the in_operator
-    populate!(out_operator, in_operator)
+    convert_data!(out_operator, in_operator)
 
     return out_operator
 end
 
 # Probably shouldn't be used directly because this assumes appropriately converted metadata
-function populate!(out_operator::BSparseOperator, in_operator::FHIaimsCSCOperator)
-    return populate!(
-        get_keydata(out_operator),
-        get_sparsity(out_operator),
-        get_basisset(out_operator),
-        get_data(in_operator),
-        get_sparsity(in_operator),
-        BSparseOperator,
-        FHIaimsCSCOperator,
-    )
-end
+function convert_data!(out_operator::BSparseOperator, in_operator::FHIaimsCSCOperator)
 
-# Loop over the CSC sparsity and occupy appropriate values based on block sparsity
-function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity,
-    out_type::Type{BSparseOperator}, in_type::Type{FHIaimsCSCOperator})
+    out_keydata = get_keydata(out_operator)
+    out_sparsity = get_sparsity(out_operator)
+    out_basisset = get_basisset(out_operator)
+    in_data = get_data(in_operator)
+    in_sparsity = get_sparsity(in_operator)
 
     # TODO: We could perform hermitian to hermitian populate! and afterwards perform
     # BSparseOperator hermitian -> BSparseOperator non-hermitian conversion.
@@ -54,7 +45,7 @@ function populate!(out_keydata, out_sparsity, out_basisset, in_data, in_sparsity
     basis2atom = get_basis2atom(out_basisset)
     iglobal2ilocal = get_iglobal2ilocal(out_sparsity)
 
-    shconv = SHConversion(out_type) ∘ inv(SHConversion(in_type))
+    shconv = SHConversion(BSparseOperator) ∘ inv(SHConversion(FHIaimsCSCOperator))
 
     # Use inv(shconv) for orders and phases because matrix is being converted
     # using `type2` conversion, for more information see tests/unit/shconversion.jl

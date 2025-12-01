@@ -30,7 +30,7 @@ function allows_symmetry(operatorkinds)
 end
 
 function allows_symmetry(operatorkind::OperatorKind)
-    return isequal(operatorkind.spin, :none)
+    return (:spin ∉ keys(operatorkind.tags)) || isequal(operatorkind.spin, :none)
 end
 
 # Technically eveything below is for parsing only

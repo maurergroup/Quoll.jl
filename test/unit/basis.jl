@@ -115,3 +115,37 @@ end
     ref_atom2offset = [0, 5, 9, 13]
     @test ref_atom2offset == Quoll.get_atom2offset(basisset)
 end
+
+@testset "get_subbasis_masks" begin
+    a = ChemicalSpecies(:H1)
+    b = ChemicalSpecies(:H2)
+    subbasis = [
+        Quoll.BasisMetadata(a, 2, 0, 0, nothing)
+        Quoll.BasisMetadata(b, 2, 0, 0, nothing)
+        Quoll.BasisMetadata(b, 2, 1, 1, nothing)
+        Quoll.BasisMetadata(a, 1, 0, 0, nothing)
+    ]
+    subbasis_masks_ref = dictionary([
+        a => [1, 1, 0, 0, 0],
+        b => [1, 0, 0, 1]
+    ])
+    @test Quoll.get_subbasis_masks(basisset, subbasis) == subbasis_masks_ref
+end
+
+@testset "get_dense_subbasis_mask" begin
+    a = ChemicalSpecies(:H1)
+    b = ChemicalSpecies(:H2)
+    subbasis = [
+        Quoll.BasisMetadata(a, 2, 0, 0, nothing)
+        Quoll.BasisMetadata(b, 2, 0, 0, nothing)
+        Quoll.BasisMetadata(b, 2, 1, 1, nothing)
+        Quoll.BasisMetadata(a, 1, 0, 0, nothing)
+    ]
+    dense_subbasis_mask_ref = [
+        1, 1, 0, 0, 0,
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 1, 0, 0, 0
+    ]
+    @test Quoll.get_dense_subbasis_mask(basisset, subbasis) == dense_subbasis_mask_ref
+end

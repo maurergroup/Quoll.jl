@@ -10,13 +10,23 @@ end
 # Requires defining appropriate constructor for T2.
 # This function is an alias for the constructor, but also
 # selects appropriate kwargs based on T1 at runtime
-function convert_operator(in_operator::T1, ::Type{T2};
-    radii = nothing, hermitian = nothing, float = nothing) where {T1<:AbstractOperator, T2<:AbstractOperator}
+function convert_operator(in_operator::T₁, ::Type{T₂};
+    radii = nothing, hermitian = nothing, float = nothing) where {T₁<:AbstractOperator, T₂<:AbstractOperator}
 
     isnothing(hermitian) && (hermitian = get_sparsity(in_operator).hermitian)
     isnothing(float) && (float = get_float(in_operator))
 
-    return T2(in_operator, radii = radii, hermitian = hermitian, float = float)
+    return T₂(in_operator, radii = radii, hermitian = hermitian, float = float)
+end
+
+### FOURIER TRANSFORM INTERFACE ###
+
+function fourier_transform(in_operator::T₁, kpoints, ::Type{T₂}) where {T₁<:AbstractOperator, T₂<:AbstractOperator}
+    if !isa(kpoints, AbstractVector{<:AbstractVector})
+        kpoints = [kpoints]
+    end
+    phases = eachcol(precompute_phases(kpoints, get_sparsity(in_operator).images))
+    return fourier_transform(in_operator, kpoints, phases, T₂)
 end
 
 ### SPARSITY CONVERSION INTERFACE ###

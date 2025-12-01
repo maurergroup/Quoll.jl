@@ -83,70 +83,86 @@ function requires_kpoint_grid(params)
     return requires
 end
 
-function validate_crystal_symmetry(input, basis_projection, symmetry)
-    allowed = allows_crystal_symmetry(input, basis_projection)
-    supplied = symmetry.crystal_symmetry
-
-    @argcheck !(isequal(supplied, true) && isequal(allowed, false))
-    return true
-end
-
-function validate_time_reversal(input, symmetry)
-    allowed = allows_time_reversal(input)
-    supplied = symmetry.time_reversal
-
-    @argcheck !(isequal(supplied, true) && isequal(allowed, false))
-    return true
-end
-
 function validate_symmetry(input, basis_projection, symmetry)
     validate_time_reversal(input, symmetry)
     validate_crystal_symmetry(input, basis_projection, symmetry)
     return true
 end
 
-function allows_crystal_symmetry(input, basis_projection)
+function validate_time_reversal(input, symmetry)
+    allowed = allows_time_reversal(input.operators)
+    supplied = symmetry.time_reversal
+
+    @argcheck !(isequal(supplied, true) && isequal(allowed, false))
+    return true
+end
+
+function validate_crystal_symmetry(input, basis_projection, symmetry)
+    allowed = allows_crystal_symmetry(input.operators, basis_projection)
+    supplied = symmetry.crystal_symmetry
+
+    @argcheck !(isequal(supplied, true) && isequal(allowed, false))
+    return true
+end
+
+allows_time_reversal(operatorkinds, ::QuollParams) = allows_time_reversal(operatorkinds)
+
+function allows_time_reversal(operatorkinds)
+    allows = true
+    allows &= allows_symmetry(operatorkinds)
+    return allows
+end
+
+allows_crystal_symmetry(operatorkinds, params::QuollParams) = allows_crystal_symmetry(operatorkinds, params.basis_projection)
+
+function allows_crystal_symmetry(operatorkinds, basis_projection)
     allows = true
     allows &= isnothing(basis_projection)
-    allows &= allows_symmetry(input.operators)
+    allows &= allows_symmetry(operatorkinds)
     return allows
 end
-allows_crystal_symmetry(params::QuollParams) = allows_crystal_symmetry(params.input, params.basis_projection)
-
-function allows_time_reversal(input)
-    allows = true
-    allows &= allows_symmetry(input.operators)
-    return allows
-end
-allows_time_reversal(params::QuollParams) = allows_time_reversal(params.input)
 
 ### CONVENIENCE METHODS ###
 
-function get_time_reversal(params::QuollParams)
+function get_time_reversal(operatorkinds, params::QuollParams)
     if !isnothing(params.symmetry.time_reversal)
         return params.symmetry.time_reversal
     else
-        return allows_time_reversal(params)
+        return allows_time_reversal(operatorkinds, params)
     end
 end
 
-function get_crystal_symmetry(params::QuollParams)
+function get_crystal_symmetry(operatorkinds, params::QuollParams)
     if !isnothing(params.symmetry.crystal_symmetry)
         return params.symmetry.crystal_symmetry
     else
-        return allows_crystal_symmetry(params)
+        return allows_crystal_symmetry(operatorkinds, params)
     end
 end
 
-function get_kgrid(atoms::AbstractSystem, params::QuollParams)
+function get_kgrid(atoms::AbstractSystem, operatorkinds, params::QuollParams)
     return get_kgrid(
         atoms,
         density = params.kpoint_grid.density,
         mesh = params.kpoint_grid.mesh,
         shift = params.kpoint_grid.shift,
-        time_reversal = get_time_reversal(params),
-        crystal_symmetry = get_crystal_symmetry(params),
+        time_reversal = get_time_reversal(operatorkinds, params),
+        crystal_symmetry = get_crystal_symmetry(operatorkinds, params),
         symprec = params.symmetry.symprec,
+    )
+end
+
+function perform_core_projection(operators, kgrid::KGrid, my_ikpoints, comm::MPI.Comm, params::QuollParams)
+    # TODO: in the future if the projection method is not just a singleton
+    # but also depends on parameters, those parameters can be parsed in as well
+    # and fed into the constructor `method()` here
+    return perform_core_projection(
+        operators,
+        params.basis_projection.projected_basis,
+        kgrid,
+        my_ikpoints,
+        comm,
+        params.basis_projection.method(),
     )
 end
 

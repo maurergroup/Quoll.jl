@@ -3,16 +3,15 @@
 # and some file containing symmetry operations like obtaining rotations
 # and checking if the system has inversion symmetry or not (relevant for Brillouin.jl)
 
-# TODO:
-# - Would be useful to know whether it contains symmetries or not, and which ones
-# - There needs to be a way to distribute k-points to MPI tasks
-#   (to achieve this could have an outer constructor which would take full KGrid
-#   plus my_indices and would return a smaller KGrid)
 struct KGrid{T, W}
     kpoints::T
     weights::W
     time_reversal::Union{Missing, Bool}
     crystal_symmetry::Union{Missing, Bool}
+end
+
+function get_nkpoints(kgrid::KGrid)
+    return length(kgrid.kpoints)
 end
 
 function get_kgrid(atoms::AbstractSystem; density = nothing, mesh = nothing,
@@ -94,4 +93,14 @@ end
 function get_recip_mesh(real_lattice, density)
     recip_basis_lengths = norm.(eachcol(get_recip_lattice(real_lattice)))
     return ceil(Int, recip_basis_lengths .* density)
+end
+
+# Returns a matrix
+function precompute_phases(ks, ts)
+    K = reduce(hcat, ks)
+    T = reduce(hcat, ts)
+
+    dots = T' * K
+
+    return cis.(2π .* dots)
 end

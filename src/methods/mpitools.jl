@@ -1,9 +1,7 @@
-# TODO: some notes, move somewhere else
 # GLOBAL COMMUNICATOR
 # comm
 # comm_size (can be obtained from comm)
 # my_rank (can be obtained from comm)
-
 # my_configs (can be obtained from (my_rank, comm_size, n_structures))
 
 # SINGLE CONFIG COMMUNICATOR
@@ -11,13 +9,12 @@
 # subcomm
 # subcomm_size (can be obtained from subcomm)
 # my_subrank (can be obtained from subcomm)
-
 # my_kpoints (can be obtained from (my_subrank, subcomm_size, n_kpoints))
 
 # SINGLE KPOINT COMMUNICATOR
 # (if more than one k-point per mpi task, then subsubcomm_size = 1)
 # - AFAIK we don't need this one because we will not be implementing ScaLAPACK for now
-# - Instead of this, it's better to initialise the script with fewer 
+# - Instead of this, it's better to initialise the script with fewer processes
 # subsubcomm
 # subsubcomm_size (can be obtained from subsubcomm)
 # my_subsubrank (can be obtained from subsubcomm)

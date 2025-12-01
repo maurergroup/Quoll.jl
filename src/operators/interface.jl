@@ -29,6 +29,74 @@ get_spins(operator::AbstractOperator) = operator.metadata.spins
 
 get_float(::AbstractOperator{O, T}) where {O, T} = T
 
+### FACTORIES ###
+
+function Base.zero(operator::T) where T<:AbstractOperator
+    return build_operator(
+        T, get_kind(operator), get_metadata(operator),
+        uninit = false,
+        value = zero(get_float(operator)),
+    )
+end
+
+function Base.similar(operator::T) where T<:AbstractOperator
+    return build_operator(
+        T, get_kind(operator), get_metadata(operator),
+        uninit = true,
+        type = get_float(operator)
+    )
+end
+
+function build_operator(::Type{T}, operatorkind::OperatorKind, metadata::AbstractOperatorMetadata;
+    uninit = false, value = 0.0, type = Nothing) where T<:AbstractOperator
+    constructor = Base.typename(T).wrapper
+    return constructor(operatorkind, metadata, uninit = uninit, value = value, type = type)
+end
+
+function build_operator(::Type{T}, operatorkind::OperatorKind, data, metadata::AbstractOperatorMetadata
+    ) where T<:AbstractOperator
+    constructor = Base.typename(T).wrapper
+    return constructor(operatorkind, data, metadata)
+end
+
+### BASIS SET PROJECTION ###
+
+# Assumes only basis and spins explicitly depend on specific orbitals.
+# If this is not the case for a given metadata type then this method
+# needs to be specialised for that typ
+function construct_subbasis_metadata(metadata::AbstractOperatorMetadata, subbasis::Vector{T};
+    inverted = false) where T<:BasisMetadata
+
+    basisset = get_basisset(metadata)
+    spins = get_spins(metadata)
+
+    subbasis_masks = get_subbasis_masks(basisset, subbasis, inverted = inverted)
+    subbasisset = BasisSetMetadata(basisset, subbasis_masks)
+    isnothing(spins) ? subspins = nothing : subspins = SpinsMetadata(spins, subbasis_masks)
+
+    return construct_subbasis_metadata(metadata, subbasisset, subspins)
+end
+
+function construct_subbasis_metadata(metadata::M, subbasisset::BasisSetMetadata, subspins::Union{SpinsMetadata, Nothing}
+    ) where M<:AbstractOperatorMetadata
+
+    field_symbols = fieldnames(M)
+    nfields = length(field_symbols)
+
+    newfields = ntuple(Val(nfields)) do i_field
+        field_symbol = field_symbols[i_field]
+        if isequal(field_symbol, :basisset)
+            return subbasisset
+        elseif isequal(field_symbol, :spins)
+            return subspins
+        else
+            getfield(metadata, field_symbol)
+        end
+    end
+
+    return M(newfields...)
+end
+
 ### WRITE INTERFACE ###
 
 function write_operators(dir::AbstractString, operators)

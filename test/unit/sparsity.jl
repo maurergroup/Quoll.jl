@@ -145,18 +145,79 @@ end
         @test iexternal2ilocal[(i, j)] == ref_iexternal2ilocal[(i, j)]
     end
 
+    # ij2images = dictionary([
+    #     (1, 1) => [SA[0, 0, 1], SA[0, 0, -1], SA[0, 0, 0], SA[-1, 1, 0], SA[1, -1, 0]],
+    #     (1, 2) => [SA[0, 0, 1], SA[0, 0, 0]],
+    #     (2, 1) => [SA[0, 0, 0], SA[0, 0, -1]],
+    #     (2, 2) => [SA[0, 0, 1], SA[0, 0, -1], SA[0, 0, 0], SA[-1, 1, 0], SA[1, -1, 0]],
+    # ])
+    # images = [
+    #     SA[ 0,  0,  0],
+    #     SA[ 0,  0,  1],
+    #     SA[ 0,  0, -1],
+    #     SA[-1,  1,  0],
+    #     SA[ 1, -1,  0],
+    # ]
     ref_iexternal2imlocal = dictionary([
         (1, 1) => [3, 2, 1, 5, 4],
-        (1, 2) => [1, 2, n, n, n],
-        (2, 1) => [2, n, 1, n ,n],
+        (1, 2) => [2, n, 1, n, n],
+        (2, 1) => [1, 2, n, n ,n],
         (2, 2) => [3, 2, 1, 5, 4],
     ])
 
     iexternal2imlocal = Quoll.get_iexternal2imlocal(images, sparsity)
-    @test sort(keys(iexternal2ilocal)) == sort(keys(ref_iexternal2ilocal))
+    @test sort(keys(iexternal2imlocal)) == sort(keys(ref_iexternal2imlocal))
     for i in 1:2, j in 1:2
-        (i, j) ∈ keys(ref_iexternal2ilocal) || continue
-        @test iexternal2ilocal[(i, j)] == ref_iexternal2ilocal[(i, j)]
+        (i, j) ∈ keys(ref_iexternal2imlocal) || continue
+        @test iexternal2imlocal[(i, j)] == ref_iexternal2imlocal[(i, j)]
+    end
+end
+
+@testset "get_ilocal2iexternal" begin
+    ij2images = dictionary([
+        (1, 1) => [SA[0, 0, 1], SA[0, 0, -1], SA[0, 0, 0], SA[-1, 1, 0], SA[1, -1, 0]],
+        (1, 2) => [SA[0, 0, 1], SA[0, 0, 0]],
+        (2, 1) => [SA[0, 0, 0], SA[0, 0, -1]],
+        (2, 2) => [SA[0, 0, 1], SA[0, 0, -1], SA[0, 0, 0], SA[-1, 1, 0], SA[1, -1, 0]],
+    ])
+    images = [
+        SA[ 0,  0,  0],
+        SA[ 0,  0,  1],
+        SA[ 0,  0, -1],
+        SA[-1,  1,  0],
+        SA[ 1, -1,  0],
+    ]
+    hermitian = false
+
+    sparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
+    n = nothing
+
+    ref_ilocal2iexternal = dictionary([
+        (1, 1) => [2, 3, 1, 4, 5],
+        (1, 2) => [2, 1],
+        (2, 1) => [1, 3],
+        (2, 2) => [2, 3, 1, 4, 5],
+    ])
+
+    ilocal2iexternal = Quoll.get_ilocal2iexternal(images, sparsity)
+    @test sort(keys(ilocal2iexternal)) == sort(keys(ref_ilocal2iexternal))
+    for i in 1:2, j in 1:2
+        (i, j) ∈ keys(ref_ilocal2iexternal) || continue
+        @test ilocal2iexternal[(i, j)] == ref_ilocal2iexternal[(i, j)]
+    end
+
+    ref_imlocal2iexternal = dictionary([
+        (1, 1) => [3, 2, 1, 5, 4],
+        (1, 2) => [3, 1],
+        (2, 1) => [1, 2],
+        (2, 2) => [3, 2, 1, 5, 4],
+    ])
+
+    imlocal2iexternal = Quoll.get_imlocal2iexternal(images, sparsity)
+    @test sort(keys(imlocal2iexternal)) == sort(keys(ref_imlocal2iexternal))
+    for i in 1:2, j in 1:2
+        (i, j) ∈ keys(ref_imlocal2iexternal) || continue
+        @test imlocal2iexternal[(i, j)] == ref_imlocal2iexternal[(i, j)]
     end
 end
 

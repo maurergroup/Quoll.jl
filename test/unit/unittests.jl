@@ -24,8 +24,8 @@ end
     include("basis.jl")
 end
 
-@safetestset "kgrid.jl" begin
-    include("kgrid.jl")
+@safetestset "kpoints.jl" begin
+    include("kpoints.jl")
 end
 
 @safetestset "operatorkind.jl" begin

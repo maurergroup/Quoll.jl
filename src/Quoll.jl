@@ -1,9 +1,11 @@
 module Quoll
 
+using Base
 using Reexport
 using ArgCheck
 using LinearAlgebra
 using StaticArrays
+using OffsetArrays
 using Dictionaries
 using AutoHashEquals
 using AxisKeys
@@ -43,7 +45,7 @@ include("sparsity.jl")
 include("shconversion.jl")
 
 export get_kgrid
-include("kgrid.jl")
+include("kpoints.jl")
 
 # Operator formats and their IO routines
 # (Assuming no dependencies between different format types in each file)
@@ -54,9 +56,10 @@ export write_operator, write_operators
 export find_operatorkinds
 include("operators/interface.jl")
 
-export BSparseOperator
+export BSparseOperator, DenseOperator
 include("operators/canonical/abstract.jl")
 include("operators/canonical/bsparse.jl")
+include("operators/canonical/dense.jl")
 
 export DeepHOperator
 include("operators/deeph/deeph.jl")
@@ -68,8 +71,10 @@ include("operators/fhiaims/fhiaims_csc.jl")
 # Operator format conversions
 
 export convert_operator, convert_operators
+export fourier_transform
 include("conversions/interface.jl")
 
+include("conversions/canonical/bsparse.jl")
 include("conversions/fhiaims/fhiaims_csc.jl")
 include("conversions/deeph/deeph.jl")
 

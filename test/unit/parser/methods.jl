@@ -155,15 +155,6 @@ end
 end
 
 @testset "requires_kpoint_grid" begin
-# function requires_kpoint_grid(params::QuollParams)
-#     requires = false
-#     requires |= !isnothing(params.basis_projection)
-#     requires |= params.postprocessing.fermi_level
-#     requires |= params.postprocessing.dos
-#     requires |= params.error_metrics.eigenvalue_error
-#     requires |= params.error_metrics.el_entropy_error
-#     return requires
-# end
 
     params = DummyQuollParams(
         nothing,

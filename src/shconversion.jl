@@ -1,6 +1,3 @@
-using Base
-using OffsetArrays
-
 # Conversion from wiki to a given format
 struct SHConversion{T}
     orders::T

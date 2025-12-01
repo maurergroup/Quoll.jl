@@ -73,3 +73,29 @@ end
     frac_positions = [0.05 0.20; 0.00 0.00; 0.00 0.00]
     @test Quoll.get_frac_positions(atoms) ≈ frac_positions
 end
+
+@testset "get_species2atom" begin
+    cellvecs = SA[
+        SA[10.0,  0.0,  0.0],
+        SA[ 0.0, 10.0,  0.0],
+        SA[ 0.0,  0.0, 10.0],
+    ]u"Å"
+    atoms = periodic_system(
+        [
+            ChemicalSpecies(:He) => SA[0.00, 1.00, 0.00]u"Å",
+            ChemicalSpecies(:H) => SA[1.00, 0.00, 0.00]u"Å",
+            ChemicalSpecies(:H) => SA[2.00, 0.00, 0.00]u"Å",
+            ChemicalSpecies(:He) => SA[0.00, 2.00, 0.00]u"Å",
+            ChemicalSpecies(:Li) => SA[0.00, 0.00, 1.00]u"Å",
+            ChemicalSpecies(:He) => SA[0.00, 3.00, 0.00]u"Å",
+        ],
+        cellvecs,
+    )
+
+    species2atom_ref = Dictionary(
+        [ChemicalSpecies(:H), ChemicalSpecies(:He), ChemicalSpecies(:Li)],
+        [[2, 3], [1, 4, 6], [5]]
+    )
+
+    @test sort(Quoll.get_species2atom(atoms)) == sort(species2atom_ref)
+end

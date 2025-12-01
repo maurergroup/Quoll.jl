@@ -1,13 +1,23 @@
 const DeepHDict{T, N} = AbstractAnyDict{NTuple{5, Int}, <:AbstractArray{T, N}}
 
-struct DeepHMetadata{A<:AbstractSystem, S<:RealBlockSparsity, B<:BasisSetMetadata, P<:Union{SpinsMetadata, Nothing}} <: AbstractOperatorMetadata{A, S, B, P}
+struct DeepHMetadata{
+    A<:AbstractSystem,
+    S<:RealBlockSparsity,
+    B<:BasisSetMetadata,
+    P<:Union{SpinsMetadata, Nothing}
+} <: AbstractOperatorMetadata{A, S, B, P}
     atoms::A
     sparsity::S
     basisset::B
     spins::P
 end
 
-struct DeepHOperator{O<:OperatorKind, T<:Number, D<:DeepHDict{T}, M<:DeepHMetadata} <: AbstractOperator{O, T, D, M}
+struct DeepHOperator{
+    O<:OperatorKind,
+    T<:Number,
+    D<:DeepHDict{T},
+    M<:DeepHMetadata
+} <: AbstractOperator{O, T, D, M}
     kind::O
     data::D
     metadata::M

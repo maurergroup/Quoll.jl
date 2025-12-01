@@ -11,14 +11,24 @@
 # the dimension of space and Unitful quantities which, for example, would not
 # change for different atoms in a dataset
 
-struct FHIaimsCSCMetadata{A<:AbstractSystem, S<:RealCSCSparsity, B<:BasisSetMetadata, P<:Union{SpinsMetadata, Nothing}} <: AbstractFHIaimsMetadata{A, S, B, P}
+struct FHIaimsCSCMetadata{
+    A<:AbstractSystem,
+    S<:RealCSCSparsity,
+    B<:BasisSetMetadata,
+    P<:Union{SpinsMetadata, Nothing}
+} <: AbstractFHIaimsMetadata{A, S, B, P}
     atoms::A
     sparsity::S
     basisset::B
     spins::P
 end
 
-struct FHIaimsCSCOperator{O<:OperatorKind, T<:Number, D<:AbstractVector{T}, M<:FHIaimsCSCMetadata} <: AbstractFHIaimsOperator{O, T, D, M}
+struct FHIaimsCSCOperator{
+    O<:OperatorKind,
+    T<:Number,
+    D<:AbstractVector{T},
+    M<:FHIaimsCSCMetadata
+} <: AbstractFHIaimsOperator{O, T, D, M}
     kind::O
     data::D
     metadata::M

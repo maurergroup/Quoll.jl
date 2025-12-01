@@ -1,7 +1,10 @@
+# Assuming 'U' hermicity
+
 abstract type AbstractSparsity end
 
 abstract type AbstractCSCSparsity <: AbstractSparsity end
 abstract type AbstractBlockSparsity <: AbstractSparsity end
+abstract type AbstractDenseSparsity <: AbstractSparsity end
 
 struct RealCSCSparsity <: AbstractCSCSparsity
     rowval::Vector{Int}
@@ -10,8 +13,12 @@ struct RealCSCSparsity <: AbstractCSCSparsity
     hermitian::Bool
 end
 
-# In reciprocal space we could only have unique (i, j) pairs from `ij2images`
-# Assuming 'U' hermicity
+struct RecipCSCSparsity <: AbstractCSCSparsity
+    rowval::Vector{Int}
+    colptr::Vector{Int}
+    hermitian::Bool
+end
+
 struct RealBlockSparsity <: AbstractBlockSparsity
     ij2images::Dictionary{NTuple{2, Int}, Vector{SVector{3, Int}}}
     images::Vector{SVector{3, Int}}
@@ -20,6 +27,15 @@ end
 
 struct RecipBlockSparsity <: AbstractBlockSparsity
     ij::Vector{NTuple{2, Int}}
+    hermitian::Bool
+end
+
+struct RealDenseSparsity <: AbstractDenseSparsity
+    images::Vector{SVector{3, Int}}
+    hermitian::Bool
+end
+
+struct RecipDenseSparsity <: AbstractDenseSparsity
     hermitian::Bool
 end
 
@@ -104,6 +120,26 @@ end
 function get_iexternal2imlocal(images, sparsity::RealBlockSparsity)
     return map(sparsity.ij2images) do images_local
         indexin(images, -images_local)
+    end
+end
+
+# local ⊆ global
+function get_ilocal2iglobal(sparsity::RealBlockSparsity)
+    ilocal2iexternal = get_ilocal2iexternal(sparsity.images, sparsity)
+    return map(ilocal2iexternal) do ilocal2iexternal_ij
+        convert(Vector{Int}, ilocal2iexternal_ij)
+    end
+end
+
+function get_ilocal2iexternal(images, sparsity::RealBlockSparsity)
+    return map(sparsity.ij2images) do images_local
+        indexin(images_local, images)
+    end
+end
+
+function get_imlocal2iexternal(images, sparsity::RealBlockSparsity)
+    return map(sparsity.ij2images) do images_local
+        indexin(-images_local, images)
     end
 end
 
@@ -266,3 +302,29 @@ function RealBlockSparsity(colcellptr::Array{T, 3}, rowval::Vector{T}, images, b
     
     return RealBlockSparsity(ij2images, images, true)
 end
+
+function convert_sparsity(in_sparsity::RealBlockSparsity, ::Type{RecipDenseSparsity};
+    hermitian = false)
+    @assert isequal(in_sparsity.hermitian, hermitian)
+    return RecipDenseSparsity(hermitian)
+end
+
+# struct RealBlockSparsity <: AbstractBlockSparsity
+#     ij2images::Dictionary{NTuple{2, Int}, Vector{SVector{3, Int}}}
+#     images::Vector{SVector{3, Int}}
+#     hermitian::Bool
+# end
+
+# struct RecipBlockSparsity <: AbstractBlockSparsity
+#     ij::Vector{NTuple{2, Int}}
+#     hermitian::Bool
+# end
+
+# struct RealDenseSparsity <: AbstractDenseSparsity
+#     images::Vector{SVector{3, Int}}
+#     hermitian::Bool
+# end
+
+# struct RecipDenseSparsity <: AbstractDenseSparsity
+#     hermitian::Bool
+# end

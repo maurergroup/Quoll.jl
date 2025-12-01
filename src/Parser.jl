@@ -7,19 +7,24 @@ using Unitful
 using UnitfulAtomic
 using AtomsBase
 using ArgCheck
+using MPI
 
 using ..Quoll
 using ..Quoll:
     AbstractOperator,
     OperatorKind,
+    KGrid,
     allows_symmetry,
     get_avail_operatorkinds,
     get_operatorkinds,
     get_readformat,
     get_writeformat
 import ..Quoll: find_operatorkinds, get_kgrid
+
 using ..Projections
 using ..Projections: AbstractBasisProjection, get_basis_projection
+import ..Projections: perform_core_projection
+
 using ..Postprocessing
 using ..Postprocessing: SmearingFunction, get_smearing
 

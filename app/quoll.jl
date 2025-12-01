@@ -43,7 +43,6 @@ global_logger(
 
 @info "Parsing QUOLL input file"
 
-# input_filepath = "/home/chem/phrpwt/Jobs/Data_Pipeline/Quoll_Workspace/Quoll/examples/SiC/input_file.toml"
 input_filepath = abspath(ARGS[1])
 params, input_dirs, output_dirs = Quoll.Parser.parse_inputfile(input_filepath)
 
@@ -51,6 +50,11 @@ params, input_dirs, output_dirs = Quoll.Parser.parse_inputfile(input_filepath)
 
 ndirs = length(input_dirs)
 my_idirs = Quoll.split_work(ndirs, global_comm, Quoll.DefaultSplit())
+
+# Construct an MPI sub-communicator for MPI tasks working on the same atomic configuration
+global_color = first(my_idirs)
+config_comm = MPI.Comm_split(global_comm, global_color, global_rank)
+config_rank = MPI.Comm_rank(config_comm)
 
 for idir in my_idirs
     input_dir = input_dirs[idir]
@@ -61,7 +65,6 @@ for idir in my_idirs
     operatorkinds = find_operatorkinds(input_dir, params)
     operators = load_operators(input_dir, operatorkinds, params.input.format)
 
-    # TODO: in the future could allow for <other canonical formats/shortcut conversions>
     @info "Converting operators into BSparseOperator format"
 
     operators = convert_operators(operators, BSparseOperator)
@@ -71,7 +74,18 @@ for idir in my_idirs
 
         # Assuming all operators in the directory are related to the same atoms
         atoms = Quoll.get_atoms(first(operators))
-        kgrid = get_kgrid(atoms, params)
+        kgrid = get_kgrid(atoms, operatorkinds, params)
+
+        @info "Splitting k-points across MPI tasks"
+        # TODO: add an option for different splits in the input file
+        nkpoints = Quoll.get_nkpoints(kgrid)
+        my_ikpoints = Quoll.split_work(nkpoints, config_comm, Quoll.FHIaimsLAPACKSplit())
+    end
+
+    if !isnothing(params.basis_projection)
+        @info "Projecting the core states"
+
+        operators = perform_core_projection(operators, kgrid, my_ikpoints, config_comm, params)
     end
 
     if !isnothing(params.output)

@@ -46,3 +46,11 @@ function get_frac_positions(atoms::AbstractSystem)
     real_positions = ustrip.(stack(position(atoms, :)))
     return ustrip.(real_lattice) \ ustrip.(real_positions)
 end
+
+function get_species2atom(atoms::AbstractSystem)
+    all_species = species(atoms, :)
+    unique_species = Indices(unique(all_species))
+    return map(unique_species) do z
+        findall(isequal(z), all_species)
+    end
+end

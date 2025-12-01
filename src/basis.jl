@@ -38,8 +38,45 @@ basis_species(basisset::BasisSetMetadata, species::ChemicalSpecies) = basisset.b
 get_unique_species(basisset::BasisSetMetadata) = unique(basisset.atom2species)
 
 # Assuming ms that belong to a given l are next to each other
-function get_angular_momenta(basis::Vector{T}) where T<:BasisMetadata
+function get_angular_momenta(basis::AbstractVector{T}) where T<:BasisMetadata
     return getfield.(filter(orbital -> orbital.l == orbital.m, basis), :l)
+end
+
+function BasisSetMetadata(basisset::BasisSetMetadata, masks::SpeciesDictionary)
+    unique_species_keys = Indices(keys(basisset.basis))
+    subbasis_dict = map(unique_species_keys) do z
+        basis_z = basis_species(basisset, z)
+        basis_z[masks[z]]
+    end
+    return BasisSetMetadata(Base.ImmutableDict(pairs(subbasis_dict)...), basisset.atom2species)
+end
+
+# Returns Dictionary{ChemicalSpecies, BitVector}
+function get_subbasis_masks(basisset::BasisSetMetadata, subbasis::Vector{T};
+    inverted = false) where T<:BasisMetadata
+
+    unique_species_keys = Indices(keys(basisset.basis))
+
+    return map(unique_species_keys) do z
+        basis_z = basis_species(basisset, z)
+        subbasis_z = filter(orbital -> isequal(orbital.z, z), subbasis)
+
+        # Throw a warning if some orbitals in subbasis are not present in basisset
+        # (which could happen if the orbitals were supplied incorrectly in the input file)
+        if !all(subbasis_z .∈ Ref(basis_z))
+            @warn "Some orbitals in the subbasis are not present in the full basis"
+        end
+
+        inverted ? basis_z .∉ Ref(subbasis_z) : basis_z .∈ Ref(subbasis_z)
+    end
+end
+
+# Returns BitVector to be used with dense operators
+function get_dense_subbasis_mask(basisset::BasisSetMetadata, subbasis::Vector{T};
+    inverted = false) where T<:BasisMetadata
+
+    subbasis_masks = get_subbasis_masks(basisset, subbasis, inverted = inverted)
+    return reduce(vcat, (subbasis_masks[z] for z in basisset.atom2species))
 end
 
 get_atom2nbasis(basisset::BasisSetMetadata) = get_atom2nbasis(basisset.basis, basisset.atom2species)

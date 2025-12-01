@@ -9,25 +9,40 @@ using StructArrays
 # defined already (however this wouldn't be possible without creating a new instance because BSparseOperator
 # is parametric with respect to KT, but that's possible without copies)
 
-struct RealBSparseMetadata{A<:AbstractSystem, S<:RealBlockSparsity, B<:BasisSetMetadata, P<:Union{SpinsMetadata, Nothing}} <: AbstractBSparseMetadata{A, S, B, P}
+struct RealBSparseMetadata{
+    A<:AbstractSystem,
+    S<:RealBlockSparsity,
+    B<:BasisSetMetadata,
+    P<:Union{SpinsMetadata, Nothing}
+} <: AbstractBSparseMetadata{A, S, B, P}
     atoms::A
     sparsity::S
     basisset::B
     spins::P
 end
 
-struct RecipBSparseMetadata{A<:AbstractSystem, S<:RecipBlockSparsity, B<:BasisSetMetadata, P<:Union{SpinsMetadata, Nothing}} <: AbstractBSparseMetadata{A, S, B, P}
+struct RecipBSparseMetadata{
+    A<:AbstractSystem,
+    S<:RecipBlockSparsity,
+    B<:BasisSetMetadata,
+    P<:Union{SpinsMetadata, Nothing},
+    K<:SVector{3}
+} <: AbstractBSparseMetadata{A, S, B, P}
     atoms::A
     sparsity::S
     basisset::B
     spins::P
-    kpoint::SVector{3, Float64}
+    kpoint::K
 end
 
-# I will usually work with the case where metadata in keydata are named tuples
-# i.e. KT == Tuple{Vector{@NamedTuple{basisf::BasisMetadata{E}, spin::SpinMetadata}}, ...}
 # TODO: Consider changing <:SpeciesPairAnyDict{<:AbstractArray{T}}
-struct BSparseOperator{O<:OperatorKind, T<:Number, D<:SpeciesPairAnyDict{<:AbstractArray{T}}, M<:AbstractBSparseMetadata, KD<:AtomPairAnyDict} <: AbstractBSparseOperator{O, T, D, M, KD}
+struct BSparseOperator{
+    O<:OperatorKind,
+    T<:Number,
+    D<:SpeciesPairAnyDict{<:AbstractArray{T}},
+    M<:AbstractBSparseMetadata,
+    KD<:AtomPairAnyDict
+} <: AbstractCanonicalOperator{O, T, D, M}
     kind::O
     data::D
     metadata::M
@@ -36,55 +51,66 @@ end
 
 get_keydata(operator::BSparseOperator) = operator.keydata
 
-# Constructor to initialize the operator with zero values
-# TODO: possibly split into smaller functions? Also this function could accept
-# additional metadata to go into keydata
-function BSparseOperator(kind::OperatorKind, metadata::AbstractBSparseMetadata; float::Type{T} = Float64) where T
+# Constructor to initialize the operator with some data
+function BSparseOperator(kind::OperatorKind, metadata::AbstractBSparseMetadata; uninit = false, value = 0.0, type = nothing)
 
     z1z2_ij2interval = get_z1z2_ij2interval(metadata)
-    basisset = get_basisset(metadata)
-    spins = get_spins(metadata)
-    sparsity = get_sparsity(metadata)
 
-    # Construct data
+    data = initialise_data(metadata, z1z2_ij2interval, uninit = uninit, value = value, type = type)
+    keydata = construct_keydata(data, metadata, z1z2_ij2interval)
+
+    return BSparseOperator(kind, data, metadata, keydata)
+end
+
+function BSparseOperator(kind::OperatorKind, data::SpeciesPairAnyDict, metadata::AbstractBSparseMetadata)
+
+    z1z2_ij2interval = get_z1z2_ij2interval(metadata)
+    keydata = construct_keydata(data, metadata, z1z2_ij2interval)
+
+    return BSparseOperator(kind, data, metadata, keydata)
+end
+
+function initialise_data(metadata::RealBSparseMetadata, z1z2_ij2interval;
+    uninit = false, value::T₁ = 0.0, type::Type{T₂} = Nothing) where {T₁, T₂}
+    
+    uninit && @argcheck !(T₂ <: Nothing)
+
+    if !(T₂ <: Nothing)
+        T = T₂
+        converted_value = convert(T₂, value)
+    else
+        T = T₁
+        converted_value = value
+    end
+
+    basisset = get_basisset(metadata)
+
     data = Dictionary{NTuple{2, ChemicalSpecies}, Array{T, 3}}()
     species2nbasis = get_species2nbasis(basisset)
 
     for ((z1, z2), ij2interval) in pairs(z1z2_ij2interval)
-        insert!(
-            data, (z1, z2),
-            zeros(
-                T, species2nbasis[z1], species2nbasis[z2],
-                # End interval value of the last (i, j) pair
-                # (relies on the fact that ordered dictionary type is used)
-                ij2interval[end][end] 
-            )
+        array = Array{T, 3}(
+            undef, species2nbasis[z1], species2nbasis[z2],
+            # End interval value of the last (i, j) pair
+            # (relies on the fact that ordered dictionary type is used)
+            ij2interval[end][end] 
         )
+        uninit || fill!(array, converted_value)
+        insert!(data, (z1, z2), array)
     end
 
-    # Construct keydata
+    return data
+end
+
+function construct_keydata(data, metadata::RealBSparseMetadata, z1z2_ij2interval)
+    sparsity = get_sparsity(metadata)
+
     keydata_values = []
     ij_contiguous = NTuple{2, Int}[]
 
     for (z1, z2) in keys(z1z2_ij2interval)
         
-        if metadata.spins !== nothing
-            μ = StructArray(
-                orbital = basis_species(basisset, z1),
-                spin = spins_species(spins, z1),
-            )
-            ν = StructArray(
-                orbital = basis_species(basisset, z2),
-                spin = spins_species(spins, z2),
-            )
-        else
-            μ = StructArray(
-                orbital = basis_species(basisset, z1),
-            )
-            ν = StructArray(
-                orbital = basis_species(basisset, z2),
-            )
-        end
+        μ, ν = construct_axis_metadata.((z1, z2), Ref(metadata))
 
         # TODO: AxisKeys.findindex treats each element of StaticArray instance
         # as separate values to search for. Using tuples instead is a workaround
@@ -104,7 +130,14 @@ function BSparseOperator(kind::OperatorKind, metadata::AbstractBSparseMetadata; 
     end
     keydata = Dictionary{NTuple{2, Int}, typeof(first(keydata_values))}(ij_contiguous, keydata_values)
 
-    return BSparseOperator(kind, data, metadata, keydata)
+    return keydata
+end
+
+function synchronise_data!(operator::BSparseOperator, comm::MPI.Comm)
+    data = get_data(operator)
+    for key in keys(data)
+        MPI.Allreduce!(data[key], +, comm)
+    end
 end
 
 get_z1z2_ij2interval(operator::BSparseOperator) = get_z1z2_ij2interval(get_atoms(operator), get_sparsity(operator))
