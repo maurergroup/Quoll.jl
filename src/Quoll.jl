@@ -6,6 +6,7 @@ using ArgCheck
 using LinearAlgebra
 using StaticArrays
 using OffsetArrays
+using Tullio
 using Dictionaries
 using AutoHashEquals
 using AxisKeys

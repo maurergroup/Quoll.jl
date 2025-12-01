@@ -93,7 +93,6 @@ function perform_core_projection(operators, projected_basis, kgrid::KGrid, my_ik
     return v_operators
 end
 
-# TODO: if not views, then sometimes can result in redundant allocations
 function core_valence_partition(operator::DenseOperator, core_mask::BitVector, valence_mask::BitVector)
     O = get_data(operator)
     O₁₁ = view(O, core_mask, core_mask)
