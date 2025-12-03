@@ -67,7 +67,7 @@ for idir in my_idirs
 
     @info "Converting operators into BSparseOperator format"
 
-    operators = convert_operators(operators, BSparseOperator)
+    operators = convert_operators(operators, BSparseOperator, radii = params.input.radii)
 
     if Quoll.Parser.requires_kpoint_grid(params)
         @info "Initialising k-point grid"
