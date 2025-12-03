@@ -23,7 +23,6 @@ function convert_operator_data(out_metadata::DeepHMetadata, in_operator::BSparse
         get_sparsity(out_metadata),
         get_basisset(out_metadata),
         get_keydata(in_operator),
-        get_atoms(in_operator),
         get_sparsity(in_operator),
         DeepHOperator,
         BSparseOperator,
@@ -31,7 +30,7 @@ function convert_operator_data(out_metadata::DeepHMetadata, in_operator::BSparse
     )
 end
 
-function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_atoms, in_sparsity,
+function convert_operator_data(out_sparsity, out_basisset, in_keydata, in_sparsity,
     out_type::Type{DeepHOperator}, in_type::Type{BSparseOperator}, ::Type{T} = Float64) where T
 
     herm_nonherm_conv = in_sparsity.hermitian && !out_sparsity.hermitian

@@ -16,13 +16,13 @@ function BSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermi
     out_operator = build_operator(BSparseOperator, in_kind, out_metadata, uninit = false, value = zero(float))
 
     # Populate out_operator with values from the in_operator
-    convert_data!(out_operator, in_operator)
+    convert_operator_data!(out_operator, in_operator)
 
     return out_operator
 end
 
 # Probably shouldn't be used directly because this assumes appropriately converted metadata
-function convert_data!(out_operator::BSparseOperator, in_operator::FHIaimsCSCOperator)
+function convert_operator_data!(out_operator::BSparseOperator, in_operator::FHIaimsCSCOperator)
 
     out_keydata = get_keydata(out_operator)
     out_sparsity = get_sparsity(out_operator)
