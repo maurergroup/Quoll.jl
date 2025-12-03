@@ -21,7 +21,6 @@ function BSparseOperator(in_operator::FHIaimsCSCOperator; radii = nothing, hermi
     return out_operator
 end
 
-# Probably shouldn't be used directly because this assumes appropriately converted metadata
 function convert_operator_data!(out_operator::BSparseOperator, in_operator::FHIaimsCSCOperator)
 
     out_keydata = get_keydata(out_operator)
@@ -30,20 +29,20 @@ function convert_operator_data!(out_operator::BSparseOperator, in_operator::FHIa
     in_data = get_data(in_operator)
     in_sparsity = get_sparsity(in_operator)
 
-    # TODO: We could perform hermitian to hermitian populate! and afterwards perform
+    # TODO: We could perform hermitian to hermitian convert_operator_data! and afterwards perform
     # BSparseOperator hermitian -> BSparseOperator non-hermitian conversion.
     # However, one would have to modify BSparseOperator(::FHIaimsCSCOperator)
-    # by computing non-hermitian sparsity and metadata after populate! and initiating
+    # by computing non-hermitian sparsity and metadata after convert_operator_data! and initiating
     # the conversion.
     herm_to_nonherm = in_sparsity.hermitian && !out_sparsity.hermitian
-    herm_to_nonherm && throw(error("Hermitian to non-hermitian populate! is not implemented"))
+    herm_to_nonherm && throw(error("Hermitian to non-hermitian convert_operator_data! is not implemented"))
 
     rowval, colcellptr, in_images = in_sparsity.rowval, in_sparsity.colcellptr, in_sparsity.images
     atom2species, out_images = out_basisset.atom2species, out_sparsity.images
     
     atom2offset = get_atom2offset(out_basisset)
     basis2atom = get_basis2atom(out_basisset)
-    iglobal2ilocal = get_iglobal2ilocal(out_sparsity)
+    iexternal2ilocal = get_iexternal2ilocal(in_images, out_sparsity)
 
     shconv = SHConversion(BSparseOperator) ∘ inv(SHConversion(FHIaimsCSCOperator))
 
@@ -58,7 +57,7 @@ function convert_operator_data!(out_operator::BSparseOperator, in_operator::FHIa
     orders_atomarray = convert_to_atomarray(orders, atom2species)
     phases_atomarray = convert_to_atomarray(phases, atom2species)
     out_keydata_atomarray = convert_to_atomarray(out_keydata, natoms)
-    iglobal2ilocal_atomarray = convert_to_atomarray(iglobal2ilocal, natoms)
+    iexternal2ilocal_atomarray = convert_to_atomarray(iexternal2ilocal, natoms)
 
     for iR in axes(colcellptr, 2)
         R = in_images[iR]
@@ -78,7 +77,7 @@ function convert_operator_data!(out_operator::BSparseOperator, in_operator::FHIa
                 ib_local = ib - atom2offset[iat]
                 orders_iat = orders_atomarray[iat]
 
-                iR_local = iglobal2ilocal_atomarray[iat, jat][iR]
+                iR_local = iexternal2ilocal_atomarray[iat, jat][iR]
                 !isnothing(iR_local) || continue
 
                 out_keydata_atomarray[iat, jat][
