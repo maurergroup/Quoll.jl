@@ -95,7 +95,7 @@ for idir in my_idirs
 
         @info "Writing operators"
 
-        if global_rank == 0
+        if config_rank == 0
             write_operators(output_dirs[idir], operators)
         end
     end
