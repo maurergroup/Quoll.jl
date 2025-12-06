@@ -150,6 +150,10 @@ end
 
         A2 = reorder_matrix_type1_orders(A1, basis, shconv1)
         @test A2 == ref
+
+        P = Quoll.compute_signed_perm_matrix(basis, shconv1)
+        A2 = P * A1 * P'
+        @test A2 == ref
     end
 
     @testset "Combination" begin
@@ -278,6 +282,26 @@ end
         @test Set(keys(phases)) == Set(keys(ref))
         for key in keys(ref)
             @test phases[key] == ref[key]
+        end
+    end
+    
+    @testset "precompute_signed_perm_matrices" begin
+        ref = dictionary([
+            z1 => [
+                 1  0  0  0;
+                 0  0  1  0;
+                 0 -1  0  0;
+                 0  0  0  1
+            ],
+            z2 => [
+                 1;;
+            ]
+        ])
+
+        signed_perm_matrices = Quoll.precompute_signed_perm_matrices(basisset, shconv, float = Int)
+        @test Set(keys(signed_perm_matrices)) == Set(keys(ref))
+        for key in keys(ref)
+            @test signed_perm_matrices[key] == ref[key]
         end
     end
     

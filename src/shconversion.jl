@@ -136,3 +136,26 @@ function precompute_phases!(phases::AbstractDictionary, ::Val{2})
 
     return Base.ImmutableDict(pairs(phases_pairs)...)
 end
+
+# SH conversion for a matrix M_z₁z₂ can be performed as P_z₁ * M_z₁z₂ * (P_z₂)ᵀ
+function precompute_signed_perm_matrices(basisset::BasisSetMetadata, shconv::SHConversion; float::Type{T} = Float64) where T
+    signed_perms = Dictionary{ChemicalSpecies, Matrix{T}}()
+    for z in get_unique_species(basisset)
+        basis_z = basis_species(basisset, z)
+        insert!(signed_perms, z, compute_signed_perm_matrix(basis_z, shconv, float = float))
+    end
+    return signed_perms
+end
+
+function compute_signed_perm_matrix(basis_z, shconv::SHConversion; float::Type{T} = Float64) where T
+    perm_matrix = compute_perm_matrix(basis_z, shconv, float = float)
+    phases = get_phase.(basis_z, Ref(shconv))
+    return Matrix{T}(Diagonal(phases) * perm_matrix)
+end
+
+function compute_perm_matrix(basis_z, shconv::SHConversion; float::Type{T} = Float64) where T
+    nbasis = length(basis_z)
+    orders = collect(1:nbasis) .+ get_shift.(basis_z, Ref(shconv)) 
+
+    return Matrix{T}(I(nbasis)[orders, :])
+end
