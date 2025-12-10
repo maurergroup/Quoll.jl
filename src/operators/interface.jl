@@ -104,8 +104,10 @@ function write_operators(dir::AbstractString, operators)
     return write_operator.(dir, operators)
 end
 
-# Here using a constructor as below would not make sense
-function write_operator end
+function write_operator(dir::AbstractString, operator::AbstractOperator)
+    write_operator_metadata(dir, operator)
+    write_operator_data(dir, operator)
+end
 
 ### LOAD INTERFACE ###
 

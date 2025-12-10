@@ -10,9 +10,9 @@ struct KGrid{T, W}
     crystal_symmetry::Union{Missing, Bool}
 end
 
-function get_nkpoints(kgrid::KGrid)
-    return length(kgrid.kpoints)
-end
+get_nkpoints(kgrid::KGrid) = length(kgrid.kpoints)
+get_kpoints(kgrid::KGrid, ik) = kgrid.kpoints[ik]
+get_weights(kgrid::KGrid, ik) = kgrid.weights[ik]
 
 function get_kgrid(atoms::AbstractSystem; density = nothing, mesh = nothing,
     shift = falses(3), time_reversal = false, crystal_symmetry = false, symprec = 1e-5)

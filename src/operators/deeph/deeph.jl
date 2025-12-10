@@ -53,7 +53,7 @@ function write_operator_metadata(dir::AbstractString, operator::DeepHOperator)
     write_site_positions(dir, operator)
 end
 
-function write_operator_data(dir, operator::DeepHOperator)
+function write_operator_data(dir::AbstractString, operator::DeepHOperator)
     h5open(joinpath(dir, get_avail_filename(operator)), "w") do db
         for (key, block) in pairs(get_data(operator))
             key_str = string(collect(key))
@@ -128,7 +128,7 @@ get_avail_filename(
     ::Pair{Val{:spin}, Val{SPIN}},
     ::Type{<:DeepHOperator}
 ) where SPIN = "hamiltonians.h5"
-/
+
 get_avail_filename(
     ::Hamiltonian,
     ::Pair{Val{:source}, Val{:pred}},
