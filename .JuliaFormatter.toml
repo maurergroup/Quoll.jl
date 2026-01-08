@@ -1,0 +1,9 @@
+style = "blue"
+long_to_short_function_def = false
+short_to_long_function_def = false
+whitespace_typedefs = false
+always_use_return = true
+format_docstrings = true
+join_lines_based_on_source = true
+align_matrix = true
+align_assignment = true

@@ -11,15 +11,18 @@ using MPI
 
 using ..Quoll
 using ..Quoll:
-    AbstractOperator,
+    AbstractMetadata,
     OperatorKind,
+    BasisMetadata,
     KGrid,
+    LengthAngstrom,
     allows_symmetry,
+    get_operator_groups,
     get_avail_operatorkinds,
     get_operatorkinds,
     get_readformat,
     get_writeformat
-import ..Quoll: find_operatorkinds, get_kgrid
+import ..Quoll: find_operatorkinds, construct_kgrid
 
 using ..Projections
 using ..Projections: AbstractBasisProjection, get_basis_projection
@@ -43,14 +46,14 @@ include("parser/symmetry.jl")
     input::InputParams
 
     # Optional parameter sets
-    output::Maybe{OutputParams} = nothing
+    output::Maybe{OutputParams}                    = nothing
     basis_projection::Maybe{BasisProjectionParams} = nothing
 
     # Optional parameter sets with existing defaults
-    kpoint_grid::KPointGridParams = KPointGridParams()
+    kpoint_grid::KPointGridParams     = KPointGridParams()
     postprocessing::PostprocessParams = PostprocessParams()
-    error_metrics::ErrorMetricParams = ErrorMetricParams()
-    symmetry::SymmetryParams = SymmetryParams()
+    error_metrics::ErrorMetricParams  = ErrorMetricParams()
+    symmetry::SymmetryParams          = SymmetryParams()
 
     function QuollParams(
         input,
@@ -75,7 +78,15 @@ include("parser/symmetry.jl")
         # Look if there are any unresolvable clashes
         search_clashes(basis_projection, error_metrics)
 
-        new(input, output, basis_projection, kpoint_grid, postprocessing, error_metrics, symmetry)
+        return new(
+            input,
+            output,
+            basis_projection,
+            kpoint_grid,
+            postprocessing,
+            error_metrics,
+            symmetry,
+        )
     end
 end
 

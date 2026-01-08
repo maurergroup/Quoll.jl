@@ -5,10 +5,9 @@ using Reexport
 using ArgCheck
 using LinearAlgebra
 using StaticArrays
-using OffsetArrays
-using Tullio
+using StructArrays
+using Memoize
 using Dictionaries
-using AutoHashEquals
 using AxisKeys
 using Unitful
 using DelimitedFiles
@@ -20,76 +19,72 @@ using NeighbourLists
 using Spglib
 using MPI
 
-# Constants
+### CONSTANTS ###
 
 include("constants.jl")
 
-# Methods
+### TOOLS ###
 
-export recentre
-include("methods/mpitools.jl")
-include("methods/atomtools.jl")
-include("methods/fastlookup.jl")
-include("methods/symmetry.jl")
+include("tools/mpitools.jl")
+include("tools/atomtools.jl")
+include("tools/fastlookup.jl")
+include("tools/symmetry.jl")
 
-# Core types and their methods
+### OPERATOR COMPONENTS ###
 
 export Overlap, Hamiltonian
-include("operatorkind.jl")
+include("core/components/source.jl")
+include("core/components/operatorkind.jl")
+include("core/components/shconvention.jl")
+include("core/components/basis.jl")
+include("core/components/spin.jl")
+include("core/components/sparsity.jl")
 
-export BasisMetadata
-include("basis.jl")
+export construct_kgrid
+include("core/components/kpoints.jl")
 
-export ⬆, ⬇
-include("spin.jl")
-include("sparsity.jl")
-include("shconversion.jl")
+### OPERATOR METHODS AND COMPOSITE TYPES ###
 
-export get_kgrid
-include("kpoints.jl")
+include("core/struct.jl")
 
-# Operator formats and their IO routines
-# (Assuming no dependencies between different format types in each file)
+export build_operator
+include("core/factories.jl")
 
-export load_atoms
-export load_operator, load_operators
-export write_operator, write_operators
 export find_operatorkinds
-include("operators/interface.jl")
+export load_operators, load_operator
+export write_operators, write_operator
+include("core/inout.jl")
 
-export BSparseOperator, DenseOperator
-include("operators/canonical/abstract.jl")
-include("operators/canonical/bsparse.jl")
-include("operators/canonical/dense.jl")
+export convert_operator
+include("core/conversions.jl")
 
-export DeepHOperator
-include("operators/deeph/deeph.jl")
-
-export FHIaimsCSCOperator
-include("operators/fhiaims/abstract.jl")
-include("operators/fhiaims/fhiaims_csc.jl")
-
-# Operator format conversions
-
-export convert_operator, convert_operators
 export fourier_transform
-include("conversions/interface.jl")
+include("core/fourier.jl")
 
-include("conversions/canonical/bsparse.jl")
-include("conversions/fhiaims/fhiaims_csc.jl")
-include("conversions/deeph/deeph.jl")
+### OPERATORS ###
+# Assuming no dependencies between different format types in each file
 
-# Basis projection module
+include("operators/common.jl")
+include("operators/canonical.jl")
+include("operators/fhiaims.jl")
+include("operators/deeph.jl")
+
+### CONVERSIONS ###
+
+include("conversions/canonical.jl")
+include("conversions/deeph.jl")
+
+### BASIS PROJECTION MODULE ###
 
 include("Projections.jl")
 @reexport using .Projections
 
-# Postprocessing module
+### POSTPROCESSING MODULE ###
 
 include("Postprocessing.jl")
 @reexport using .Postprocessing
 
-# Parser module
+### PARSER MODULE ###
 
 include("Parser.jl")
 using .Parser

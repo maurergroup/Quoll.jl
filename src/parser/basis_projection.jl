@@ -1,5 +1,5 @@
 @option struct BasisProjectionParams <: AbstractQuollParams
-    projected_basis::Vector{BasisMetadata{Base.ImmutableDict{String, String}}}
+    projected_basis::Vector{BasisMetadata{Base.ImmutableDict{Symbol,Symbol}}}
     method::Type{<:AbstractBasisProjection}
 end
 
@@ -14,17 +14,17 @@ function parse_basismetadata(basisfunc::AbstractString)
     l = parse(Int, match_znlm.captures[3])
 
     m_str = match_znlm.captures[4]
-    ms = m_str == "*" ? Tuple(-l:l) : (parse(Int, m_str),)
+    ms = m_str == "*" ? Tuple((-l):l) : (parse(Int, m_str),)
 
     extras_begin = match_znlm.offsets[5] + 1
     eachmatch_extras = eachmatch(re_extras, basisfunc[extras_begin:end])
 
     extras_pairs = (
-        convert(String, match.captures[1]) => convert(String, match.captures[2])
+        Symbol(match.captures[1]) => Symbol(match.captures[2])
         for match in eachmatch_extras
     )
 
-    extras_dict_start = Base.ImmutableDict{String, String}()
+    extras_dict_start = Base.ImmutableDict{Symbol,Symbol}()
     if isempty(extras_pairs)
         extras_dict = extras_dict_start
     else
@@ -37,12 +37,15 @@ end
 function Configurations.from_dict(
     ::Type{BasisProjectionParams},
     ::OptionField{:projected_basis},
-    ::Type{Vector{BasisMetadata{Base.ImmutableDict{String, String}}}},
+    ::Type{Vector{BasisMetadata{Base.ImmutableDict{Symbol,Symbol}}}},
     projected_basis_str,
 )
-    @argcheck isa(projected_basis_str, Vector{String}) "`projected_basis` field must be an array of strings"
+    @argcheck(
+        isa(projected_basis_str, Vector{String}),
+        "`projected_basis` field must be an array of strings"
+    )
 
-    projected_basis = BasisMetadata{Base.ImmutableDict{String, String}}[]
+    projected_basis = BasisMetadata{Base.ImmutableDict{Symbol,Symbol}}[]
     for basisfunc in projected_basis_str
         push!(projected_basis, parse_basismetadata(basisfunc)...)
     end
@@ -57,9 +60,12 @@ function Configurations.from_dict(
     s,
 )
     @argcheck isa(s, String)
-    
+
     symbol = Symbol(normalize_comparison(s))
-    @argcheck hasmethod(get_basis_projection, Tuple{Val{symbol}}) "Basis projection $s is unavailable or doesn't exist"
+    @argcheck(
+        hasmethod(get_basis_projection, Tuple{Val{symbol}}),
+        "Basis projection $s is unavailable or doesn't exist"
+    )
 
     return get_basis_projection(Val(symbol))
 end

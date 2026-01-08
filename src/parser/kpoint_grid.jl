@@ -1,8 +1,8 @@
 @option struct KPointGridParams <: AbstractQuollParams
-    mesh::Maybe{SVector{3, Int}} = nothing
-    density::Float64 = 10.0
-    shift::SVector{3, Bool} = SA[false, false, false]
-    kpoints::Maybe{Vector{SVector{4, Float64}}} = nothing
+    mesh::Maybe{SVector{3,Int}}                = nothing
+    density::Float64                           = 10.0
+    shift::SVector{3,Bool}                     = SA[false, false, false]
+    kpoints::Maybe{Vector{SVector{4,Float64}}} = nothing
 
     function KPointGridParams(mesh, density, shift, kpoints)
 
@@ -10,25 +10,25 @@
         !isnothing(mesh) && @argcheck all(mesh .> 0)
         @argcheck density > 0
 
-        new(mesh, density, shift, kpoints)
+        return new(mesh, density, shift, kpoints)
     end
 end
 
 function Configurations.from_dict(
     ::Type{KPointGridParams},
     ::OptionField{:shift},
-    ::Type{SVector{3, Bool}},
+    ::Type{SVector{3,Bool}},
     shift,
 )
     @argcheck isa(shift, Bool) || isa(shift, Vector)
 
-    return isa(shift, Bool) ? SVector{3, Bool}([shift for _ in 1:3]) : SVector{3, Bool}(shift)
+    return isa(shift, Bool) ? SVector{3,Bool}([shift for _ in 1:3]) : SVector{3,Bool}(shift)
 end
 
 function Configurations.from_dict(
     ::Type{KPointGridParams},
     ::OptionField{:kpoints},
-    ::Type{Vector{SVector{4, Float64}}},
+    ::Type{Vector{SVector{4,Float64}}},
     kpoints,
 )
     @argcheck isa(kpoints, String) || isa(kpoints, Vector)
@@ -37,7 +37,6 @@ function Configurations.from_dict(
         return eachrow(readdlm(kpoints))
 
     elseif kpoints isa Vector
-        return [SVector{4, Float64}(kpoint) for kpoint in kpoints]
+        return [SVector{4,Float64}(kpoint) for kpoint in kpoints]
     end
 end
-

@@ -1,21 +1,28 @@
-### TYPE ALIASES ###
+### COMMON TYPE ALIASES ###
 
-const AbstractAnyDict{K, V} = Union{<:AbstractDict{K, V}, <:AbstractDictionary{K, V}}
-const SpeciesPairAnyDict{V} = AbstractAnyDict{NTuple{2, ChemicalSpecies}, V}
-const SpeciesAnyDict{V}  = AbstractAnyDict{ChemicalSpecies, V}
-const AtomPairAnyDict{V} = AbstractAnyDict{NTuple{2, Int}, V}
+const AbstractAnyDict{K,V} = Union{<:AbstractDict{K,V},<:AbstractDictionary{K,V}}
+const AtomPairAnyDict{V} = AbstractAnyDict{NTuple{2,Int},V}
+const AtomPairDictionary{V} = AbstractDictionary{NTuple{2,Int},V}
+const AtomPairDictionaryArray{T,N} = AtomPairDictionary{<:AbstractArray{T,N}}
 
-const SpeciesDictionary{V} = AbstractDictionary{ChemicalSpecies, V}
-const SpeciesDict{V} = AbstractDict{ChemicalSpecies, V}
+const SpeciesPairAnyDict{V} = AbstractAnyDict{NTuple{2,ChemicalSpecies},V}
+const SpeciesPairDictionary{V} = AbstractDictionary{NTuple{2,ChemicalSpecies},V}
+const SpeciesPairDictionaryArray{T,N} = SpeciesPairDictionary{<:AbstractArray{T,N}}
+
+const SpeciesAnyDict{V} = AbstractAnyDict{ChemicalSpecies,V}
+const SpeciesDictionary{V} = AbstractDictionary{ChemicalSpecies,V}
+const SpeciesDict{V} = AbstractDict{ChemicalSpecies,V}
 
 const ThreeDimSliceView{T} = SubArray{
-    T, 3, Array{T, 3},
+    T,3,Array{T,3},
     Tuple{
         Base.Slice{Base.OneTo{Int}},
         Base.Slice{Base.OneTo{Int}},
-        UnitRange{Int}
-    }, true
+        UnitRange{Int},
+    },true,
 }
+
+const LengthAngstrom = Quantity{Float64,Unitful.𝐋,typeof(u"Å")}
 
 ### UNITS ###
 # Internally UnitfulAtomic is used to convert between units if needed,

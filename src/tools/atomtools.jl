@@ -18,7 +18,7 @@ function recentre(atoms::AbstractSystem)
 
     # Construct new atoms
     recentered_atoms = periodic_system(
-        [Atom(atom, position = wrapped_atom_pos[:, iat]) for (iat, atom) in enumerate(atoms)],
+        [Atom(atom; position=wrapped_atom_pos[:, iat]) for (iat, atom) in enumerate(atoms)],
         cell_vectors(atoms),
     )
     return recentered_atoms

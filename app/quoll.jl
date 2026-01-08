@@ -1,12 +1,4 @@
 # mpiexecjl -n 8 -t 1 quoll.jl input_file.toml
-# (non-MPI version works with julia quoll.jl even when MPI is not properly set up)
-# In theory I probably need a separate Project.toml in bin/ because we need
-# additional dependencies. Ideally this could be part of [targets], but
-# currently only `test` and `build` targets are supported by Pkg.
-# Maybe it would make sense to simply have Quoll as a dependency like in docs
-# and add extra bits like parsing and logging dependencies. In that case I would
-# probably need separate tests as well. However, only units test then would be 
-# testing functions in src/ (maybe that's fine?)
 using Quoll
 using Configurations
 using LinearAlgebra
@@ -15,6 +7,7 @@ using MPI
 include("logger.jl")
 
 ### START MPI ###
+# Set BLAS threads to 1 to prioritise MPI parallelisation
 MPI.Init()
 BLAS.set_num_threads(1)
 
@@ -22,23 +15,14 @@ global_comm = MPI.COMM_WORLD
 global_rank = MPI.Comm_rank(global_comm)
 
 ### SETUP LOGGER ###
-# - I think it's fair to simply move logs to stderr because if quoll job
-#   is submitted on hpc normally stderr goes to a file like a slurm file.
-# - However, it would be nice to make sure logging works as expected
-#   for MPI, e.g. could use a Tranformer logger to only show rank 0 messages
-#   (could do this with an environment variable instead of input file to allow
-#   immediate logging even during input file reading).
-# - Also could add timestamps to logging messages.
-# - If we keep logger here, maybe we should keep the parser here as well?
-#   For example, Configurations.jl is only needed for parsing.
 global_logger(
     filterrank_logger(
         timestamp_rank_logger(
             ConsoleLogger(stderr, Logging.Info),
-            global_rank
+            global_rank,
         ),
         global_rank,
-    )
+    ),
 )
 
 @info "Parsing QUOLL input file"
@@ -61,23 +45,27 @@ for idir in my_idirs
 
     @info "Starting configuration $(basename(input_dir))"
     @info "Loading operators"
-    
+
     operatorkinds = find_operatorkinds(input_dir, params)
-    operators = load_operators(input_dir, operatorkinds, params.input.format)
+    operators = load_operators(
+        Quoll.Operator, params.input.format, input_dir, operatorkinds
+    )
 
-    @info "Converting operators into BSparseOperator format"
-
-    operators = convert_operators(operators, BSparseOperator, radii = params.input.radii)
+    @info "Converting operators to canonical format"
+    operators =
+        convert_operator.(
+            Quoll.KeyedOperator, Quoll.CanonicalBlockRealMetadata, operators;
+            radii=params.input.radii,
+        )
 
     if Quoll.Parser.requires_kpoint_grid(params)
         @info "Initialising k-point grid"
 
         # Assuming all operators in the directory are related to the same atoms
-        atoms = Quoll.get_atoms(first(operators))
-        kgrid = get_kgrid(atoms, operatorkinds, params)
+        atoms = Quoll.op_atoms(first(operators))
+        kgrid = construct_kgrid(atoms, operatorkinds, params)
 
         @info "Splitting k-points across MPI tasks"
-        # TODO: add an option for different splits in the input file
         nkpoints = Quoll.get_nkpoints(kgrid)
         my_ikpoints = Quoll.split_work(nkpoints, config_comm, Quoll.FHIaimsLAPACKSplit())
     end
@@ -85,19 +73,24 @@ for idir in my_idirs
     if !isnothing(params.basis_projection)
         @info "Projecting the core states"
 
-        operators = perform_core_projection(operators, kgrid, my_ikpoints, config_comm, params)
+        operators = perform_core_projection(
+            operators, kgrid, my_ikpoints, config_comm, params
+        )
     end
 
     if !isnothing(params.output)
         @info "Converting operators into $(params.output.format) format"
 
-        operators = convert_operators(operators, params.output.format, hermitian = params.output.hermitian)
+        operators =
+            convert_operator.(
+                Quoll.Operator, params.output.format, operators;
+                hermitian=params.output.hermitian,
+            )
 
         @info "Writing operators"
 
         if config_rank == 0
-            write_operators(output_dirs[idir], operators)
+            write_operators(params.output.format, output_dirs[idir], operators)
         end
     end
-
 end

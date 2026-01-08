@@ -3,27 +3,38 @@
 # and some file containing symmetry operations like obtaining rotations
 # and checking if the system has inversion symmetry or not (relevant for Brillouin.jl)
 
-struct KGrid{T, W}
+struct KGrid{T,W}
     kpoints::T
     weights::W
-    time_reversal::Union{Missing, Bool}
-    crystal_symmetry::Union{Missing, Bool}
+    time_reversal::Union{Missing,Bool}
+    crystal_symmetry::Union{Missing,Bool}
 end
 
 get_nkpoints(kgrid::KGrid) = length(kgrid.kpoints)
 get_kpoints(kgrid::KGrid, ik) = kgrid.kpoints[ik]
 get_weights(kgrid::KGrid, ik) = kgrid.weights[ik]
 
-function get_kgrid(atoms::AbstractSystem; density = nothing, mesh = nothing,
-    shift = falses(3), time_reversal = false, crystal_symmetry = false, symprec = 1e-5)
+function construct_kgrid(
+    atoms::AbstractSystem;
+    density=nothing,
+    mesh=nothing,
+    shift=falses(3),
+    time_reversal=false,
+    crystal_symmetry=false,
+    symprec=1e-5,
+)
 
     # Get symmetry rotations
     spglib_cell = get_spglib_cell(atoms)
-    rotations = get_symmetry_rotations(spglib_cell, crystal_symmetry = crystal_symmetry, symprec = symprec)
+    rotations = get_symmetry_rotations(
+        spglib_cell; crystal_symmetry=crystal_symmetry, symprec=symprec
+    )
 
     # Get k-point grid
     mesh = get_recip_mesh(atoms, density, mesh)
-    kgrid_spglib = get_stabilized_reciprocal_mesh(rotations, mesh, is_shift = shift, is_time_reversal = time_reversal)
+    kgrid_spglib = get_stabilized_reciprocal_mesh(
+        rotations, mesh; is_shift=shift, is_time_reversal=time_reversal
+    )
 
     # Add the shift and wrap irreducible k-points to [-0.5, 0.5)
     kirreds = map(Spglib.eachpoint(kgrid_spglib)) do kcoord
@@ -40,30 +51,38 @@ function get_kgrid(atoms::AbstractSystem; density = nothing, mesh = nothing,
 
     # Test if all reducible k-points can be reproduced with symmetry rotations
     grid_address = kgrid_spglib.grid_address
-    symmetries_valid = check_kpoint_reduction(rotations, time_reversal, shift, mesh, grid_address, k_all_reducible, kirreds)
+    symmetries_valid = check_kpoint_reduction(
+        rotations, time_reversal, shift, mesh, grid_address, k_all_reducible, kirreds
+    )
 
     if !symmetries_valid
         @warn "Reducible k-points could not be generated from the irreducible kpoints. " *
-              "This points to a bug in spglib. Defaulting to no symmetries."
-        return get_kgrid(
-            atoms, density = density, mesh = mesh, shift = shift,
-            time_reversal = false, crystal_symmetry = false, symprec = symprec
+            "This points to a bug in spglib. Defaulting to no symmetries."
+        return construct_kgrid(
+            atoms; density=density, mesh=mesh, shift=shift,
+            time_reversal=false, crystal_symmetry=false, symprec=symprec,
         )
     else
-        return KGrid(collect(eachpoint(kgrid_spglib)), weights, time_reversal, crystal_symmetry)
+        return KGrid(
+            collect(eachpoint(kgrid_spglib)), weights, time_reversal, crystal_symmetry
+        )
     end
 end
 
-"""Bring ``k``-point coordinates into the range [-0.5, 0.5)"""
+"""
+Bring ``k``-point coordinates into the range [-0.5, 0.5)
+"""
 function normalize_kpoint_coordinate(x::Real)
     x = x - round(Int, x, RoundNearestTiesUp)
     @assert -0.5 ≤ x < 0.5
-    x
+    return x
 end
 normalize_kpoint_coordinate(k::AbstractVector) = normalize_kpoint_coordinate.(k)
 
-function check_kpoint_reduction(rotations, time_reversal, is_shift, mesh, grid_address, k_all_reducible, kirreds)
-    all_rotations = time_reversal ? rotations ∪ [SMatrix{3, 3}(-I(3))] : rotations
+function check_kpoint_reduction(
+    rotations, time_reversal, is_shift, mesh, grid_address, k_all_reducible, kirreds
+)
+    all_rotations = time_reversal ? rotations ∪ [SMatrix{3,3}(-I(3))] : rotations
     shift = is_shift .// 2
 
     for (iks_reducible, k) in zip(k_all_reducible, kirreds), ikred in iks_reducible

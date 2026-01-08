@@ -32,8 +32,8 @@ end
     include("operatorkind.jl")
 end
 
-@safetestset "shconversion.jl" begin
-    include("shconversion.jl")
+@safetestset "shconvention.jl" begin
+    include("shconvention.jl")
 end
 
 @safetestset "sparsity.jl" begin

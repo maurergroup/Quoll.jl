@@ -1,3 +1,5 @@
+# TODO: split into FHIaimsCSC -> CanonicalBlock and CanonicalBlock -> DeepHBlock
+# once CanonicalBlock can be written to file
 using DelimitedFiles
 using JSON
 using HDF5
@@ -18,6 +20,7 @@ operators = ["H", "S"]
 [output]
 format = "DeepH"
 directory = "SiC_DeepH_converted"
+hermitian = false
 """
 
 SiC_examples = joinpath(@__DIR__, "../../examples/SiC")
@@ -29,7 +32,7 @@ tarballs = [
 setupteardown_tmp(tarballs = tarballs) do
     inputfile_path = "inputfile.toml"
     write(inputfile_path, inputfile)
-    run.(mpiexec_quollapp(app, project, inputfile_path; np = np))
+    run.(mpiexec_quollapp(app, project, inputfile_path; np=np))
 
     dir_ref = joinpath("SiC_DeepH", "SiC_DeepH")
     dir = "SiC_DeepH_converted"

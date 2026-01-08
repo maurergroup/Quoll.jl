@@ -72,10 +72,10 @@ function reorder_matrix_type1_orders(A1, basis, shconv)
 end
 
 
-@testset "SHConversion" begin
+@testset "SHConvention" begin
     orders = [[1], [3,  1,  2], [1,  4,  5,  3,  2]]
     phases = [[1], [1, -1,  1], [1,  1, -1, -1,  1]]
-    shconv = Quoll.SHConversion(orders, phases)
+    shconv = Quoll.SHConvention(orders, phases)
 
     l = 0
     @test shconv.orders[l + 1][0] == 1 - (l + 1)
@@ -130,13 +130,13 @@ end
     # 2 -1  3 end
     orders1 = [[1], [2,  1,  3]]
     phases1 = [[1], [1, -1,  1]]
-    shconv1 = Quoll.SHConversion(orders1, phases1)
+    shconv1 = Quoll.SHConvention(orders1, phases1)
 
     # 2 -1  3 start
     # 1  3  2 end
     orders2 = [[1], [ 2,  3,  1]]
     phases2 = [[1], [-1,  1,  1]]
-    shconv2 = Quoll.SHConversion(orders2, phases2)
+    shconv2 = Quoll.SHConvention(orders2, phases2)
 
     @testset "Basic" begin
         ref = [
@@ -221,7 +221,7 @@ end
 
     orders = [[1], [2,  1,  3]]
     phases = [[1], [1, -1,  1]]
-    shconv = Quoll.SHConversion(orders, phases)
+    shconv = Quoll.SHConvention(orders, phases)
 
     @testset "precompute_shifts" begin
         ref = dictionary([

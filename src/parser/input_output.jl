@@ -1,44 +1,50 @@
 @option struct InputParams <: AbstractQuollParams
-    format::Type{<:AbstractOperator}
+    format::Type{<:AbstractMetadata}
     directory::Vector{String}
     operators::Vector{OperatorKind} = get_avail_operatorkinds(format)
-    radii::Maybe{Dict{ChemicalSpecies, Quantity{Float64, Unitful.𝐋, typeof(u"Å")}}} = nothing
+    radii::Maybe{Dict{ChemicalSpecies,LengthAngstrom}} = nothing
 
     function InputParams(format, directory, operators, radii)
         # Convert to absolute paths
         directory = abspath.(directory)
 
         # Check if root directories exist
-        @argcheck all(isdir.(directory)) "Some of the supplied input directories do not exist"
+        @argcheck(
+            all(isdir.(directory)),
+            "Some of the supplied input directories do not exist"
+        )
 
         # Check if root directories are not the same
         @argcheck allunique(directory)
 
-        new(format, directory, operators, radii)
+        return new(format, directory, operators, radii)
     end
 end
 
 @option struct OutputParams <: AbstractQuollParams
-    format::Type{<:AbstractOperator}
-    hermitian::Bool = false
+    format::Type{<:AbstractMetadata}
+    hermitian::Maybe{Bool} = nothing
     directory::String
-    
+
     function OutputParams(format, hermitian, directory)
         directory = abspath(directory)
-        new(format, hermitian, directory)
+        return new(format, hermitian, directory)
     end
 end
 
 function Configurations.from_dict(
     ::Type{InputParams},
     ::OptionField{:format},
-    ::Type{Type{<:AbstractOperator}},
+    ::Type{Type{<:AbstractMetadata}},
     s,
 )
     @argcheck isa(s, String)
-    
+
     symbol = Symbol(normalize_comparison(s))
-    @argcheck hasmethod(get_readformat, Tuple{Val{symbol}}) "Writing matrix in format $s is unavailable or the format doesn't exist"
+    @argcheck(
+        hasmethod(get_readformat, Tuple{Val{symbol}}),
+        "Writing matrix in format $s is unavailable or the format doesn't exist"
+    )
 
     return get_readformat(Val(symbol))
 end
@@ -46,13 +52,16 @@ end
 function Configurations.from_dict(
     ::Type{OutputParams},
     ::OptionField{:format},
-    ::Type{Type{<:AbstractOperator}},
+    ::Type{Type{<:AbstractMetadata}},
     s,
 )
     @argcheck isa(s, String)
-    
+
     symbol = Symbol(normalize_comparison(s))
-    @argcheck hasmethod(get_writeformat, Tuple{Val{symbol}}) "Writing matrix in format $s is unavailable or the format doesn't exist"
+    @argcheck(
+        hasmethod(get_writeformat, Tuple{Val{symbol}}),
+        "Writing matrix in format $s is unavailable or the format doesn't exist"
+    )
 
     return get_writeformat(Val(symbol))
 end
@@ -64,6 +73,7 @@ function Configurations.from_dict(
     dirs,
 )
     # Ensure `dirs` is of type Vector{String}
+    # TODO: Change using traits
     @argcheck isa(dirs, String) || isa(dirs, Vector{String})
     return isa(dirs, String) ? [dirs] : dirs
 end
@@ -72,7 +82,7 @@ function Configurations.from_dict(
     ::Type{InputParams},
     ::OptionField{:operators},
     ::Type{Vector{OperatorKind}},
-    operators
+    operators,
 )
     # Ensure `operators` is of type Vector{String}
     @argcheck isa(operators, String) || isa(operators, Vector{String})
@@ -81,11 +91,14 @@ function Configurations.from_dict(
     valid_symbols = []
     for operator in operators
         symbol = Symbol(normalize_comparison(operator))
-        @argcheck hasmethod(get_operatorkinds, Tuple{Val{symbol}}) "Operator kind $operator is unavailable or doesn't exist"
+        @argcheck(
+            hasmethod(get_operatorkinds, Tuple{Val{symbol}}),
+            "Operator kind $operator is unavailable or doesn't exist"
+        )
         push!(valid_symbols, symbol)
     end
 
-    return vcat(get_operatorkinds.(Val.(valid_symbols))...)
+    return reduce(vcat, get_operatorkinds.(Val.(valid_symbols)))
 end
 
 function parse_radius(radius_string)
@@ -95,7 +108,7 @@ function parse_radius(radius_string)
     z = ChemicalSpecies(Symbol(radius_match.captures[1]))
     r = parse(Float64, radius_match.captures[2])
     unit = radius_match.captures[3]
-    
+
     if isnothing(unit)
         @warn "Units to radii field not supplied, assuming Å"
         r = r * u"Å"
@@ -109,15 +122,15 @@ function parse_radius(radius_string)
             throw(ArgumentError("Unknown radius unit $unit"))
         end
     end
-    
+
     return z, r
 end
 
 function Configurations.from_dict(
     ::Type{InputParams},
     ::OptionField{:radii},
-    ::Type{Dict{ChemicalSpecies, Quantity{Float64, Unitful.𝐋, typeof(u"Å")}}},
-    radii
+    ::Type{Dict{ChemicalSpecies,LengthAngstrom}},
+    radii,
 )
     # Ensure `radii` is of type Vector{String}
     @argcheck isa(radii, String) || isa(radii, Vector{String})

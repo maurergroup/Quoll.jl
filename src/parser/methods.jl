@@ -22,26 +22,35 @@ function search_clashes(basis_projection, error_metrics)
 end
 
 # Check if the operators are sufficient for the requested job
-function validate_operatorkinds(operatorkinds, output, basis_projection, postprocessing, error_metrics)
-    Sref = Overlap(source = :ref) ∈ operatorkinds
-    Spred = Overlap(source = :pred) ∈ operatorkinds
+function validate_operatorkinds(
+    operatorkinds, output, basis_projection, postprocessing, error_metrics
+)
 
-    spins = [h.spin for h in operatorkinds if h isa Hamiltonian]
+    # Collect operator kinds into groups containing Sref, Spred, Href, Hpred
+    # with the rest of the keys matching in a group
+    op_filter = op -> op isa Overlap || op isa Hamiltonian
+    groups = get_operator_groups(
+        operatorkinds; op_filter=op_filter, excluded_keys=[:source]
+    )
 
-    for spin in spins
-        Href = Hamiltonian(source = :ref, spin = spin) ∈ operatorkinds
-        Hpred = Hamiltonian(source = :pred, spin = spin) ∈ operatorkinds
+    for group in groups
+        Sref = !isnothing(findfirst(op -> op isa Overlap && op.source == :ref, group))
+        Spred = !isnothing(findfirst(op -> op isa Overlap && op.source == :pred, group))
+        Href = !isnothing(findfirst(op -> op isa Hamiltonian && op.source == :ref, group))
+        Hpred = !isnothing(findfirst(op -> op isa Hamiltonian && op.source == :pred, group))
 
-        output !== nothing && (@argcheck Sref || Spred || Href || Hpred)
-        basis_projection !== nothing && (@argcheck Sref)
+        #! format: off
+        !isnothing(output)           && (@argcheck Sref || Spred || Href || Hpred)
+        !isnothing(basis_projection) && (@argcheck Sref)
 
-        postprocessing.dos && (@argcheck (Sref && Href) || (Spred && Hpred))
-        postprocessing.fermi_level && (@argcheck (Sref && Href) || (Spred && Hpred))
+        postprocessing.dos            && (@argcheck (Sref && Href) || (Spred && Hpred))
+        postprocessing.fermi_level    && (@argcheck (Sref && Href) || (Spred && Hpred))
         postprocessing.band_structure && (@argcheck (Sref && Href) || (Spred && Hpred))
 
-        error_metrics.mae && (@argcheck Href && Hpred)
+        error_metrics.mae              && (@argcheck Href && Hpred)
         error_metrics.eigenvalue_error && (@argcheck (Sref && Href) || (Spred && Hpred))
         error_metrics.el_entropy_error && (@argcheck (Sref && Href) || (Spred && Hpred))
+        #! format: on
     end
 
     return true
@@ -113,7 +122,8 @@ function allows_time_reversal(operatorkinds)
     return allows
 end
 
-allows_crystal_symmetry(operatorkinds, params::QuollParams) = allows_crystal_symmetry(operatorkinds, params.basis_projection)
+allows_crystal_symmetry(operatorkinds, params::QuollParams) =
+    allows_crystal_symmetry(operatorkinds, params.basis_projection)
 
 function allows_crystal_symmetry(operatorkinds, basis_projection)
     allows = true
@@ -140,19 +150,21 @@ function get_crystal_symmetry(operatorkinds, params::QuollParams)
     end
 end
 
-function get_kgrid(atoms::AbstractSystem, operatorkinds, params::QuollParams)
-    return get_kgrid(
-        atoms,
-        density = params.kpoint_grid.density,
-        mesh = params.kpoint_grid.mesh,
-        shift = params.kpoint_grid.shift,
-        time_reversal = get_time_reversal(operatorkinds, params),
-        crystal_symmetry = get_crystal_symmetry(operatorkinds, params),
-        symprec = params.symmetry.symprec,
+function construct_kgrid(atoms::AbstractSystem, operatorkinds, params::QuollParams)
+    return construct_kgrid(
+        atoms;
+        density=params.kpoint_grid.density,
+        mesh=params.kpoint_grid.mesh,
+        shift=params.kpoint_grid.shift,
+        time_reversal=get_time_reversal(operatorkinds, params),
+        crystal_symmetry=get_crystal_symmetry(operatorkinds, params),
+        symprec=params.symmetry.symprec,
     )
 end
 
-function perform_core_projection(operators, kgrid::KGrid, my_ikpoints, comm::MPI.Comm, params::QuollParams)
+function perform_core_projection(
+    operators, kgrid::KGrid, my_ikpoints, comm::MPI.Comm, params::QuollParams
+)
     # TODO: in the future if the projection method is not just a singleton
     # but also depends on parameters, those parameters can be parsed in as well
     # and fed into the constructor `method()` here
@@ -161,8 +173,8 @@ function perform_core_projection(operators, kgrid::KGrid, my_ikpoints, comm::MPI
         params.basis_projection.projected_basis,
         kgrid,
         my_ikpoints,
-        comm,
-        params.basis_projection.method(),
+        comm;
+        method=params.basis_projection.method(),
     )
 end
 
@@ -176,7 +188,6 @@ function get_output_dirs(output_root, input_roots, input_eachroot)
 
     output_dirs = String[]
     for (abs_input_root, abs_input_leaves) in zip(input_roots, input_eachroot)
-        
         rel_leaves = relpath.(abs_input_leaves, abs_input_root)
 
         if include_input_root_basename

@@ -1,4 +1,4 @@
-function convert_to_atomarray(d::SpeciesAnyDict{V}, atom2species) where V
+function convert_to_atomarray(d::SpeciesAnyDict{V}, atom2species) where {V}
     natoms = length(atom2species)
     sentinel = get_sentinel_value(V)
     return [
@@ -7,7 +7,7 @@ function convert_to_atomarray(d::SpeciesAnyDict{V}, atom2species) where V
     ]
 end
 
-function convert_to_atomarray(d::SpeciesPairAnyDict{V}, atom2species) where V
+function convert_to_atomarray(d::SpeciesPairAnyDict{V}, atom2species) where {V}
     natoms = length(atom2species)
     sentinel = get_sentinel_value(V)
     return [
@@ -16,7 +16,7 @@ function convert_to_atomarray(d::SpeciesPairAnyDict{V}, atom2species) where V
     ]
 end
 
-function convert_to_atomarray(d::AtomPairAnyDict{V}, natoms) where V
+function convert_to_atomarray(d::AtomPairAnyDict{V}, natoms) where {V}
     sentinel = get_sentinel_value(V)
     return [
         get(d, (i, j), sentinel)
@@ -24,16 +24,17 @@ function convert_to_atomarray(d::AtomPairAnyDict{V}, natoms) where V
     ]
 end
 
-get_sentinel_value(::Type{V}) where V = missing
+get_sentinel_value(::Type{V}) where {V} = missing
 
-get_sentinel_value(::Type{A}) where A<:AbstractArray = A(undef, Tuple(fill(0, ndims(A)))...)
+get_sentinel_value(::Type{A}) where {A<:AbstractArray} =
+    A(undef, Tuple(fill(0, ndims(A)))...)
 
-get_sentinel_value(::Type{A}) where A<:KeyedArray = missing
+get_sentinel_value(::Type{A}) where {A<:KeyedArray} = missing
 
 # This is for keydata.data.data, but I found that having Union{missing, T}
 # type instability doesn't lead to measurable performance loss,
 # so at least for keydata it seems like it's not really worth it
-function get_sentinel_value(::Type{<:ThreeDimSliceView{T}}) where T
+function get_sentinel_value(::Type{<:ThreeDimSliceView{T}}) where {T}
     dummy_array = zeros(T, 1, 1, 1)
     return view(dummy_array, :, :, 0:-1)
 end
