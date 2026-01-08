@@ -1,3 +1,4 @@
+#! format: off
 using Quoll
 using AtomsBase
 using Configurations
@@ -9,20 +10,19 @@ using Main.TestUtils
     @test collect(Quoll.Parser.parse_basismetadata(
         "C(1, 0, 0)"
     )) == [
-        # BasisMetadata(ChemicalSpecies(:C), 1, 0, 0, Base.ImmutableDict{String, String}())
-        BasisMetadata(ChemicalSpecies(:C), 1, 0, 0, Dict{String, String}())
+        Quoll.BasisMetadata(ChemicalSpecies(:C), 1, 0, 0, Dict{Symbol, Symbol}())
     ]
     @test collect(Quoll.Parser.parse_basismetadata(
         "C(1, 0, 0) type = atomic"
     )) == [
-        BasisMetadata(ChemicalSpecies(:C), 1, 0, 0, Dict("type" => "atomic"))
+        Quoll.BasisMetadata(ChemicalSpecies(:C), 1, 0, 0, Dict(:type => :atomic))
     ]
     @test collect(Quoll.Parser.parse_basismetadata(
         "Si(2, 1, *) type = atomic, func = gaussian"
     )) == [
-        BasisMetadata(ChemicalSpecies(:Si), 2, 1, -1, Dict("type" => "atomic", "func" => "gaussian")),
-        BasisMetadata(ChemicalSpecies(:Si), 2, 1,  0, Dict("type" => "atomic", "func" => "gaussian")),
-        BasisMetadata(ChemicalSpecies(:Si), 2, 1,  1, Dict("type" => "atomic", "func" => "gaussian")),
+        Quoll.BasisMetadata(ChemicalSpecies(:Si), 2, 1, -1, Dict(:type => :atomic, :func => :gaussian)),
+        Quoll.BasisMetadata(ChemicalSpecies(:Si), 2, 1,  0, Dict(:type => :atomic, :func => :gaussian)),
+        Quoll.BasisMetadata(ChemicalSpecies(:Si), 2, 1,  1, Dict(:type => :atomic, :func => :gaussian)),
     ]
 end
 
@@ -33,11 +33,11 @@ end
         "Si(2, 1, *) type = hydrogenic, function = gaussian"
     ]
     projected_basis = [
-        BasisMetadata(ChemicalSpecies(:C),  1, 0,  0, Dict("type" => "atomic")),
-        BasisMetadata(ChemicalSpecies(:Si), 1, 0,  0, Dict("type" => "atomic")),
-        BasisMetadata(ChemicalSpecies(:Si), 2, 1, -1, Dict("type" => "hydrogenic", "function" => "gaussian")),
-        BasisMetadata(ChemicalSpecies(:Si), 2, 1,  0, Dict("type" => "hydrogenic", "function" => "gaussian")),
-        BasisMetadata(ChemicalSpecies(:Si), 2, 1,  1, Dict("type" => "hydrogenic", "function" => "gaussian")),
+        Quoll.BasisMetadata(ChemicalSpecies(:C),  1, 0,  0, Dict(:type => :atomic)),
+        Quoll.BasisMetadata(ChemicalSpecies(:Si), 1, 0,  0, Dict(:type => :atomic)),
+        Quoll.BasisMetadata(ChemicalSpecies(:Si), 2, 1, -1, Dict(:type => :hydrogenic, :function => :gaussian)),
+        Quoll.BasisMetadata(ChemicalSpecies(:Si), 2, 1,  0, Dict(:type => :hydrogenic, :function => :gaussian)),
+        Quoll.BasisMetadata(ChemicalSpecies(:Si), 2, 1,  1, Dict(:type => :hydrogenic, :function => :gaussian)),
     ]
 
     @testset "Existing method" begin

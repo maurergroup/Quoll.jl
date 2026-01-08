@@ -30,7 +30,6 @@ using Test
     end
 
     @testset "N_mpi > N" begin
-
         N_mpi = 8
         N = 4
 
@@ -50,9 +49,7 @@ using Test
         @test Quoll.split_work(N, N_mpi, my_rank, split_method) == Int[]
         my_rank = 7
         @test Quoll.split_work(N, N_mpi, my_rank, split_method) == Int[]
-
     end
-
 end
 
 @testset "DefaultSplit" begin
@@ -83,7 +80,6 @@ end
     end
 
     @testset "N_mpi > N" begin
-
         N_mpi = 8
         N = 4
 
@@ -103,7 +99,5 @@ end
         @test Quoll.split_work(N, N_mpi, my_rank, split_method) == [3]
         my_rank = 7
         @test Quoll.split_work(N, N_mpi, my_rank, split_method) == [4]
-
     end
-
 end

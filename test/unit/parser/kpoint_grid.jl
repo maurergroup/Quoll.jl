@@ -6,7 +6,6 @@ using StaticArrays
 using Main.TestUtils
 
 @testset "KPointGridParams" begin
-
     @testset "From parameters" begin
         d = Dict("mesh" => [10, 10, 1])
         params = from_dict(Quoll.Parser.KPointGridParams, d)
@@ -30,7 +29,6 @@ using Main.TestUtils
 
     @testset "From file" begin
         setupteardown_tmp() do
-
             kpoint_file = "kpoints.dat"
             open(kpoint_file, "w") do io
                 write(io, "1.0 1.0 1.0 1.0\n")
@@ -53,5 +51,4 @@ using Main.TestUtils
         d = Dict("density" => -10.0)
         @test_throws ArgumentError from_dict(Quoll.Parser.KPointGridParams, d)
     end
-
 end

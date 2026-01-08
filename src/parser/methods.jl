@@ -58,7 +58,7 @@ end
 
 # Find operatorkinds and check if they are compatible with the supplied parameters
 function find_operatorkinds(dir::AbstractString, params::QuollParams)
-    found_operatorkinds = find_operatorkinds(dir, params.input.format)
+    found_operatorkinds = find_operatorkinds(params.input.format, dir)
     if !all(params.input.operators .∈ Ref(found_operatorkinds))
         operatorkinds = params.input.operators ∩ found_operatorkinds
 

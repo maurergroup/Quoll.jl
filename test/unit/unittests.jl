@@ -1,69 +1,69 @@
 using SafeTestsets
 
-@safetestset "methods" begin
+@safetestset "tools" begin
 
     @safetestset "atomtools.jl" begin
-        include("methods/atomtools.jl")
+        include("tools/atomtools.jl")
     end
 
     @safetestset "mpitools.jl" begin
-        include("methods/mpitools.jl")
+        include("tools/mpitools.jl")
     end
 
     @safetestset "fastlookup.jl" begin
-        include("methods/fastlookup.jl")
+        include("tools/fastlookup.jl")
     end
 
     @safetestset "symmetry.jl" begin
-        include("methods/symmetry.jl")
+        include("tools/symmetry.jl")
     end
 
 end
 
-@safetestset "basis.jl" begin
-    include("basis.jl")
-end
+@safetestset "core" begin
 
-@safetestset "kpoints.jl" begin
-    include("kpoints.jl")
-end
+    @safetestset "components" begin
 
-@safetestset "operatorkind.jl" begin
-    include("operatorkind.jl")
-end
+        @safetestset "basis.jl" begin
+            include("core/components/basis.jl")
+        end
 
-@safetestset "shconvention.jl" begin
-    include("shconvention.jl")
-end
+        @safetestset "kpoints.jl" begin
+            include("core/components/kpoints.jl")
+        end
 
-@safetestset "sparsity.jl" begin
-    include("sparsity.jl")
-end
+        @safetestset "operatorkind.jl" begin
+            include("core/components/operatorkind.jl")
+        end
 
-@safetestset "spin.jl" begin
-    include("spin.jl")
+        @safetestset "shconvention.jl" begin
+            include("core/components/shconvention.jl")
+        end
+
+        @safetestset "sparsity.jl" begin
+            include("core/components/sparsity.jl")
+        end
+
+        @safetestset "spin.jl" begin
+            include("core/components/spin.jl")
+        end
+
+    end
+    
 end
 
 @safetestset "operators" begin
-
-    @safetestset "canonical" begin
     
-        @safetestset "bsparse.jl" begin
-            include("operators/canonical/bsparse.jl")
-        end
-
+    @safetestset "canonical.jl" begin
+        include("operators/canonical.jl")
+    end
+    
+    @safetestset "canonical.jl" begin
+        include("operators/fhiaims.jl")
     end
 
-    @safetestset "fhiaims" begin
-    
-        @safetestset "abstract.jl" begin
-            include("operators/fhiaims/abstract.jl")
-        end
-
-        @safetestset "fhiaims_csc.jl" begin
-            include("operators/fhiaims/fhiaims_csc.jl")
-        end
-
+    @safetestset "deeph.jl" begin
+        include("operators/deeph.jl")
     end
 
 end

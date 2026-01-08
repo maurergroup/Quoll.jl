@@ -1,3 +1,4 @@
+#! format: off
 using Quoll
 using StaticArrays
 using Dictionaries
@@ -7,7 +8,7 @@ using Unitful
 using Test
 using Main.TestUtils
 
-@testset "RealBlockSparsity" begin
+@testset "BlockRealSparsity" begin
 
     @testset "From neighbourlist" begin
         # |H₁-H₂-----H₃-|H₁-H₂-----H₃-|H₁-H₂-----H₃-|
@@ -43,7 +44,9 @@ using Main.TestUtils
                 (3, 3) => [SA[0, 0, 0]                           ],
             ])
 
-            block_sparsity = Quoll.RealBlockSparsity(atoms, radii, hermitian = false)
+            block_sparsity = Quoll.build_sparsity(
+                Quoll.BlockRealSparsity, atoms, radii, hermitian=false
+            )
 
             @test sort(block_sparsity.images) == sort(ref_images)
             @test sort(keys(block_sparsity.ij2images)) == sort(keys(ref_ij2images))
@@ -68,7 +71,9 @@ using Main.TestUtils
                 (3, 3) => [SA[0, 0, 0]                           ],
             ])
 
-            block_sparsity = Quoll.RealBlockSparsity(atoms, radii, hermitian = true)
+            block_sparsity = Quoll.build_sparsity(
+                Quoll.BlockRealSparsity, atoms, radii, hermitian=true
+            )
 
             @test sort(block_sparsity.images) == sort(ref_images)
             @test sort(keys(block_sparsity.ij2images)) == sort(keys(ref_ij2images))
@@ -80,7 +85,7 @@ using Main.TestUtils
 
     end
 
-    @testset "From RealCSCSparsity" begin
+    @testset "From CSCRealSparsity" begin
         rowval = [1, 1, 2, 1, 1, 1]
         colcellptr = zeros(Int, 2, 3, 2)
         colcellptr[1, :, :] = [1 2; 4 0; 5 6]
@@ -97,7 +102,7 @@ using Main.TestUtils
             (2, 2) => [SA[0, 0, 0]                           ],
         ])
 
-        block_sparsity = Quoll.RealBlockSparsity(colcellptr, rowval, images, basis2atom)
+        block_sparsity = Quoll.BlockRealSparsity(colcellptr, rowval, images, basis2atom)
 
         @test block_sparsity.hermitian == true
         @test sort(block_sparsity.images) == sort(ref_images)
@@ -128,7 +133,7 @@ end
     ]
     hermitian = false
 
-    sparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
+    sparsity = Quoll.BlockRealSparsity(ij2images, images, hermitian)
     n = nothing
 
     ref_iexternal2ilocal = dictionary([
@@ -189,7 +194,7 @@ end
     ]
     hermitian = false
 
-    sparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
+    sparsity = Quoll.BlockRealSparsity(ij2images, images, hermitian)
     n = nothing
 
     ref_ilocal2iexternal = dictionary([
@@ -236,7 +241,7 @@ end
         SA[ 1, -1,  0],
     ]
 
-    nhsparsity = Quoll.RealBlockSparsity(nhij2images, images, false)
+    nhsparsity = Quoll.BlockRealSparsity(nhij2images, images, false)
     n = nothing
 
     @testset "Onsite" begin
@@ -285,7 +290,7 @@ end
     ]
     hermitian = false
 
-    nhsparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
+    nhsparsity = Quoll.BlockRealSparsity(ij2images, images, hermitian)
     hsparsity = Quoll.convert_to_hermitian(nhsparsity)
 
     ref_ij2images = dictionary([
@@ -319,7 +324,7 @@ end
     ]
     hermitian = true
 
-    hsparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
+    hsparsity = Quoll.BlockRealSparsity(ij2images, images, hermitian)
     nhsparsity = Quoll.convert_to_nonhermitian(hsparsity)
 
     ref_ij2images = dictionary([
@@ -351,7 +356,7 @@ end
     #         SA[0, -1,  0],
     #     ]
     #     hermitian = true
-    #     hsparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
+    #     hsparsity = Quoll.BlockRealSparsity(ij2images, images, hermitian)
     #     nhsparsity = Quoll.convert_to_nonhermitian(hsparsity)
 
     #     # On-site still contain redundant images
@@ -370,7 +375,7 @@ end
 
 end
 
-@testset "make_onsite_hermitian!" begin
+@testset "make_onsite_nonhermitian!" begin
     ij2images = dictionary([
         (1, 1) => [SA[0, 0, 0], SA[1, 0, 0]],
         (1, 2) => [SA[0, 0, 0], SA[1, 0, 0]],
@@ -385,7 +390,7 @@ end
         (2, 2) => [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]],
     ])
 
-    Quoll.make_onsite_hermitian!(ij2images)
+    Quoll.make_onsite_nonhermitian!(ij2images)
     for i in 1:2
         @test sort(ij2images[(i, i)]) == sort(ref_ij2images[(i, i)])
     end

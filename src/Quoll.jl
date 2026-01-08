@@ -52,7 +52,7 @@ include("core/factories.jl")
 
 export find_operatorkinds
 export load_operators, load_operator
-export write_operators, write_operator
+export write_operators
 include("core/inout.jl")
 
 export convert_operator

@@ -5,7 +5,6 @@ using StaticArrays
 using Test
 
 @testset "parse_kpathparams" begin
-
     @testset "Nominal case" begin
         band = "0.0  0.0  0.0 -0.5 -0.5 -0.5 20 G X"
         kpathparams = Quoll.Parser.parse_kpathparams(band)
@@ -22,15 +21,13 @@ using Test
 
         band = "0.0  0.0  0.0 -0.5 -0.5 -0.5 20.1 G X"
         @test_throws ArgumentError Quoll.Parser.parse_kpathparams(band)
-        
+
         band = "0.0  0.0  0.0 -0.5 -0.5 -0.5 20 G"
         @test_throws ArgumentError Quoll.Parser.parse_kpathparams(band)
     end
-
 end
 
 @testset "DOSParams" begin
-
     @testset "Inverted energy ranges" begin
         d = Dict(
             "smearing_function" => "fermi_dirac",
@@ -41,45 +38,43 @@ end
         )
         @test_throws ArgumentError from_dict(Quoll.Parser.DOSParams, d)
     end
-
 end
 
 @testset "BandStructureParams" begin
     bands = [
         "0.0  0.0  0.0 -0.5 -0.5 -0.5 20 G X",
-        "0.5  0.0  0.0  0.0  0.0  0.0 20 Y G"
+        "0.5  0.0  0.0  0.0  0.0  0.0 20 Y G",
     ]
 
     @testset "Negative density" begin
         d = Dict("bands" => bands, "density" => -10.0)
         @test_throws ArgumentError from_dict(Quoll.Parser.BandStructureParams, d)
     end
-
 end
 
+#! format: off
 @testset "PostprocessParams" begin
-
     @testset "Nominal case" begin
         d = Dict(
-            "fermi_level" => true,
-            "dos" => false,
-            "band_structure" => false,
-            "fermi_level_params" => Dict(
+            "fermi_level"           => true,
+            "dos"                   => false,
+            "band_structure"        => false,
+            "fermi_level_params"    => Dict(
                 "smearing_function" => "fermi_dirac"
             ),
             "dos_params" => Dict(
                 "smearing_function" => "fermi_dirac",
-                "temperature" => 500.0,
-                "n_points" => 1000,
-                "energy_begin" => -20.0,
-                "energy_end" => 20.0,
+                "temperature"       => 500.0,
+                "n_points"          => 1000,
+                "energy_begin"      => -20.0,
+                "energy_end"        => 20.0,
             ),
             "band_structure_params" => Dict(
                 "bands" => [
                     "0.0  0.0  0.0 -0.5 -0.5 -0.5 20 G X",
-                    "0.5  0.0  0.0  0.0  0.0  0.0 20 Y G"
-                ]
-            )
+                    "0.5  0.0  0.0  0.0  0.0  0.0 20 Y G",
+                ],
+            ),
         )
         params = from_dict(Quoll.Parser.PostprocessParams, d)
 
@@ -97,5 +92,5 @@ end
             Quoll.Parser.KPathParams(SA[0.5, 0.0, 0.0], SA[0.0, 0.0, 0.0], 20, :Y, :G),
         ]
     end
-    
 end
+#! format: on

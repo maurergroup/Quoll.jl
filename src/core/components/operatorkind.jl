@@ -1,3 +1,5 @@
+# An unordered dictionary is used to make comparison between two operatorkinds
+# not depend on tag order
 struct OperatorKind{K}
     tags::UnorderedDictionary{Symbol,Symbol}
 
@@ -74,7 +76,12 @@ function get_operator_groups(
 end
 
 function statictuple(kind::OperatorKind{K}) where {K}
-    pairtypes = Tuple(Pair(Val(pair[1]), Val(pair[2])) for pair in pairs(kind.tags))
+    # Making sure pairtypes are sorted with respect to tag keys
+    # (to make sure methods that dispatch on statictuple work)
+    pairtypes = Tuple(
+        Pair(Val(pair[1]), Val(pair[2]))
+        for pair in sort(pairs(kind.tags), by=kv->kv[1])
+    )
     return tuple(Val(K), pairtypes...)
 end
 

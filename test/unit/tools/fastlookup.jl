@@ -13,7 +13,7 @@ end
 @testset "SpeciesDict{Vector{Int}}" begin
     d = Dict(
         a => [10, 20],
-        b => [30, 40]
+        b => [30, 40],
     )
 
     ref_atomarray = Vector{Vector{Int}}(undef, 3)
@@ -54,7 +54,7 @@ end
     d = Dict(
         (1, 1) => sliceview,
         (1, 2) => sliceview,
-        (3, 3) => sliceview
+        (3, 3) => sliceview,
     )
 
     ref_atomarray = Matrix{typeof(sliceview)}(undef, 3, 3)

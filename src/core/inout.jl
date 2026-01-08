@@ -36,10 +36,10 @@ function write_operators end
 ### PARSING ###
 
 # Find available operators in the supplied dir
-function find_operatorkinds(dir::AbstractString, format::Type{<:AbstractMetadata})
+function find_operatorkinds(::Type{M}, dir::AbstractString) where {M<:AbstractMetadata}
     found_operatorkinds = OperatorKind[]
-    for operatorkind in get_avail_operatorkinds(format)
-        names = get_avail_filenames(format, operatorkind)
+    for operatorkind in get_avail_operatorkinds(M)
+        names = get_avail_filenames(M, operatorkind)
         ps = joinpath.(dir, names)
         if any(ispath.(ps))
             push!(found_operatorkinds, operatorkind)

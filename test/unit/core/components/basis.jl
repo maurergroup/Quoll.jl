@@ -4,34 +4,34 @@ using AtomsBase
 
 using Test
 
-const basisset = begin
-    a = ChemicalSpecies(:H1)
-    b = ChemicalSpecies(:H2)
+const basisset = let a = ChemicalSpecies(:H1), b = ChemicalSpecies(:H2)
     Quoll.BasisSetMetadata(
         dictionary([
             a => [
-                BasisMetadata(a, 1, 0, 0, nothing)
-                BasisMetadata(a, 2, 0, 0, nothing)
-                BasisMetadata(a, 2, 1,-1, nothing)
-                BasisMetadata(a, 2, 1, 0, nothing)
-                BasisMetadata(a, 2, 1, 1, nothing)
+                Quoll.BasisMetadata(a, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 1, nothing)
             ],
             b => [
-                BasisMetadata(b, 2, 0, 0, nothing)
-                BasisMetadata(b, 2, 1,-1, nothing)
-                BasisMetadata(b, 2, 1, 0, nothing)
-                BasisMetadata(b, 2, 1, 1, nothing)
-            ]
+                Quoll.BasisMetadata(b, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 1, nothing)
+            ],
         ]),
-        [a, b, b, a]
+        [a, b, b, a],
     )
 end
 
 @testset "get_angular_momenta" begin
     ref_ells_a = [0, 0, 1]
     ref_ells_b = [0, 1]
-    @test Quoll.get_angular_momenta(Quoll.basis_species(basisset, ChemicalSpecies(:H1))) == ref_ells_a
-    @test Quoll.get_angular_momenta(Quoll.basis_species(basisset, ChemicalSpecies(:H2))) == ref_ells_b
+    @test Quoll.get_angular_momenta(Quoll.basis_species(basisset, ChemicalSpecies(:H1))) ==
+        ref_ells_a
+    @test Quoll.get_angular_momenta(Quoll.basis_species(basisset, ChemicalSpecies(:H2))) ==
+        ref_ells_b
 end
 
 @testset "get_unique_species" begin
@@ -73,7 +73,7 @@ end
 
     basis_atom3 = [
         Quoll.BasisMetadata(b, 2, 0, 0, nothing)
-        Quoll.BasisMetadata(b, 2, 1,-1, nothing)
+        Quoll.BasisMetadata(b, 2, 1, -1, nothing)
         Quoll.BasisMetadata(b, 2, 1, 0, nothing)
         Quoll.BasisMetadata(b, 2, 1, 1, nothing)
     ]
@@ -82,7 +82,7 @@ end
     basis_atom4 = [
         Quoll.BasisMetadata(a, 1, 0, 0, nothing)
         Quoll.BasisMetadata(a, 2, 0, 0, nothing)
-        Quoll.BasisMetadata(a, 2, 1,-1, nothing)
+        Quoll.BasisMetadata(a, 2, 1, -1, nothing)
         Quoll.BasisMetadata(a, 2, 1, 0, nothing)
         Quoll.BasisMetadata(a, 2, 1, 1, nothing)
     ]
@@ -95,7 +95,7 @@ end
 
     basis_species_b = [
         Quoll.BasisMetadata(b, 2, 0, 0, nothing)
-        Quoll.BasisMetadata(b, 2, 1,-1, nothing)
+        Quoll.BasisMetadata(b, 2, 1, -1, nothing)
         Quoll.BasisMetadata(b, 2, 1, 0, nothing)
         Quoll.BasisMetadata(b, 2, 1, 1, nothing)
     ]
@@ -104,7 +104,7 @@ end
     basis_species_a = [
         Quoll.BasisMetadata(a, 1, 0, 0, nothing)
         Quoll.BasisMetadata(a, 2, 0, 0, nothing)
-        Quoll.BasisMetadata(a, 2, 1,-1, nothing)
+        Quoll.BasisMetadata(a, 2, 1, -1, nothing)
         Quoll.BasisMetadata(a, 2, 1, 0, nothing)
         Quoll.BasisMetadata(a, 2, 1, 1, nothing)
     ]
@@ -127,7 +127,7 @@ end
     ]
     subbasis_masks_ref = dictionary([
         a => [1, 1, 0, 0, 0],
-        b => [1, 0, 0, 1]
+        b => [1, 0, 0, 1],
     ])
     @test Quoll.get_subbasis_masks(basisset, subbasis) == subbasis_masks_ref
 end
@@ -145,7 +145,7 @@ end
         1, 1, 0, 0, 0,
         1, 0, 0, 1,
         1, 0, 0, 1,
-        1, 1, 0, 0, 0
+        1, 1, 0, 0, 0,
     ]
     @test Quoll.get_dense_subbasis_mask(basisset, subbasis) == dense_subbasis_mask_ref
 end

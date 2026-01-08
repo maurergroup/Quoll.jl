@@ -36,7 +36,6 @@ end
 # end
 
 @testset "get_output_dirs" begin
-
     @testset "Single root" begin
         @testset "Nominal case" begin
             output_root = abspath("output")
@@ -50,7 +49,9 @@ end
                 ]),
             ]
 
-            output_dirs = Quoll.Parser.get_output_dirs(output_root, input_roots, input_eachroot)
+            output_dirs = Quoll.Parser.get_output_dirs(
+                output_root, input_roots, input_eachroot
+            )
             rel_output_dirs = relpath.(output_dirs, output_root)
 
             @test rel_output_dirs[1] == joinpath("dir1", "dir11")
@@ -64,7 +65,9 @@ end
             input_roots = abspath.(["root"])
             input_eachroot = [abspath.(["root"])]
 
-            output_dirs = Quoll.Parser.get_output_dirs(output_root, input_roots, input_eachroot)
+            output_dirs = Quoll.Parser.get_output_dirs(
+                output_root, input_roots, input_eachroot
+            )
             rel_output_dirs = relpath.(output_dirs, output_root)
 
             @test rel_output_dirs[1] == "."
@@ -90,7 +93,9 @@ end
                 ]),
             ]
 
-            output_dirs = Quoll.Parser.get_output_dirs(output_root, input_roots, input_eachroot)
+            output_dirs = Quoll.Parser.get_output_dirs(
+                output_root, input_roots, input_eachroot
+            )
             rel_output_dirs = relpath.(output_dirs, output_root)
 
             @test rel_output_dirs[1] == joinpath("root1", "dir1", "dir11")
@@ -109,18 +114,18 @@ end
             input_roots = abspath.(["root1", "root2"])
             input_eachroot = [abspath.(["root1"]), abspath.(["root2"])]
 
-            output_dirs = Quoll.Parser.get_output_dirs(output_root, input_roots, input_eachroot)
+            output_dirs = Quoll.Parser.get_output_dirs(
+                output_root, input_roots, input_eachroot
+            )
             rel_output_dirs = relpath.(output_dirs, output_root)
 
             @test rel_output_dirs[1] == "root1"
             @test rel_output_dirs[2] == "root2"
         end
     end
-
 end
 
 @testset "find_leafdirs" begin
-
     @testset "Nominal case" begin
         tempdirs = [
             joinpath("dir1", "dir11"),
@@ -149,20 +154,17 @@ end
 
         leafdirs = Quoll.Parser.find_leafdirs(root)
         @test leafdirs == [root]
-
     end
-
 end
 
 @testset "requires_kpoint_grid" begin
-
     params = DummyQuollParams(
         nothing,
         DummyPostprocessParams(false, false),
         DummyErrorParams("foo", false, false),
     )
     @test Quoll.Parser.requires_kpoint_grid(params) == false
-    
+
     params = DummyQuollParams(
         true,
         DummyPostprocessParams(false, false),
@@ -190,11 +192,9 @@ end
         DummyErrorParams("foo", true, false),
     )
     @test Quoll.Parser.requires_kpoint_grid(params) == true
-    
 end
 
 @testset "search_clashes" begin
-
     error_metrics = DummyErrorParams(false, false, false)
     @test isnothing(Quoll.Parser.search_clashes(nothing, error_metrics))
 
@@ -206,5 +206,4 @@ end
 
     error_metrics = DummyErrorParams(true, false, false)
     @test_throws ArgumentError Quoll.Parser.search_clashes(true, error_metrics)
-
 end

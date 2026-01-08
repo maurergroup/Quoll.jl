@@ -10,7 +10,6 @@ using AtomsBaseTesting
 using Main.TestUtils
 
 @testset "recentre" begin
-
     @testset "Periodic system" begin
         # ||: [ 0.0, 1.0)
         #  |: [-0.5, 0.5)
@@ -18,9 +17,9 @@ using Main.TestUtils
         # |x₂---||--x₁-|-----|| →
         # |-----||x₂---|--x₁-||
         cellvecs = SA[
-            SA[1.0,   0.0,   0.0],
-            SA[0.0, 100.0,   0.0],
-            SA[0.0,   0.0, 100.0],
+            SA[1.0, 0.0, 0.0],
+            SA[0.0, 100.0, 0.0],
+            SA[0.0, 0.0, 100.0],
         ]u"Å"
         atoms = periodic_system(
             [
@@ -37,7 +36,7 @@ using Main.TestUtils
             cellvecs,
         )
 
-        test_approx_eq(recentre(atoms), recentered_atoms)
+        test_approx_eq(Quoll.recentre(atoms), recentered_atoms)
     end
 
     @testset "Non-periodic system" begin
@@ -45,9 +44,8 @@ using Main.TestUtils
             ChemicalSpecies(:H1) => SA[0.40, 0.00, 0.00]u"Å",
             ChemicalSpecies(:H2) => SA[0.55, 0.00, 0.00]u"Å",
         ])
-        @test_throws ArgumentError recentre(atoms)
+        @test_throws ArgumentError Quoll.recentre(atoms)
     end
-
 end
 
 @testset "get_recip_lattice" begin
@@ -58,9 +56,9 @@ end
 
 @testset "get_frac_positions" begin
     cellvecs = SA[
-        SA[10.0,  0.0,  0.0],
-        SA[ 0.0, 10.0,  0.0],
-        SA[ 0.0,  0.0, 10.0],
+        SA[10.0, 0.0, 0.0],
+        SA[0.0, 10.0, 0.0],
+        SA[0.0, 0.0, 10.0],
     ]u"Å"
     atoms = periodic_system(
         [
@@ -76,9 +74,9 @@ end
 
 @testset "get_species2atom" begin
     cellvecs = SA[
-        SA[10.0,  0.0,  0.0],
-        SA[ 0.0, 10.0,  0.0],
-        SA[ 0.0,  0.0, 10.0],
+        SA[10.0, 0.0, 0.0],
+        SA[0.0, 10.0, 0.0],
+        SA[0.0, 0.0, 10.0],
     ]u"Å"
     atoms = periodic_system(
         [
@@ -94,7 +92,7 @@ end
 
     species2atom_ref = Dictionary(
         [ChemicalSpecies(:H), ChemicalSpecies(:He), ChemicalSpecies(:Li)],
-        [[2, 3], [1, 4, 6], [5]]
+        [[2, 3], [1, 4, 6], [5]],
     )
 
     @test sort(Quoll.get_species2atom(atoms)) == sort(species2atom_ref)

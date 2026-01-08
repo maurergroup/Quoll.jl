@@ -27,43 +27,47 @@ using Main.TestUtils
 
     s = "Si 10.0 foo"
     @test_throws ArgumentError Quoll.Parser.parse_radius(s)
-
 end
 
-
 @testset "InputParams" begin
-
     @testset "operators" begin
         directories, _ = create_temptree([])
 
         @testset "Nominal case" begin
-            d = Dict("format" => "FHI-aims", "directory" => directories, "operators" => "H_ref")
+            d = Dict(
+                "format" => "FHI-aims",
+                "directory" => directories,
+                "operators" => "H nospin",
+            )
             params = from_dict(Quoll.Parser.InputParams, d)
 
             @test Set(params.operators) == Set([
-                Hamiltonian(source = :ref, spin = :none),
-                Hamiltonian(source = :ref, spin = :soc),
-                Hamiltonian(source = :ref, spin = :up),
-                Hamiltonian(source = :ref, spin = :down),
+                Hamiltonian(; source=:ref),
+                Hamiltonian(; source=:pred),
             ])
 
-            d = Dict("format" => "FHI-aims", "directory" => directories, "operators" => ["H_ref"])
+            d = Dict(
+                "format" => "FHI-aims",
+                "directory" => directories,
+                "operators" => ["H nospin"],
+            )
             params = from_dict(Quoll.Parser.InputParams, d)
 
             @test Set(params.operators) == Set([
-                Hamiltonian(source = :ref, spin = :none),
-                Hamiltonian(source = :ref, spin = :soc),
-                Hamiltonian(source = :ref, spin = :up),
-                Hamiltonian(source = :ref, spin = :down),
+                Hamiltonian(; source=:ref),
+                Hamiltonian(; source=:pred),
             ])
         end
 
         @testset "Incorrect kind" begin
-            d = Dict("format" => "FHI-aims", "directory" => directories, "operators" => ["foo", "bar"])
+            d = Dict(
+                "format" => "FHI-aims",
+                "directory" => directories,
+                "operators" => ["foo", "bar"],
+            )
 
             @test_throws ArgumentError params = from_dict(Quoll.Parser.InputParams, d)
         end
-
     end
 
     @testset "format" begin
@@ -73,7 +77,7 @@ end
             d = Dict("format" => "FHI-aims", "directory" => directories)
             params = from_dict(Quoll.Parser.InputParams, d)
 
-            @test params.format == Quoll.FHIaimsCSCOperator
+            @test params.format == Quoll.FHIaimsCSCNoSpinRealMetadata
         end
 
         @testset "Incorrect format" begin
@@ -109,7 +113,7 @@ end
 
     @testset "radii" begin
         directories, _ = create_temptree([])
-    
+
         @testset "Nominal case" begin
             radii = ["Si 12.0 ang", "C 10.0 ang"]
             d = Dict("format" => "FHI-aims", "directory" => directories, "radii" => radii)
@@ -119,13 +123,10 @@ end
                 ChemicalSpecies(:C) => 10.0u"Å",
             )
         end
-
     end
-
 end
 
 @testset "OutputParams" begin
-
     @testset "format" begin
         directory = abspath("bar")
 
@@ -133,7 +134,7 @@ end
             d = Dict("format" => "DeepH", "directory" => directory)
             params = from_dict(Quoll.Parser.OutputParams, d)
 
-            @test params.format == Quoll.DeepHOperator
+            @test params.format == Quoll.DeepHBlockNoSpinRealMetadata
         end
 
         @testset "Incorrect format" begin
@@ -141,11 +142,9 @@ end
 
             @test_throws ArgumentError from_dict(Quoll.Parser.OutputParams, d)
         end
-
     end
 
     @testset "hermitian" begin
-
         @testset "Overwrite default" begin
             directory, format = abspath("bar"), "DeepH"
 
@@ -154,11 +153,9 @@ end
 
             @test params.hermitian == true
         end
-
     end
 
     @testset "directory" begin
-
         @testset "Absolute directory" begin
             directory, reference = abspath("bar"), abspath("bar")
 
@@ -176,7 +173,5 @@ end
 
             @test params.directory == reference
         end
-
     end
-
 end

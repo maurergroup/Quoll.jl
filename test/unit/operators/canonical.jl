@@ -7,6 +7,7 @@ using Unitful
 using Test
 using Main.TestUtils
 
+#! format: off
 @testset "get_z1z2_ij2interval" begin
     cellvecs = SA[
         SA[1.0,   0.0,   0.0],
@@ -43,7 +44,7 @@ using Main.TestUtils
         SA[ 0,  0, -1],
     ]
     hermitian = true
-    sparsity = Quoll.RealBlockSparsity(ij2images, images, hermitian)
+    sparsity = Quoll.BlockRealSparsity(ij2images, images, hermitian)
 
     ref_z1z2_ij2interval = dictionary([
         (a, a) => dictionary([
@@ -95,3 +96,4 @@ using Main.TestUtils
         end
     end
 end
+#! format: on

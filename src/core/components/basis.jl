@@ -75,10 +75,8 @@ end
 
 get_unique_species(basisset::BasisSetMetadata) = unique(basisset.atom2species)
 
-# Assuming ms that belong to a given l are next to each other,
-# and that each subblock has m=0 basis function
 function get_angular_momenta(basis::AbstractVector{T}) where {T<:BasisMetadata}
-    return getfield.(filter(orbital -> orbital.l == orbital.m, basis), :l)
+    return getfield.(get_basis_per_subblock(basis), :l)
 end
 
 function get_subblock_ranges(basisset::BasisSetMetadata)

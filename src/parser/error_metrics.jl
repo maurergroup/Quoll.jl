@@ -10,7 +10,7 @@ end
 
 @option struct ElEntropyErrorParams <: AbstractQuollParams
     smearing_function::Type{<:SmearingFunction} = FermiDirac
-    temperature::Float64l                       = 1000.0
+    temperature::Float64                        = 1000.0
 
     function ElEntropyErrorParams(smearing_function, temperature)
         @argcheck temperature > 0.0
