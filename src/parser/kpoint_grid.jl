@@ -37,6 +37,6 @@ function Configurations.from_dict(
         return eachrow(readdlm(kpoints))
 
     elseif kpoints isa Vector
-        return [SVector{4,Float64}(kpoint) for kpoint in kpoints]
+        return [SVector{4,Float64}(kpoint_weight) for kpoint_weight in kpoints]
     end
 end

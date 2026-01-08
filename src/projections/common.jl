@@ -1,12 +1,13 @@
 # TODO: Would be quite different for a non-periodic system (no need for a k-point grid)
-# TODO: make sure to use the same SH convention in reciprocal space as the input operators,
-# even though the default reciprocal format is CanonicalDenseRecipMetadata
+# TODO: Need to check whether symmetries of KGrid are appropriate
 function perform_core_projection(
     operators, projected_basis, kgrid::KGrid, my_ikpoints, comm::MPI.Comm;
     method::AbstractBasisProjection=LaikovCore(),
     recip_operator_type::Type{OPₖ}=Operator,
     recip_format::Type{Mₖ}=CanonicalDenseNoSpinRecipMetadata,
 ) where {OPₖ<:AbstractOperator,Mₖ<:AbstractMetadata}
+    @argcheck !(kgrid.crystal_symmetry)
+
     my_kpoints = view(kgrid.kpoints, my_ikpoints)
     my_weights = view(kgrid.weights, my_ikpoints)
     my_kpoints_float = convert(Vector{SVector{3,Float64}}, my_kpoints)

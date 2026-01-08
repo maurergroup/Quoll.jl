@@ -6,8 +6,8 @@
 struct KGrid{T,W}
     kpoints::T
     weights::W
-    time_reversal::Union{Missing,Bool}
-    crystal_symmetry::Union{Missing,Bool}
+    time_reversal::Bool
+    crystal_symmetry::Bool
 end
 
 get_nkpoints(kgrid::KGrid) = length(kgrid.kpoints)

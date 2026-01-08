@@ -92,9 +92,17 @@ function requires_kpoint_grid(params)
     return requires
 end
 
-function validate_symmetry(input, basis_projection, symmetry)
+function validate_symmetry(input, basis_projection, kpoint_grid, symmetry)
     validate_time_reversal(input, symmetry)
     validate_crystal_symmetry(input, basis_projection, symmetry)
+
+    # Additional check whether symmetries were set
+    # if a manual k-point grid was supplied
+    if !isnothing(kpoint_grid.kpoints)
+        @argcheck !isnothing(symmetry.time_reversal)
+        @argcheck !isnothing(symmetry.crystal_symmetry)
+    end
+
     return true
 end
 
@@ -151,15 +159,26 @@ function get_crystal_symmetry(operatorkinds, params::QuollParams)
 end
 
 function construct_kgrid(atoms::AbstractSystem, operatorkinds, params::QuollParams)
-    return construct_kgrid(
-        atoms;
-        density=params.kpoint_grid.density,
-        mesh=params.kpoint_grid.mesh,
-        shift=params.kpoint_grid.shift,
-        time_reversal=get_time_reversal(operatorkinds, params),
-        crystal_symmetry=get_crystal_symmetry(operatorkinds, params),
-        symprec=params.symmetry.symprec,
-    )
+    if isnothing(params.kpoint_grid.kpoints)
+        return construct_kgrid(
+            atoms;
+            density=params.kpoint_grid.density,
+            mesh=params.kpoint_grid.mesh,
+            shift=params.kpoint_grid.shift,
+            time_reversal=get_time_reversal(operatorkinds, params),
+            crystal_symmetry=get_crystal_symmetry(operatorkinds, params),
+            symprec=params.symmetry.symprec,
+        )
+    else
+        kpoints = getindex.(params.kpoint_grid.kpoints, Ref([1, 2, 3]))
+        weights = getindex.(params.kpoint_grid.kpoints, 4)
+        return KGrid(
+            kpoints,
+            weights,
+            params.symmetry.time_reversal,
+            params.symmetry.crystal_symmetry,
+        )
+    end
 end
 
 function perform_core_projection(

@@ -178,7 +178,7 @@ function inv_fourier_transform_data!(
 end
 
 function inv_fourier_transform_data!(
-    out_keydata::CanonicalBlockRealKeyData,
+    out_keydata::CanonicalBlockRealKeyData{Tₒᵤₜ},
     ::CanonicalBlockRealData,
     in_data::DenseRecipData,
     out_sparsity::BlockRealSparsity,
@@ -187,7 +187,7 @@ function inv_fourier_transform_data!(
     shconv_isidentity::Val{isidentity},
     phases_k,
     weight,
-) where {isidentity}
+) where {Tₒᵤₜ,isidentity}
     out_keydata_body = unwrap_data(out_keydata)
     in_data_body = unwrap_data(in_data)
 
@@ -223,10 +223,17 @@ function inv_fourier_transform_data!(
                     ib_dense = ib + atom2offset_i
                     !isidentity && (ib_dense += shifts_zi[ib])
 
-                    contribution = (
-                        weight *
-                        real(in_data_body[ib_dense, jb_dense] * inv_phases_kij[iR])
-                    )
+                    if Tₒᵤₜ <: Complex
+                        contribution = (
+                            weight *
+                            real(in_data_body[ib_dense, jb_dense] * inv_phases_kij[iR])
+                        )
+                    elseif Tₒᵤₜ <: Real
+                        contribution = (
+                            weight *
+                            real(in_data_body[ib_dense, jb_dense] * inv_phases_kij[iR])
+                        )
+                    end
                     !isidentity && (contribution *= shphases_zizj[ib, jb])
 
                     out_block[ib, jb, iR] += contribution

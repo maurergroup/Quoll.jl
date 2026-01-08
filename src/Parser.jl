@@ -73,7 +73,7 @@ include("parser/symmetry.jl")
             error_metrics,
         )
         # Check if supplied symmetry options are appropriate
-        validate_symmetry(input, basis_projection, symmetry)
+        validate_symmetry(input, basis_projection, kpoint_grid, symmetry)
 
         # Look if there are any unresolvable clashes
         search_clashes(basis_projection, error_metrics)
