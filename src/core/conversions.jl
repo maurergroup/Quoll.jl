@@ -30,7 +30,7 @@ function convert_operator(
     )
 
     # Convert operator data
-    convert_operator_data!(out_operator, in_operator)
+    convert_data!(out_operator, in_operator)
 
     return out_operator
 end
@@ -41,14 +41,14 @@ end
 # to use sparsity as trait too, but we can assume a data format implies a particular
 # sparsity type.
 # However, keydata does not imply sparsity, which is why we need data traits
-function convert_operator_data!(
+function convert_data!(
     out_operator::OPₒᵤₜ,
     in_operator::OPᵢₙ,
 ) where {
     OPₒᵤₜ<:AbstractOperator,
     OPᵢₙ<:AbstractOperator,
 }
-    return convert_operator_data!(
+    return convert_data!(
         trait(KeyedTrait, OPₒᵤₜ),
         trait(KeyedTrait, OPᵢₙ),
         out_operator,
@@ -56,7 +56,7 @@ function convert_operator_data!(
     )
 end
 
-function convert_operator_data!(
+function convert_data!(
     ::NoKeydata,
     ::NoKeydata,
     out_operator::OPₒᵤₜ,
@@ -69,10 +69,10 @@ function convert_operator_data!(
     Mᵢₙ = typeof(op_metadata(in_operator))
     Dₒᵤₜ = op_data_type(Mₒᵤₜ)
     Dᵢₙ = op_data_type(Mᵢₙ)
-    return convert_operator_data!(Dₒᵤₜ, Dᵢₙ, out_operator, in_operator)
+    return convert_data!(Dₒᵤₜ, Dᵢₙ, out_operator, in_operator)
 end
 
-function convert_operator_data!(
+function convert_data!(
     ::HasKeydata,
     ::NoKeydata,
     out_operator::OPₒᵤₜ,
@@ -86,10 +86,10 @@ function convert_operator_data!(
     KDₒᵤₜ = op_keydata_type(Mₒᵤₜ)
     Dₒᵤₜ = op_data_type(Mₒᵤₜ)
     Dᵢₙ = op_data_type(Mᵢₙ)
-    return convert_operator_data!(KDₒᵤₜ, Dₒᵤₜ, Dᵢₙ, out_operator, in_operator)
+    return convert_data!(KDₒᵤₜ, Dₒᵤₜ, Dᵢₙ, out_operator, in_operator)
 end
 
-function convert_operator_data!(
+function convert_data!(
     ::NoKeydata,
     ::HasKeydata,
     out_operator::OPₒᵤₜ,
@@ -103,10 +103,10 @@ function convert_operator_data!(
     Dₒᵤₜ = op_data_type(Mₒᵤₜ)
     KDᵢₙ = op_keydata_type(Mᵢₙ)
     Dᵢₙ = op_data_type(Mᵢₙ)
-    return convert_operator_data!(Dₒᵤₜ, KDᵢₙ, Dᵢₙ, out_operator, in_operator)
+    return convert_data!(Dₒᵤₜ, KDᵢₙ, Dᵢₙ, out_operator, in_operator)
 end
 
-function convert_operator_data!(
+function convert_data!(
     ::HasKeydata,
     ::HasKeydata,
     out_operator::OPₒᵤₜ,
@@ -121,7 +121,7 @@ function convert_operator_data!(
     Dₒᵤₜ = op_data_type(Mₒᵤₜ)
     KDᵢₙ = op_keydata_type(Mᵢₙ)
     Dᵢₙ = op_data_type(Mᵢₙ)
-    return convert_operator_data!(KDₒᵤₜ, Dₒᵤₜ, KDᵢₙ, Dᵢₙ, out_operator, in_operator)
+    return convert_data!(KDₒᵤₜ, Dₒᵤₜ, KDᵢₙ, Dᵢₙ, out_operator, in_operator)
 end
 
 ### METADATA ###

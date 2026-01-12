@@ -77,7 +77,10 @@ op_sparsity_type(::Type{<:FHIaimsDenseRecipMetadata}) = DenseRecipSparsity
 
 ### LOADING ###
 
-function load_operator_basic_metadata(
+# For all functions here we use source for dispatch instead of M<:FHIaimsCSCRealMetadata
+# We do this because in this particular case all methods could be reused with other
+# FHI-aims operators. If this was not the case, M would be used for dispatch instead
+function load_metadata_basic(
     ::Type{<:FHIaimsCSCRealMetadata}, dir::AbstractString, kind::OperatorKind
 )
     source = FHIaimsSource()
@@ -88,7 +91,7 @@ function load_operator_basic_metadata(
     return BasicMetadataContainer(kind, source, sparsity, basisset, shconv, atoms)
 end
 
-function load_operator_metadata(
+function load_metadata(
     ::Type{<:FHIaimsCSCNoSpinRealMetadata},
     ::AbstractString,
     basic_metadata::BasicMetadataContainer,
@@ -96,7 +99,7 @@ function load_operator_metadata(
     return RealMetadata(basic_metadata)
 end
 
-function load_operator_metadata(
+function load_metadata(
     ::Type{<:FHIaimsCSCSpinRealMetadata},
     ::AbstractString,
     basic_metadata::BasicMetadataContainer,
@@ -109,7 +112,7 @@ function load_operator_metadata(
     return SpinRealMetadata(basic_metadata, spins)
 end
 
-function load_operator_data(
+function load_data(
     ::Type{M},
     dir::AbstractString,
     operatorkind::OperatorKind{K},
@@ -150,69 +153,15 @@ function load_operator_data(
 end
 
 @memoize function load_atoms(source::FHIaimsSource, dir::AbstractString)
-    path = joinpath(dir, "geometry.in")
-    atoms = load_system(path)
+    p = joinpath(dir, "geometry.in")
+    @argcheck ispath(p)
+    atoms = load_system(p)
 
     # Recentre atom positions to be consistent with relative positions
     # that are used during real-space matrix integration in FHI-aims
     all(periodicity(atoms)) && (atoms = recentre(atoms))
 
     return atoms
-end
-
-@memoize function BasisSetMetadata(
-    source::FHIaimsSource, dir::AbstractString, atoms::AbstractSystem
-)
-    p = joinpath(dir, "basis-indices.out")
-    @argcheck ispath(p)
-
-    atom2species = species(atoms, :)
-    basis = Base.ImmutableDict(
-        (
-            species => BasisMetadata{Base.ImmutableDict{Symbol,Symbol}}[]
-            for species in unique(atom2species)
-        )...,
-    )
-
-    f = open(p, "r")
-
-    # Reads both the empty lines and the header
-    while isempty(strip(readline(f)))
-    end
-
-    species2firstatom = dictionary(
-        species => findfirst(x -> x == species, atom2species)
-        for species in unique(atom2species)
-    )
-
-    ib = 1
-    while !(eof(f))
-        _, type, iat, n, l, m = convert.(String, split(readline(f)))
-        iat, n, l, m = parse.(Int, (iat, n, l, m))
-        type = Symbol(type)
-
-        if iat == species2firstatom[atom2species[iat]]
-            push!(
-                basis[atom2species[iat]],
-                BasisMetadata(
-                    atom2species[iat], n, l, m, Base.ImmutableDict(:type => type)
-                ),
-            )
-        end
-
-        ib += 1
-    end
-    close(f)
-
-    # Lift arbitrary degeneracies if any
-    basis = lift_arbitrary_degeneracy(basis)
-
-    out_basisset = BasisSetMetadata(basis, atom2species)
-
-    # Reorder basis functions according to FHIaims spherical harmonics convention
-    out_basisset = convert_basisset_shconv(out_basisset, default_shconv(source))
-
-    return out_basisset
 end
 
 @memoize function CSCRealSparsity(source::FHIaimsSource, dir::AbstractString)
@@ -273,6 +222,62 @@ end
     close(f)
 
     return CSCRealSparsity(rowval, colcellptr, cells, true)
+end
+
+@memoize function BasisSetMetadata(
+    source::FHIaimsSource, dir::AbstractString, atoms::AbstractSystem
+)
+    p = joinpath(dir, "basis-indices.out")
+    @argcheck ispath(p)
+
+    atom2species = species(atoms, :)
+    basis = Base.ImmutableDict(
+        (
+            species => BasisMetadata{Base.ImmutableDict{Symbol,Symbol}}[]
+            for species in unique(atom2species)
+        )...,
+    )
+
+    f = open(p, "r")
+
+    # Reads both the empty lines and the header
+    while isempty(strip(readline(f)))
+    end
+
+    species2firstatom = dictionary(
+        species => findfirst(x -> x == species, atom2species)
+        for species in unique(atom2species)
+    )
+
+    ib = 1
+    while !(eof(f))
+        _, type, iat, n, l, m = convert.(String, split(readline(f)))
+        iat, n, l, m = parse.(Int, (iat, n, l, m))
+        type = Symbol(type)
+
+        z = atom2species[iat]
+        if iat == species2firstatom[z]
+            push!(
+                basis[z],
+                BasisMetadata(
+                    z, n, l, m, Base.ImmutableDict(:type => type)
+                ),
+            )
+        end
+
+        ib += 1
+    end
+    close(f)
+
+    # Lift arbitrary degeneracies if any
+    basis = lift_arbitrary_degeneracy(basis)
+
+    out_basisset = BasisSetMetadata(basis, atom2species)
+
+    # Reorder basis functions according to FHIaims spherical harmonics convention
+    out_basisset = convert_basisset_shconv(out_basisset, default_shconv(source))
+
+    return out_basisset
 end
 
 ### PARSING ###

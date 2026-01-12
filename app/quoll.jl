@@ -1,4 +1,3 @@
-# mpiexecjl -n 8 -t 1 quoll.jl input_file.toml
 using Quoll
 using Configurations
 using LinearAlgebra

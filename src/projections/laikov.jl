@@ -1,6 +1,6 @@
 struct LaikovCore <: AbstractBasisProjection end
 
-function compute_valence_operator_data(
+function compute_valence_data(
     operators, core_mask_list, valence_mask_list, method::LaikovCore
 )
     # Check that all operators are hermitian
@@ -25,7 +25,7 @@ function compute_valence_operator_data(
     overlap_data₁₁⁻¹ = wrap_data(M_overlap, S₁₁⁻¹)
 
     return [
-        compute_valence_operator_data(
+        compute_valence_data(
             typeof(op_metadata(operator)),
             op_data(operator),
             overlap_data₁₁⁻¹,
@@ -41,7 +41,7 @@ end
 
 # TODO: could use the same function if used abstract type of laikov and FC99V
 # but would have to move Ŝ₁₂ outside
-function compute_valence_operator_data(
+function compute_valence_data(
     ::Type{M},
     operator_data::DenseRecipData{T},
     overlap_data₁₁⁻¹::DenseRecipData{T},

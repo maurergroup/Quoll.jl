@@ -58,7 +58,7 @@ function perform_core_projection(
         ]
 
         # Obtain projected valence-only operator data at the k-point
-        recip_v_data_list = compute_valence_operator_data(
+        recip_v_data_list = compute_valence_data(
             recip_operators,
             c_dense_mask_list,
             v_dense_mask_list,

@@ -30,7 +30,7 @@ function build_operator(
     end
 
     # Build data
-    data = build_operator_data(metadata; value=value, type=type, initialised=initialised)
+    data = build_data(metadata; value=value, type=type, initialised=initialised)
 
     return build_operator(OP, metadata, data; extra_kwargs=extra_kwargs)
 end
@@ -64,7 +64,7 @@ function build_operator_extra(
     extra_kwargs=NamedTuple(),
 ) where {M<:AbstractMetadata}
     KD = op_keydata_type(M)
-    return build_operator_keydata(KD, metadata, data)
+    return build_keydata(KD, metadata, data)
 end
 
 ### OPERATOR FINAL ###
@@ -88,7 +88,7 @@ end
 
 ### DATA ###
 
-function build_operator_data(
+function build_data(
     metadata::M;
     value=0.0, type=Nothing, initialised=true,
 ) where {M<:AbstractMetadata}
@@ -103,5 +103,5 @@ function build_operator_data(
     # Type of uninitialised data needs to be known
     !initialised && @argcheck !(type <: Nothing)
 
-    return build_operator_data(op_data_type(M), metadata, value, initialised)
+    return build_data(op_data_type(M), metadata, value, initialised)
 end

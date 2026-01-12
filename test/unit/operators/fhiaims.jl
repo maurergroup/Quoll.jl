@@ -150,7 +150,7 @@ end
         end
     end
 
-    @testset "load_operator_data" begin
+    @testset "load_data" begin
         rs_hamiltonian = Float64[-1, -2, -3, -4, -4, -5, 0]
 
         @testset "Plain" begin
@@ -158,7 +158,7 @@ end
                 open("rs_hamiltonian.out", "w") do io
                     writedlm(io, rs_hamiltonian)
                 end
-                operator_data = Quoll.load_operator_data(
+                operator_data = Quoll.load_data(
                     Quoll.FHIaimsCSCNoSpinRealMetadata, pwd(), Hamiltonian(; source=:ref)
                 )
                 @test Quoll.unwrap_data(operator_data) ≈
@@ -172,7 +172,7 @@ end
                     dset = create_dataset(io, "sparse_matrix", Float64, (7,))
                     write(dset, rs_hamiltonian)
                 end
-                operator_data = Quoll.load_operator_data(
+                operator_data = Quoll.load_data(
                     Quoll.FHIaimsCSCNoSpinRealMetadata, pwd(), Hamiltonian(; source=:ref)
                 )
                 @test Quoll.unwrap_data(operator_data) ≈

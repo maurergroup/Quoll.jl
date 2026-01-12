@@ -11,22 +11,22 @@ function load_operator(
 ) where {OP<:AbstractOperator,M<:AbstractMetadata}
 
     # Load metadata
-    metadata = load_operator_metadata(M, dir, kind)
+    metadata = load_metadata(M, dir, kind)
 
     # Load data
-    data = load_operator_data(M, dir, kind)
+    data = load_data(M, dir, kind)
 
     return build_operator(OP, metadata, data)
 end
 
-function load_operator_metadata(
+function load_metadata(
     ::Type{M}, dir::AbstractString, kind::OperatorKind;
 ) where {M<:AbstractMetadata}
 
     # Load basic metadata
-    basic_metadata = load_operator_basic_metadata(M, dir, kind)
+    basic_metadata = load_metadata_basic(M, dir, kind)
 
-    return load_operator_metadata(M, dir, basic_metadata)
+    return load_metadata(M, dir, basic_metadata)
 end
 
 ### WRITING ###

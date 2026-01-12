@@ -1,6 +1,6 @@
 struct FC99V <: AbstractBasisProjection end
 
-function compute_valence_operator_data(
+function compute_valence_data(
     operators, core_mask_list, valence_mask_list, method::FC99V
 )
     # Check that all operators are hermitian
@@ -20,7 +20,7 @@ function compute_valence_operator_data(
     overlap_data₁₂ = wrap_data(M_overlap, S₁₂)
 
     return [
-        compute_valence_operator_data(
+        compute_valence_data(
             typeof(op_metadata(operator)),
             op_data(operator),
             overlap_data₁₂,
@@ -33,7 +33,7 @@ function compute_valence_operator_data(
     ]
 end
 
-function compute_valence_operator_data(
+function compute_valence_data(
     ::Type{M},
     operator_data::DenseRecipData{T},
     overlap_data₁₂::DenseRecipData{T},

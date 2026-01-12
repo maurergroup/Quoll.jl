@@ -69,7 +69,7 @@ op_sparsity_type(::Type{<:DeepHBlockRealMetadata}) = BlockRealSparsity
 
 ### FACTORIES ###
 
-function build_operator_data(
+function build_data(
     ::Type{<:DeepHBlockRealData}, metadata::M, value::T, initialised::Bool
 ) where {M<:AbstractMetadata,T<:Number}
     sparsity = op_sparsity(metadata)
@@ -88,6 +88,170 @@ function build_operator_data(
     return wrap_data(M, data)
 end
 
+### LOADING ###
+
+function load_metadata_basic(
+    ::Type{M}, dir::AbstractString, kind::OperatorKind
+) where {M<:DeepHBlockRealMetadata}
+    source = DeepHSource()
+    atoms = load_atoms(source, dir)
+    sparsity = BlockRealSparsity(M, dir, kind)
+    basisset = BasisSetMetadata(source, dir, atoms)
+    shconv = default_shconv(source)
+    return BasicMetadataContainer(kind, source, sparsity, basisset, shconv, atoms)
+end
+
+function load_metadata(
+    ::Type{<:DeepHBlockNoSpinRealMetadata},
+    ::AbstractString,
+    basic_metadata::BasicMetadataContainer,
+)
+    return RealMetadata(basic_metadata)
+end
+
+function load_metadata(
+    ::Type{<:DeepHBlockSpinRealMetadata},
+    ::AbstractString,
+    basic_metadata::BasicMetadataContainer,
+)
+    kind = op_kind(basic_metadata)
+    source = op_source(basic_metadata)
+    basisset = op_basisset(basic_metadata)
+
+    spins = SpinsMetadata(source, kind, basisset)
+    return SpinRealMetadata(basic_metadata, spins)
+end
+
+function load_data(
+    ::Type{M},
+    dir::AbstractString,
+    operatorkind::OperatorKind,
+) where {M<:DeepHBlockRealMetadata}
+
+    p = joinpath(dir, get_avail_filename(M, statictuple(operatorkind)))
+    @argcheck ispath(p)
+
+    io = h5open(p, "r")
+    V = typeof(read(first(io)))
+
+    return load_data(M, io, V)
+end
+
+function load_data(
+    ::Type{M}, io::HDF5.File, ::Type{V}
+) where {M<:DeepHBlockRealMetadata,V<:AbstractMatrix{T}} where {T}
+    keys_list = NTuple{5,Int}[]
+    values_list = V[]
+
+    for (key_str, value) in pairs(io)
+        key = JSON.parse(key_str, NTuple{5,Int})
+        block = read(value, T)
+        push!(keys_list, key)
+        push!(values_list, permutedims(block, (2, 1)))
+    end
+    close(io)
+
+    data = Dictionary(keys_list, values_list)
+    
+    return wrap_data(M, data)
+end
+
+@memoize function load_atoms(source::DeepHSource, dir::AbstractString)
+    elements = readdlm(joinpath(dir, "element.dat"), Int)
+
+    # 3xN
+    positions = readdlm(joinpath(dir, "site_positions.dat"))
+
+    # 3x3 with columns as lattice vectors
+    lattice = readdlm(joinpath(dir, "lat.dat"))
+
+    atoms = periodic_system(
+        [
+            element => position * u"Å"
+            for (element, position) in zip(elements, eachcol(positions))
+        ],
+        [cell_vector * u"Å" for cell_vector in eachcol(lattice)],
+    )
+
+    return atoms
+end
+
+@memoize function BasisSetMetadata(
+    source::DeepHSource, dir::AbstractString, atoms::AbstractSystem
+)
+    p = joinpath(dir, "orbital_types.dat")
+    @argcheck ispath(p)
+
+    atom2species = species(atoms, :)
+    basis = Base.ImmutableDict(
+        (
+            species => BasisMetadata{Nothing}[]
+            for species in unique(atom2species)
+        )...,
+    )
+
+    species2firstatom = dictionary(
+        species => findfirst(x -> x == species, atom2species)
+        for species in unique(atom2species)
+    )
+
+    for (iat, line) in enumerate(readlines(p))
+        z = atom2species[iat]
+        if iat == species2firstatom[z]
+            l_counts = Dict{Int,Int}()
+            for l in parse.(Int, split(line))
+                l ∈ keys(l_counts) || push!(l_counts, l => 1)
+                n = l_counts[l]
+                for m in ((-l):l)
+                    push!(
+                        basis[z],
+                        BasisMetadata(
+                            z, n, l, m, nothing
+                        ),
+                    )
+                end
+                l_counts[l] += 1
+            end
+        end
+    end
+
+    out_basisset = BasisSetMetadata(basis, atom2species)
+
+    # Reorder basis functions according to DeepH spherical harmonics convention
+    out_basisset = convert_basisset_shconv(out_basisset, default_shconv(source))
+
+    return out_basisset
+end
+
+@memoize function BlockRealSparsity(
+    format::Type{M}, dir::AbstractString, operatorkind::OperatorKind
+) where {M<:DeepHBlockRealMetadata}
+    p = joinpath(dir, get_avail_filename(M, statictuple(operatorkind)))
+    @argcheck ispath(p)
+
+    # Vector of "[Rx, Ry, Rz, i, j]" strings
+    io = h5open(p, "r")
+    keys_str = keys(io)
+    close(io)
+
+    images = SVector{3,Int}[]
+    ij2images = Dictionary{NTuple{2,Int},Vector{SVector{3,Int}}}()
+    for key_str in keys_str
+        Rx, Ry, Rz, ij... = JSON.parse(key_str, NTuple{5,Int})
+        R = SVector(Rx, Ry, Rz)
+
+        get!(Vector{SVector{3,Int}}, ij2images, ij)
+        push!(ij2images[ij], R)
+        push!(images, R)
+    end
+
+    return BlockRealSparsity(ij2images, unique(images), false)
+end
+
+# load_metadata
+
+# load_data
+
 ### WRITING ###
 
 function write_operators(
@@ -96,14 +260,14 @@ function write_operators(
     ispath(dir) || mkpath(dir)
 
     # Metadata is shared -> write only once
-    write_operator_metadata(dir, first(operators))
+    write_metadata(dir, first(operators))
 
     for operator in operators
-        write_operator_data(dir, operator)
+        write_data(dir, operator)
     end
 end
 
-function write_operator_metadata(
+function write_metadata(
     dir::AbstractString,
     operator::AbstractOperator{<:OperatorKind,<:DeepHBlockRealMetadata},
 )
@@ -116,7 +280,7 @@ function write_operator_metadata(
     return write_site_positions(dir, operator)
 end
 
-function write_operator_data(
+function write_data(
     dir::AbstractString,
     operator::AbstractOperator{<:OperatorKind,<:DeepHBlockRealMetadata},
 )
@@ -215,6 +379,9 @@ function get_deeph_keys(sparsity::BlockRealSparsity)
 end
 
 ### PARSING ###
+
+get_readformat(::Val{:deeph}) = DeepHBlockNoSpinRealMetadata
+get_readformat(::Val{:deephspin}) = DeepHBlockSpinRealMetadata
 
 get_writeformat(::Val{:deeph}) = DeepHBlockNoSpinRealMetadata
 get_writeformat(::Val{:deephspin}) = DeepHBlockSpinRealMetadata

@@ -48,6 +48,18 @@ function SpinsMetadata(
     return SpinsMetadata(spins_dict, false)
 end
 
+function SpinsMetadata(
+    ::AbstractSource, ::Val{:soc}, basis::SpeciesAnyDict
+)
+    spins_dict = Base.ImmutableDict(
+        (
+            z => vcat(fill(⬆, length(atom_basis))..., fill(⬇, length(atom_basis))...)
+            for (z, atom_basis) in pairs(basis)
+        )...,
+    )
+    return SpinsMetadata(spins_dict, true)
+end
+
 function convert_spins_shconv(
     spins::SpinsMetadata, basisset::BasisSetMetadata, shconv::SHConvention
 )

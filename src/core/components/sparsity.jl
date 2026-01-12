@@ -96,7 +96,7 @@ function build_sparsity(
 
         # Add empty array if the key doesn't exist yet
         # (would be in the case of no i self-interactions across periodic boundaries)
-        haskey(ij2images, ii) || insert!(ij2images, ii, SVector{3,Int}[])
+        get!(Vector{SVector{3,Int}}, ij2images, ii)
         push!(ij2images[ii], SA[0, 0, 0])
     end
 
@@ -128,6 +128,7 @@ function convert_sparsity(
     end
 end
 
+# TODO: this is wrong right now
 function convert_sparsity(
     ::Type{Sₒᵤₜ},
     in_sparsity::CSCRealSparsity,
@@ -136,17 +137,19 @@ function convert_sparsity(
 ) where {Sₒᵤₜ<:BlockRealSparsity}
     basis2atom = get_basis2atom(basisset)
     out_sparsity = BlockRealSparsity(
-        in_sparsity.colcellptr, in_sparsity.rowval, in_sparsity.images, basis2atom
+        in_sparsity.colcellptr, in_sparsity.rowval, in_sparsity.images, basis2atom, hermitian
     )
     # Pass through `convert_sparsity` to convert hermicity
     return convert_sparsity(Sₒᵤₜ, out_sparsity, basisset; hermitian=hermitian)
 end
 
-# N.B. Tried using LittleSet for a 2 atom system and it was ~10 times slower.
+# NOTE: Tried using LittleSet for a 2 atom system and it was ~10 times slower.
 # For more atoms where unit cells are larger LittleSet might outperform regular Set.
 # One could choose the type of set to use based on the number of images inside `images`
+# NOTE: when hermitian = true, ij2images keys (ij pairs) are already in the upper
+# triangle as required.
 function BlockRealSparsity(
-    colcellptr::Array{T,3}, rowval::Vector{T}, images, basis2atom::Vector{T}
+    colcellptr::Array{T,3}, rowval::Vector{T}, images, basis2atom::Vector{T}, hermitian
 ) where {T<:Integer}
     natoms = maximum(basis2atom)
     ij2images_set = [Set{SVector{3,Int}}() for _ in 1:natoms, _ in 1:natoms]
@@ -176,10 +179,14 @@ function BlockRealSparsity(
         collect.(ij2images_set[ij_nonempty_cartesian]),
     )
 
-    # Make on-site blocks non-hermitian even when hermitian == true
-    make_onsite_nonhermitian!(ij2images)
+    if hermitian
+        # Make on-site atom pair sparsity non-hermitian even when hermitian == true.
+        # If hermitian = false, the loops above must have found all the nonhermitian
+        # images for on-site atom pairs.
+        make_onsite_nonhermitian!(ij2images)
+    end
 
-    return BlockRealSparsity(ij2images, images, true)
+    return BlockRealSparsity(ij2images, images, hermitian)
 end
 
 function convert_sparsity(
@@ -316,7 +323,7 @@ function get_ilocal2imlocal(sparsity::BlockRealSparsity)
     return map(keys(sparsity.ij2images)) do ij
         i, j = ij
         images_ijR = sparsity.ij2images[(i, j)]
-        images_jimR = -sparsity.ij2images[(j, i)]
-        indexin(images_ijR, images_jimR)
+        images_jimR = sparsity.ij2images[(j, i)]
+        indexin(images_ijR, -images_jimR)
     end
 end

@@ -253,7 +253,7 @@ end
 
 ### CONVERSIONS ###
 
-function convert_operator_data!(
+function convert_data!(
     ::Type{KDₒᵤₜ}, ::Type{Dₒᵤₜ}, ::Type{Dᵢₙ},
     out_operator::AbstractOperator, in_operator::AbstractOperator,
 ) where {
@@ -265,6 +265,10 @@ function convert_operator_data!(
     in_hermitian = op_hermicity(in_operator)
 
     herm_to_herm = in_hermitian && out_hermitian
+    # TODO: once we implement herm -> nonherm data conversion in DeepH->Canonical, modify this
+    # (although I'm not sure if the current implementation would work if in_hermitian = false.
+    # I think it would work because the loops would work in the same way, but I will not test it.
+    # Could give a warning instead. Also in that case need to do on-site stuff only when hermitian = true)
     if !herm_to_herm
         throw(
             error(
@@ -288,7 +292,7 @@ function convert_operator_data!(
     Δshconv = out_shconv ∘ inv(in_shconv)
     shconv_isidentity = Val(isidentity(Δshconv))
 
-    return convert_operator_data!(
+    return convert_data!(
         out_keydata,
         out_data,
         in_data,
@@ -304,7 +308,7 @@ end
 # TODO:
 # - write outer function as for fourier_transform_data
 # - make sure this works for differing sparsities
-function convert_operator_data!(
+function convert_data!(
     out_keydata::CanonicalBlockRealKeyData,
     ::CanonicalBlockRealData,
     in_data::CSCRealData,
@@ -398,7 +402,7 @@ function convert_operator_data!(
             for jb in 1:nbasis
                 @inbounds for ib in 1:nbasis
                     jb > ib || continue
-                    out_keydata_iat[jb, ib, imR] = out_keydata_iat[ib, jb, iR]
+                    out_keydata_iat[jb, ib, imR] = conj(out_keydata_iat[ib, jb, iR])
                 end
             end
         end

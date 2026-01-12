@@ -1,12 +1,14 @@
 [input]
-format = "FHI-aims"
-directory = "SiC_FHIaims"
+# format = "FHI-aims"
+# directory = "SiC_FHIaims"
+format = "DeepH"
+directory = "SiC_DeepH"
 operators = ["H", "S"]
 # radii = ["C 12.0 ang", "Si 12.0 ang"]
 
 [output]
 format = "DeepH"
-directory = "SiC_DeepH_converted"
+directory = "SiC_DeepH_converted_from_DeepH"
 
 # Should also allow different types,
 # i.e. Monkhorst-Pack and even possibly different shifts

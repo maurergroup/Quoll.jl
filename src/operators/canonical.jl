@@ -119,7 +119,7 @@ op_sparsity_type(::Type{<:CanonicalDenseRecipMetadata}) = DenseRecipSparsity
 
 ### FACTORIES ###
 
-function build_operator_data(
+function build_data(
     ::Type{<:CanonicalBlockRealData}, metadata::M, value::T, initialised::Bool
 ) where {M<:AbstractMetadata,T<:Number}
     basisset = op_basisset(metadata)
@@ -141,7 +141,7 @@ function build_operator_data(
     return wrap_data(M, data)
 end
 
-function build_operator_keydata(
+function build_keydata(
     ::Type{<:CanonicalBlockRealKeyData}, metadata::M, data::CanonicalBlockRealData
 ) where {M<:AbstractMetadata}
     data_body = unwrap_data(data)
@@ -177,7 +177,7 @@ function build_operator_keydata(
     return wrap_data(M, keydata)
 end
 
-function build_operator_keydata(
+function build_keydata(
     ::Type{<:CanonicalDenseRecipKeyData}, metadata::M, data::DenseRecipData
 ) where {M<:AbstractMetadata}
     data_body = unwrap_data(data)

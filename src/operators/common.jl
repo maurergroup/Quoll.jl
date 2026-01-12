@@ -1,6 +1,6 @@
 ### FACTORIES ###
 
-function build_operator_data(
+function build_data(
     ::Type{<:DenseRecipData}, metadata::M, value::T, initialised::Bool
 ) where {M<:AbstractMetadata,T<:Number}
     basisset = op_basisset(metadata)
