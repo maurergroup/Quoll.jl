@@ -90,7 +90,7 @@ K<:SVector{3}
 const FHIaimsDenseRecipMetadata{
 O<:OperatorKind,
 X<:FHIaimsSource,
-S<:CSCRealSparsity,
+S<:DenseRecipSparsity,
 B<:BasisSetMetadata,
 Y<:SHConvention,
 A<:AbstractSystem,
