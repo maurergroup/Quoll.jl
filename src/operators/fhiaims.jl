@@ -27,6 +27,8 @@ end
 
 ### METADATA ALIASES ###
 
+# FHIaimsCSCRealMetadata
+
 const FHIaimsCSCNoSpinRealMetadata{
 O<:OperatorKind,
 X<:FHIaimsSource,
@@ -62,7 +64,9 @@ op_data_type(::Type{<:FHIaimsCSCRealMetadata}) = CSCRealData
 op_source_type(::Type{<:FHIaimsCSCRealMetadata}) = FHIaimsSource
 op_sparsity_type(::Type{<:FHIaimsCSCRealMetadata}) = CSCRealSparsity
 
-const FHIaimsDenseRecipMetadata{
+# FHIaimsDenseRecipMetadata
+
+const FHIaimsDenseNoSpinRecipMetadata{
 O<:OperatorKind,
 X<:FHIaimsSource,
 S<:DenseRecipSparsity,
@@ -71,6 +75,31 @@ Y<:SHConvention,
 A<:AbstractSystem,
 K<:SVector{3}
 } = RecipMetadata{O,X,S,B,Y,A,K}
+
+const FHIaimsDenseSpinRecipMetadata{
+O<:OperatorKind,
+X<:FHIaimsSource,
+S<:DenseRecipSparsity,
+B<:BasisSetMetadata,
+Y<:SHConvention,
+A<:AbstractSystem,
+P<:SpinsMetadata,
+K<:SVector{3}
+} = SpinRecipMetadata{O,X,S,B,Y,A,P,K}
+
+const FHIaimsDenseRecipMetadata{
+O<:OperatorKind,
+X<:FHIaimsSource,
+S<:CSCRealSparsity,
+B<:BasisSetMetadata,
+Y<:SHConvention,
+A<:AbstractSystem,
+P<:SpinsMetadata,
+K<:SVector{3}
+} = Union{
+    <:FHIaimsDenseNoSpinRecipMetadata{O,X,S,B,Y,A,K},
+    <:FHIaimsDenseSpinRecipMetadata{O,X,S,B,Y,A,P,K},
+}
 op_data_type(::Type{<:FHIaimsDenseRecipMetadata}) = DenseRecipData
 op_source_type(::Type{<:FHIaimsDenseRecipMetadata}) = FHIaimsSource
 op_sparsity_type(::Type{<:FHIaimsDenseRecipMetadata}) = DenseRecipSparsity
