@@ -14,7 +14,7 @@ using DelimitedFiles
 using HDF5
 using JSON
 using AtomsBase
-using AtomsIOPython
+using ASEconvert
 using NeighbourLists
 using Spglib
 using MPI

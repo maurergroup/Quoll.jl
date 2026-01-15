@@ -4,9 +4,9 @@ version = "0.1.0"
 authors = ["Valdas Vitartas <valdas.vitartas@warwick.ac.uk> and contributors"]
 
 [deps]
+ASEconvert = "3da9722f-58c2-4165-81be-b4d7253e8fd2"
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
 AtomsBase = "a963bdd2-2df7-4f54-a1ee-49d51e6be12a"
-AtomsIOPython = "9e4c859b-2281-48ef-8059-f50fe53c37b0"
 AxisKeys = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
 Configurations = "5218b696-f38b-4ac9-8b61-a12ec717816d"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
@@ -27,11 +27,11 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 UnitfulAtomic = "a7773ee8-282e-5fa2-be4e-bd808c38a91a"
 
 [compat]
+ASEconvert = "0.2.0"
 Aqua = "0.8"
 ArgCheck = "2"
 AtomsBase = "0.5"
 AtomsBaseTesting = "0.4"
-AtomsIOPython = "0.1"
 AxisKeys = "0.2"
 CodecZlib = "0.7"
 Configurations = "0.17"

@@ -184,7 +184,7 @@ end
 @memoize function load_atoms(source::FHIaimsSource, dir::AbstractString)
     p = joinpath(dir, "geometry.in")
     @argcheck ispath(p)
-    atoms = load_system(p)
+    atoms = pyconvert(AbstractSystem, ase.io.read(p; parallel=false))
 
     # Recentre atom positions to be consistent with relative positions
     # that are used during real-space matrix integration in FHI-aims

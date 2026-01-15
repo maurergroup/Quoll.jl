@@ -232,12 +232,12 @@ end
     # Vector of "[Rx, Ry, Rz, i, j]" strings
     io = h5open(p, "r")
     keys_str = keys(io)
+    keys_tuple = JSON.parse.(keys_str, NTuple{5,Int})
     close(io)
 
     images = SVector{3,Int}[]
     ij2images = Dictionary{NTuple{2,Int},Vector{SVector{3,Int}}}()
-    for key_str in keys_str
-        Rx, Ry, Rz, ij... = JSON.parse(key_str, NTuple{5,Int})
+    for (Rx, Ry, Rz, ij...) in keys_tuple
         R = SVector(Rx, Ry, Rz)
 
         get!(Vector{SVector{3,Int}}, ij2images, ij)
@@ -245,12 +245,15 @@ end
         push!(images, R)
     end
 
-    return BlockRealSparsity(ij2images, unique(images), false)
+    keys_offsite_set = Set(filter(keys_tuple) do (_, _, _, i, j)
+        i != j
+    end)
+    hermitian = all(keys_offsite_set) do (Rx, Ry, Rz, i, j)
+        (-Rx, -Ry, -Rz, j, i) ∉ keys_offsite_set
+    end
+
+    return BlockRealSparsity(ij2images, unique(images), hermitian)
 end
-
-# load_metadata
-
-# load_data
 
 ### WRITING ###
 

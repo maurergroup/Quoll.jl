@@ -15,7 +15,6 @@ function fourier_transform(
     )
 end
 
-# TODO: pass in the k-point into metadata_extra_kwargs
 function fourier_transform(
     ::Type{OPₒᵤₜ}, ::Type{Mₒᵤₜ}, in_operator::AbstractOperator, kpoint, phases_k;
     out_shconv=nothing, source_kwargs=NamedTuple(),
