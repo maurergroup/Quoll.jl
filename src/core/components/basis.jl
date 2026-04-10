@@ -222,6 +222,8 @@ function lift_arbitrary_degeneracy(
     return newbasis_z
 end
 
+is_arbitrary_degeneracy(basisset::BasisSetMetadata) = is_arbitrary_degeneracy(basisset.basis)
+
 function is_arbitrary_degeneracy(basis::SpeciesAnyDict)
     return any(is_arbitrary_degeneracy.(values(basis)))
 end
@@ -373,12 +375,6 @@ function precompute_orders(basisset::BasisSetMetadata, shconv::SHConvention)
     return precompute_orders(basisset.basis, shconv)
 end
 
-# function precompute_phases(
-#     basisset::BasisSetMetadata, shconv::SHConvention;
-#     DIM::Val{D}=Val(1), float::Type{T}=Float64,
-# ) where {T,D}
-#     return precompute_phases(basisset.basis, shconv; DIM=Val(D), float=T)
-# end
 function precompute_shphases(
     basisset::BasisSetMetadata, shconv::SHConvention, ::Val{D}=Val(1), ::Type{T}=Float64
 ) where {D,T}

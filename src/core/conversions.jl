@@ -373,6 +373,7 @@ function convert_spins(
     # Make final changes due to the source change (e.g. reorder up and down spins if
     # the two sources don't agree). This often might leave the spins unchanged.
     if !isequal(in_source, out_source)
+        # TODO: convert_spins_source doesn't exist currently
         in_spins = convert_spins_source(in_spins, out_basisset, in_source, out_source)
     end
 
