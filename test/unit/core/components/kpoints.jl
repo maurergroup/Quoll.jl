@@ -102,3 +102,25 @@ end
         @test sum(kgrid.weights) ≈ 1.0
     end
 end
+
+@testset "get_recip_mesh" begin
+    real_lattice = 2π * [
+        1.0 0.0 0.0;
+        0.0 1.0 0.0;
+        0.0 0.0 1.0;
+    ]
+    density = 5
+    mesh_ref = [5, 5, 5]
+    @test Quoll.get_recip_mesh(real_lattice, density) == mesh_ref
+end
+
+@testset "precompute_phases" begin
+    ks = [[0, 0, 0], [0, 0, 0.5], [0, 0, -0.5]]
+    ts = [[0, 0, 0], [0, 0, 1], [0, 0, -1]]
+    phases_ref = [
+        exp(2π * im * 0.0) exp(2π * im *  0.0) exp(2π * im *  0.0);
+        exp(2π * im * 0.0) exp(2π * im *  0.5) exp(2π * im * -0.5);
+        exp(2π * im * 0.0) exp(2π * im * -0.5) exp(2π * im *  0.5);
+    ]
+    @test Quoll.precompute_phases(ks, ts) ≈ phases_ref
+end

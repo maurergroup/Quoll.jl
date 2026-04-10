@@ -111,7 +111,7 @@ end
 
 function get_recip_mesh(real_lattice, density)
     recip_basis_lengths = norm.(eachcol(get_recip_lattice(real_lattice)))
-    return ceil(Int, recip_basis_lengths .* density)
+    return ceil.(Int, recip_basis_lengths .* density)
 end
 
 # Returns a matrix
