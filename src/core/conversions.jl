@@ -359,7 +359,7 @@ function convert_spins(
     # If subbasis is present, perform basis set reduction for spins.
     # The reduce_spins function accepts a basisset directly, but we compute masks here
     # instead because out_basisset would already be projected, meaning we cannot use it
-    # to compute the masks. On the other hand, we cannot use in_basisset directly either
+    # to compute the masks. Furthermore, we cannot use in_basisset directly either
     # because it might not have the correct spherical harmonics convention
     if !isnothing(subbasis)
         in_basis = in_basisset.basis
@@ -373,7 +373,6 @@ function convert_spins(
     # Make final changes due to the source change (e.g. reorder up and down spins if
     # the two sources don't agree). This often might leave the spins unchanged.
     if !isequal(in_source, out_source)
-        # TODO: convert_spins_source doesn't exist currently
         in_spins = convert_spins_source(in_spins, out_basisset, in_source, out_source)
     end
 

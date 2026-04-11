@@ -40,6 +40,10 @@ end
             include("core/components/shconvention.jl")
         end
 
+        @safetestset "source.jl" begin
+            include("core/components/source.jl")
+        end
+        
         @safetestset "sparsity.jl" begin
             include("core/components/sparsity.jl")
         end

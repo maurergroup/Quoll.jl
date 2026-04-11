@@ -87,3 +87,5 @@ function reduce_spins(
     )...)
     return SpinsMetadata(subspins_dict, spins.soc)
 end
+
+function convert_spins_source end
