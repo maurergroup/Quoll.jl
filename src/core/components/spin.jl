@@ -53,7 +53,7 @@ function SpinsMetadata(
 )
     spins_dict = Base.ImmutableDict(
         (
-            z => vcat(fill(⬆, length(atom_basis))..., fill(⬇, length(atom_basis))...)
+            z => vcat(fill(⬆, length(atom_basis)), fill(⬇, length(atom_basis)))
             for (z, atom_basis) in pairs(basis)
         )...,
     )
@@ -79,8 +79,11 @@ end
 
 # Make a subspins based on the masks for each chemical species
 function reduce_spins(
-    spins::SpinsMetadata, subbasis_masks::SpeciesDictionary{BitVector}
+    spins::SpinsMetadata{<:Base.ImmutableDict}, subbasis_masks::SpeciesAnyDict{BitVector}
 )
-    subspins_dict = getindex.(spins.spins, subbasis_masks)
+    subspins_dict = Base.ImmutableDict((
+        z => getindex(spins.spins[z], subbasis_masks[z])
+        for z in keys(subbasis_masks)
+    )...)
     return SpinsMetadata(subspins_dict, spins.soc)
 end
