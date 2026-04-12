@@ -13,9 +13,12 @@
 /**/*.log
 /**/*.sh
 
-/examples/**/*
-!/examples/*/*.tar.gz
-!/examples/*/*.toml
+/examples/*
+
+!/examples/siliconcarbide
+/examples/siliconcarbide/*
+!/examples/siliconcarbide/*.tar.gz
+!/examples/siliconcarbide/*.toml
 
 /tmp
 /**/.notes

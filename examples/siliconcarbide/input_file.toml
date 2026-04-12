@@ -1,0 +1,65 @@
+[input]
+# format = "FHI-aims"
+# directory = "siliconcarbide_fhi"
+format = "DeepH"
+directory = "siliconcarbide_deeph"
+operators = ["H", "S"]
+# radii = ["C 12.0 ang", "Si 12.0 ang"]
+
+[output]
+format = "DeepH"
+directory = "siliconcarbide_deeph_converted_from_deeph"
+
+# Should also allow different types,
+# i.e. Monkhorst-Pack and even possibly different shifts
+[kpoint_grid]
+mesh = [10, 20, 20]
+# mesh = [1, 1, 3]
+density = 8.0
+
+[basis_projection]
+projected_basis = [
+    "C  (1, 0, 0) type = atomic",
+    "Si (1, 0, 0) type = atomic",
+    "Si (2, 0, 0) type = atomic",
+    "Si (2, 1, *) type = atomic",
+]
+method = "LaikovCore"
+
+[postprocessing]
+fermi_level = true
+dos = true
+band_structure = true
+
+[postprocessing.fermi_level_params]
+smearing_function = "gaussian"
+
+[postprocessing.dos_params]
+smearing_function = "gaussian"
+temperature = 1000
+energy_end = 10.0
+energy_begin = -10.0
+n_points = 1000
+
+[postprocessing.band_structure_params]
+bands = [
+    "0.0  0.0  0.0 -0.5 -0.5 -0.5 20 G X",
+    "0.5  0.0  0.0  0.0  0.0  0.0 20 Y G",
+]
+
+[error_metrics]
+mae = false
+eigenvalue_error = false
+el_entropy_error = false
+
+[error_metrics.eigenvalue_error_params]
+smearing_function = "gaussian"
+temperature = 1000
+
+# Needs to check how the fermi level was evaluated
+# and reevaluate the fermi level is required
+# I will also need to check how to evaluate electronic
+# entropy for different smearing functions
+[error_metrics.el_entropy_error_params]
+smearing_function = "fermi_dirac"
+temperature = 1000
