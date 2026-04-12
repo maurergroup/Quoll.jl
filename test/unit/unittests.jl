@@ -77,17 +77,33 @@ end
 end
 
 @safetestset "operators" begin
-    
+
     @safetestset "canonical.jl" begin
         include("operators/canonical.jl")
     end
-    
+
     @safetestset "canonical.jl" begin
         include("operators/fhiaims.jl")
     end
 
     @safetestset "deeph.jl" begin
         include("operators/deeph.jl")
+    end
+
+end
+
+@safetestset "projections" begin
+
+    @safetestset "common.jl" begin
+        include("projections/common.jl")
+    end
+
+    @safetestset "laikov.jl" begin
+        include("projections/laikov.jl")
+    end
+
+    @safetestset "fc99v.jl" begin
+        include("projections/fc99v.jl")
     end
 
 end

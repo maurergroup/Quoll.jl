@@ -14,7 +14,8 @@ export make_test_atoms, make_test_basisset, make_test_block_sparsity,
     make_canonical_dense_recip_metadata,
     make_spin_real_metadata, make_spin_recip_metadata,
     make_canonical_block_real_operator, make_canonical_block_real_keyed_operator,
-    make_deeph_block_real_operator, make_canonical_dense_recip_operator
+    make_deeph_block_real_operator, make_canonical_dense_recip_operator,
+    make_test_core_basis, make_hermitian_dense_recip_operator
 
 ### ATOMS ###
 
@@ -125,13 +126,13 @@ end
 
 function make_canonical_dense_recip_metadata(;
     hermitian=false, kpoint=SA[0.0, 0.0, 0.0],
+    kind=Quoll.Hamiltonian(; source=:ref),
 )
     atoms = make_test_atoms()
     basisset = make_test_basisset(atoms)
     sparsity = make_test_dense_recip_sparsity(; hermitian=hermitian)
     source = Quoll.CanonicalSource()
     shconv = Quoll.default_shconv(source)
-    kind = Quoll.Hamiltonian(; source=:ref)
 
     basic = Quoll.BasicMetadataContainer(kind, source, sparsity, basisset, shconv, atoms)
     return Quoll.RecipMetadata(basic, kpoint)
@@ -185,10 +186,40 @@ function make_deeph_block_real_operator(; hermitian=false, value=0.0)
 end
 
 function make_canonical_dense_recip_operator(;
-    hermitian=false, kpoint=SA[0.0, 0.0, 0.0], value=0.0, cfloat=ComplexF64,
+    hermitian=false, kpoint=SA[0.0, 0.0, 0.0],
+    kind=Quoll.Hamiltonian(; source=:ref), value=zero(ComplexF64),
 )
-    metadata = make_canonical_dense_recip_metadata(; hermitian=hermitian, kpoint=kpoint)
-    return Quoll.build_operator(Quoll.Operator, metadata; value=zero(cfloat))
+    metadata = make_canonical_dense_recip_metadata(;
+        hermitian=hermitian, kpoint=kpoint, kind=kind,
+    )
+    return Quoll.build_operator(Quoll.Operator, metadata; value=value)
+end
+
+### PROJECTION FIXTURES ###
+
+# Core basis: s-orbitals only (H:1s + Li:2s = 2 functions)
+function make_test_core_basis()
+    H = ChemicalSpecies(:H)
+    Li = ChemicalSpecies(:Li)
+    return [
+        Quoll.BasisMetadata(H, 1, 0, 0, nothing),   # H 1s
+        Quoll.BasisMetadata(Li, 2, 0, 0, nothing),   # Li 2s
+    ]
+end
+
+# Dense reciprocal operator with hermitian-safe data (identity matrix)
+function make_hermitian_dense_recip_operator(;
+    kind=Quoll.Hamiltonian(; source=:ref), kpoint=SA[0.0, 0.0, 0.0],
+)
+    metadata = make_canonical_dense_recip_metadata(;
+        hermitian=true, kpoint=kpoint, kind=kind,
+    )
+    operator = Quoll.build_operator(Quoll.Operator, metadata; value=zero(ComplexF64))
+    data_body = Quoll.unwrap_data(Quoll.op_data(operator))
+    for i in axes(data_body, 1)
+        data_body[i, i] = one(ComplexF64)
+    end
+    return operator
 end
 
 end # module
