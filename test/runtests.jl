@@ -3,6 +3,7 @@ using SafeTestsets
 # Include TestUtils module here; it can then be used
 # across separate test files via `using Main.TestUtils`
 include("TestUtils.jl")
+include("TestFixtures.jl")
 
 if "--quality" in ARGS
     @safetestset "Code quality" begin

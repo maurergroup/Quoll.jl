@@ -53,7 +53,19 @@ end
         end
 
     end
-    
+
+    @safetestset "convert_sparsity.jl" begin
+        include("core/convert_sparsity.jl")
+    end
+
+    @safetestset "convert_metadata.jl" begin
+        include("core/convert_metadata.jl")
+    end
+
+    @safetestset "build_operator.jl" begin
+        include("core/build_operator.jl")
+    end
+
 end
 
 @safetestset "operators" begin

@@ -407,8 +407,8 @@ function convert_metadata_final(
 end
 
 function convert_metadata_final(
-    ::Type{Mₒᵤₜ}, out_basic_metadata::BasicMetadataContainer, out_spins::SpinsMetadata,
-    out_kpoint::SVector{3}
+    ::Type{Mₒᵤₜ}, out_basic_metadata::BasicMetadataContainer, out_kpoint::SVector{3},
+    out_spins::SpinsMetadata
 ) where {Mₒᵤₜ<:Union{<:RecipMetadata,<:SpinRecipMetadata}}
     return SpinRecipMetadata(out_basic_metadata, out_spins, out_kpoint)
 end

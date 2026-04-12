@@ -124,7 +124,7 @@ end
 op_basic_metadata(metadata::AbstractMetadata) = metadata.common
 
 op_kpoint(metadata::AbstractMetadata) = metadata.kpoint
-op_spins(metadata::AbstractMetadata) = metadata.kpoint
+op_spins(metadata::AbstractMetadata) = metadata.spins
 
 op_kind(metadata::AbstractMetadata) = op_kind(op_basic_metadata(metadata))
 op_source(metadata::AbstractMetadata) = op_source(op_basic_metadata(metadata))

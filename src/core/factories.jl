@@ -4,7 +4,7 @@ function Base.zero(operator::OP) where {OP<:AbstractOperator}
     return build_operator(
         OP,
         op_metadata(operator);
-        value=zero(float(operator)),
+        value=zero(op_float_type(operator)),
         initialised=true,
     )
 end
@@ -13,7 +13,7 @@ function Base.similar(operator::OP) where {OP<:AbstractOperator}
     return build_operator(
         OP,
         op_metadata(operator);
-        type=float(operator),
+        type=op_float_type(operator),
         initialised=false,
     )
 end
