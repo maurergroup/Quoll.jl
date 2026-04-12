@@ -1,3 +1,5 @@
+# Mostly used for higher-level API tests; for lower-level functions, e.g. when testing
+# metadata components, the components themselves are usually constructed manually.
 module TestFixtures
 
 using Quoll
@@ -10,7 +12,9 @@ export make_test_atoms, make_test_basisset, make_test_block_sparsity,
     make_test_dense_recip_sparsity, make_test_spins,
     make_canonical_block_real_metadata, make_deeph_block_real_metadata,
     make_canonical_dense_recip_metadata,
-    make_spin_real_metadata, make_spin_recip_metadata
+    make_spin_real_metadata, make_spin_recip_metadata,
+    make_canonical_block_real_operator, make_canonical_block_real_keyed_operator,
+    make_deeph_block_real_operator, make_canonical_dense_recip_operator
 
 ### ATOMS ###
 
@@ -161,6 +165,30 @@ function make_spin_recip_metadata(;
 
     basic = Quoll.BasicMetadataContainer(kind, source, sparsity, basisset, shconv, atoms)
     return Quoll.SpinRecipMetadata(basic, spins, kpoint)
+end
+
+### OPERATOR FACTORIES ###
+
+function make_canonical_block_real_operator(; hermitian=false, value=0.0)
+    metadata = make_canonical_block_real_metadata(; hermitian=hermitian)
+    return Quoll.build_operator(Quoll.Operator, metadata; value=value)
+end
+
+function make_canonical_block_real_keyed_operator(; hermitian=false, value=0.0)
+    metadata = make_canonical_block_real_metadata(; hermitian=hermitian)
+    return Quoll.build_operator(Quoll.KeyedOperator, metadata; value=value)
+end
+
+function make_deeph_block_real_operator(; hermitian=false, value=0.0)
+    metadata = make_deeph_block_real_metadata(; hermitian=hermitian)
+    return Quoll.build_operator(Quoll.Operator, metadata; value=value)
+end
+
+function make_canonical_dense_recip_operator(;
+    hermitian=false, kpoint=SA[0.0, 0.0, 0.0], value=0.0, cfloat=ComplexF64,
+)
+    metadata = make_canonical_dense_recip_metadata(; hermitian=hermitian, kpoint=kpoint)
+    return Quoll.build_operator(Quoll.Operator, metadata; value=zero(cfloat))
 end
 
 end # module

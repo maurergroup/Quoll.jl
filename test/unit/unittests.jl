@@ -66,6 +66,14 @@ end
         include("core/build_operator.jl")
     end
 
+    @safetestset "convert_data.jl" begin
+        include("core/convert_data.jl")
+    end
+
+    @safetestset "fourier.jl" begin
+        include("core/fourier.jl")
+    end
+
 end
 
 @safetestset "operators" begin
