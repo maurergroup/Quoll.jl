@@ -92,7 +92,6 @@ using Main.TestUtils
         colcellptr[2, :, :] = [1 3; 4 -1; 5 6]
         images = [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]]
         basis2atom = [1, 2]
-        hermitian = true
 
         ref_images = [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]]
 
@@ -103,7 +102,7 @@ using Main.TestUtils
             (2, 2) => [SA[0, 0, 0]                           ],
         ])
 
-        block_sparsity = Quoll.BlockRealSparsity(colcellptr, rowval, images, basis2atom, hermitian)
+        block_sparsity = Quoll.BlockRealSparsity(colcellptr, rowval, images, basis2atom)
 
         @test block_sparsity.hermitian == true
         @test sort(block_sparsity.images) == sort(ref_images)
