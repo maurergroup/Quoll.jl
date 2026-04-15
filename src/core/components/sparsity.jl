@@ -203,7 +203,7 @@ function BlockRealSparsity(
     # Make on-site atom pair sparsity non-hermitian even when hermitian == true.
     make_onsite_nonhermitian!(ij2images)
 
-    return BlockRealSparsity(ij2images, images, false)
+    return BlockRealSparsity(ij2images, images, true)
 end
 
 function convert_sparsity(
