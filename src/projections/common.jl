@@ -1,5 +1,30 @@
+"""
+    perform_core_projection(operators, projected_basis, kgrid, my_ikpoints, comm; kwargs...)
+
+Project out core basis functions from a set of real-space operators, returning valence-only
+operators. The projection is performed in reciprocal space: for each k-point assigned to
+this MPI rank, operators are Fourier-transformed, the core-valence projection is applied,
+and the result is inverse-Fourier-transformed back. Contributions are summed with k-point
+weights and synchronised across MPI ranks. The function also works with a single task
+without MPI by suppling all the k-points.
+
+# Arguments
+- `operators` — vector of real-space operators (Hamiltonian + Overlap).
+- `projected_basis` — vector of `BasisMetadata` identifying the core basis functions to
+  project out.
+- `kgrid` — a [`KGrid`](@ref) (must not use crystal symmetry; currently not implemented).
+- `my_ikpoints` — indices into `kgrid` that this MPI rank is responsible for (or all
+  k-points is MPI not used).
+- `comm` — MPI communicator for synchronisation (MPI.COMM_WORLD if parallelisation is not
+  being performed)
+
+# Keyword arguments
+- `method=LaikovCore()` — projection method (`<:AbstractBasisProjection`).
+- `recip_operator_type=Operator` — operator type for reciprocal-space intermediates.
+- `recip_format=CanonicalDenseNoSpinRecipMetadata` — metadata type for reciprocal-space
+  intermediates.
+"""
 # TODO: Would be quite different for a non-periodic system (no need for a k-point grid)
-# TODO: Need to check whether symmetries of KGrid are appropriate
 function perform_core_projection(
     operators, projected_basis, kgrid::KGrid, my_ikpoints, comm::MPI.Comm;
     method::AbstractBasisProjection=LaikovCore(),
@@ -97,6 +122,13 @@ function perform_core_projection(
     return v_operators
 end
 
+"""
+    core_valence_partition(operator_or_data, core_mask, valence_mask)
+
+Split an operator (or its data) into core-core (`O₁₁`), core-valence (`O₁₂`), and
+valence-valence (`O₂₂`) blocks as views. Masks are `BitVector`s indexing into
+the full basis.
+"""
 function core_valence_partition(operator::AbstractOperator, core_mask, valence_mask)
     data = op_data(operator)
     return core_valence_partition(data, core_mask, valence_mask)

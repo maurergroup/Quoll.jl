@@ -1,5 +1,25 @@
 ### FOURIER TRANSFORM ###
 
+"""
+    fourier_transform(::Type{OPₒᵤₜ}, ::Type{Mₒᵤₜ}, in_operator, kpoints; kwargs...)
+
+Fourier-transform a real-space operator to reciprocal space at one or more k-points.
+Returns a vector of reciprocal-space operators (one per k-point).
+
+Internally: precomputes phases from the input sparsity's image vectors, converts metadata
+(injecting the k-point), allocates a complex output operator, and calls
+[`fourier_transform_data!`](@ref) for each k-point.
+
+# Arguments
+- `OPₒᵤₜ`: output operator type (`<:AbstractOperator`).
+- `Mₒᵤₜ`: output metadata type (e.g. `CanonicalDenseRecipMetadata`).
+- `in_operator`: real-space input operator.
+- `kpoints`: a single k-point vector or a collection of k-point vectors.
+
+# Keyword arguments
+- `out_shconv=nothing`: explicit SH convention for the output (defaults to the source's).
+- `source_kwargs=NamedTuple()`: extra keyword arguments for constructing the output source.
+"""
 function fourier_transform(
     ::Type{OPₒᵤₜ}, ::Type{Mₒᵤₜ}, in_operator::AbstractOperator, kpoints;
     out_shconv=nothing, source_kwargs=NamedTuple(),
@@ -59,6 +79,15 @@ function fourier_transform(
     return out_operator
 end
 
+"""
+    fourier_transform_data!(out_operator, in_operator, phases_k)
+
+Perform the forward Fourier transform of data from `in_operator` into `out_operator`
+(mutating in place) using precomputed phase factors `phases_k`. Currently dispatches on
+`KeyedTrait` of both operators, mirroring the 4-way dispatch pattern of [`convert_data!`](@ref).
+
+Concrete implementations are in `src/conversions/`.
+"""
 function fourier_transform_data!(
     out_operator::OPₒᵤₜ,
     in_operator::OPᵢₙ,
@@ -152,6 +181,15 @@ end
 
 ### INVERSE FOURIER TRANSFORM ###
 
+"""
+    inv_fourier_transform_data!(out_operator, in_operator, phases_k, weight)
+
+Perform the inverse Fourier transform, accumulating the contribution of `in_operator`
+(at a single k-point) into the real-space `out_operator`, weighted by `weight`.
+Designed to be called in a loop over k-points, summing weighted contributions.
+
+Dispatches on `KeyedTrait` of both operators, same pattern as `fourier_transform_data!`.
+"""
 function inv_fourier_transform_data!(
     out_operator::OPₒᵤₜ,
     in_operator::OPᵢₙ,

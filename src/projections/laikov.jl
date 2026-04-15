@@ -1,5 +1,29 @@
+"""
+    LaikovCore <: AbstractBasisProjection
+
+Core-projection method from Ref [1]. An application of this method can be found in Ref [2].
+Computes the valence-only operator block by subtracting core contributions using the inverse
+of the core-core overlap `S₁₁⁻¹`:
+
+    Ō₂₂ = O₂₂ + A₂₂ + A₂₂'
+
+where `A₂₂ = Ŝ₁₂' * (½ O₁₁ Ŝ₁₂ - O₁₂)` and `Ŝ₁₂ = S₁₁⁻¹ S₁₂`.
+
+Requires exactly one `Overlap` operator among the input operators.
+
+# References
+[1] doi.org/10.1002/qua.22767
+[2] doi.org/10.1038/s41524-026-02020-1
+"""
 struct LaikovCore <: AbstractBasisProjection end
 
+"""
+    compute_valence_data(operators, core_mask_list, valence_mask_list, method)
+
+Compute the projected valence-only data for each operator using the given projection
+`method` (`<:AbstractBasisProjection`). All operators must be hermitian and exactly one 
+must be an `Overlap`. Returns a vector of wrapped `DenseRecipData` (one per input operator).
+"""
 function compute_valence_data(
     operators, core_mask_list, valence_mask_list, method::LaikovCore
 )

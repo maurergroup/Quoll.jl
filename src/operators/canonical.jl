@@ -3,7 +3,11 @@ struct CanonicalSource <: AbstractSource end
 ### SPHERICAL HARMONICS CONVENTION ###
 
 #! format: off
-# Same as wiki
+"""
+    default_shconv(source) -> SHConvention
+
+Return the default spherical harmonics convention for the given source. Memoized.
+"""
 @memoize function default_shconv(source::CanonicalSource)
     return SHConvention(
         [
@@ -247,6 +251,15 @@ function construct_axis_metadata(::HasSpin, metadata::AbstractMetadata, z1::Chem
     )
 end
 
+"""
+    get_z1z2_ij2interval(atoms_or_metadata_or_operator)
+    get_z1z2_ij2interval(atoms, sparsity)
+
+Compute a species-pair-keyed dictionary mapping each `(z₁, z₂)` pair to an ordered
+dictionary of `(i, j) => UnitRange` intervals. The intervals index contiguously into the
+third dimension of the canonical block-real data array for that species pair. Used internally
+to lay out and access per-image data slices.
+"""
 function get_z1z2_ij2interval(operator::AbstractOperator)
     return get_z1z2_ij2interval(op_atoms(operator), op_sparsity(operator))
 end

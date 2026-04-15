@@ -1,8 +1,23 @@
+"""
+    Spin
+
+Enum with values `⬆` (+1) and `⬇` (−1) representing spin-up and spin-down channels.
+"""
 @enum Spin begin
     ⬆ = 1
     ⬇ = -1
 end
 
+"""
+    SpinsMetadata{S}
+
+Per-species spin assignment for each basis function.
+
+Fields:
+- `spins::S` — species-keyed dictionary mapping each species to a vector of [`Spin`](@ref)
+  values (one per basis function). For SOC, each species' vector is doubled.
+- `soc::Bool` — `true` if this represents spin-orbit coupling (basis doubled per species).
+"""
 struct SpinsMetadata{S<:SpeciesAnyDict}
     spins::S
     soc::Bool
@@ -12,6 +27,12 @@ function spins_species(spins::SpinsMetadata, z::ChemicalSpecies)
     return spins.spins[z]
 end
 
+"""
+    SpinsMetadata(source, kind, basisset)
+
+Construct `SpinsMetadata` from an operator kind's `:spin` tag. Dispatches on the spin tag
+value (`:up`, `:down`, `:soc`) to build the appropriate per-species spin vectors.
+"""
 function SpinsMetadata(
     source::AbstractSource, kind::OperatorKind, basisset::BasisSetMetadata
 )
@@ -60,6 +81,11 @@ function SpinsMetadata(
     return SpinsMetadata(spins_dict, true)
 end
 
+"""
+    convert_spins_shconv(spins, basisset, shconv)
+
+Reorder spin vectors to match a new SH convention, preserving the spin-basis correspondence.
+"""
 function convert_spins_shconv(
     spins::SpinsMetadata, basisset::BasisSetMetadata, shconv::SHConvention
 )
@@ -69,6 +95,12 @@ function convert_spins_shconv(
     return SpinsMetadata(out_spins, spins.soc)
 end
 
+"""
+    reduce_spins(spins, basisset, subbasis; inverted=false)
+
+Restrict spin metadata to a sub-basis, keeping only the spin entries corresponding to the
+retained basis functions.
+"""
 function reduce_spins(
     spins::SpinsMetadata, basisset::BasisSetMetadata, subbasis::Vector{<:BasisMetadata};
     inverted=false,
@@ -88,4 +120,10 @@ function reduce_spins(
     return SpinsMetadata(subspins_dict, spins.soc)
 end
 
+"""
+    convert_spins_source(in_spins, out_basisset, in_source, out_source)
+
+Make final changes due to the source change (e.g. reorder up and down spins if the two
+sources don't agree). This often might leave the spins unchanged.
+"""
 function convert_spins_source end

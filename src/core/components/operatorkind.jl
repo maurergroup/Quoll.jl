@@ -1,5 +1,20 @@
-# An unordered dictionary is used to make comparison between two operatorkinds
-# not depend on tag order
+"""
+    OperatorKind{K}
+
+Identifies an operator by its kind symbol `K` (e.g. `:Hamiltonian`, `:Overlap`) and a set
+of tags stored in an unordered dictionary. Tags are key-value pairs of `Symbol`s that
+distinguish variants — for example `source=:ref` or `spin=:up`. Tag order does not affect
+equality.
+
+Convenience aliases: `Hamiltonian = OperatorKind{:Hamiltonian}`,
+`Overlap = OperatorKind{:Overlap}`.
+
+# Examples
+```julia
+kind = Hamiltonian(; source=:ref)          # reference Hamiltonian
+kind = Hamiltonian(; source=:pred, spin=:soc)  # predicted SOC Hamiltonian
+```
+"""
 struct OperatorKind{K}
     tags::UnorderedDictionary{Symbol,Symbol}
 
@@ -41,6 +56,12 @@ function Base.getproperty(op::OperatorKind, name::Symbol)
     end
 end
 
+"""
+    get_tags(kind; excluded_keys=nothing)
+
+Return the tag dictionary of an `OperatorKind`. If `excluded_keys` is provided, those keys
+are filtered out from the result.
+"""
 function get_tags(op::OperatorKind; excluded_keys=nothing)
     if isnothing(excluded_keys)
         return op.tags
@@ -52,7 +73,14 @@ function get_tags(op::OperatorKind; excluded_keys=nothing)
     end
 end
 
-# Group operatorkinds in a list based on their equality of tags
+"""
+    get_operator_groups(op_list; op_filter=op->true, excluded_keys=nothing)
+
+Group a list of `OperatorKind`s by tag equality. Returns a vector of vectors, where each
+inner vector contains kinds that share identical tags (after filtering). Use `op_filter` to
+restrict which kinds are considered and `excluded_keys` to ignore specific tags during
+grouping.
+"""
 function get_operator_groups(
     op_list::AbstractVector{<:OperatorKind}; op_filter=op -> true, excluded_keys=nothing
 )
@@ -75,6 +103,12 @@ function get_operator_groups(
     return getindex.(Ref(op_list_filtered), group_indices)
 end
 
+"""
+    statictuple(kind::OperatorKind)
+
+Convert an `OperatorKind` into a tuple of `Val`-wrapped symbols, sorted by tag key. Used
+for type-stable dispatch on operator kind in format-specific methods (e.g. file name lookup).
+"""
 function statictuple(kind::OperatorKind{K}) where {K}
     # Making sure pairtypes are sorted with respect to tag keys
     # (to make sure methods that dispatch on statictuple work)
@@ -88,6 +122,14 @@ end
 const Hamiltonian = OperatorKind{:Hamiltonian}
 const Overlap = OperatorKind{:Overlap}
 
+"""
+    allows_symmetry(operatorkinds)
+    allows_symmetry(operatorkind::OperatorKind)
+
+Check whether k-point symmetry reduction is valid. Returns `false` if any operator has a
+non-trivial spin tag (`:up`, `:down`, `:soc`), since spin-polarised operators generally
+break the spatial symmetry used for k-point reduction.
+"""
 function allows_symmetry(operatorkinds)
     return all(allows_symmetry, operatorkinds)
 end

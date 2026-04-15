@@ -1,19 +1,39 @@
 ### TRAITS ###
 
+"""Base type for all Holy Traits used in dispatch throughout Quoll."""
 abstract type AbstractTrait end
 
 ### METADATA TRAITS ###
 
+"""Trait distinguishing real-space and reciprocal-space metadata."""
 abstract type SpaceTrait <: AbstractTrait end
+
+"""Singleton indicating real-space metadata (no k-point)."""
 struct RealSpace <: SpaceTrait end
+
+"""Singleton indicating reciprocal-space metadata (has a k-point)."""
 struct RecipSpace <: SpaceTrait end
 
+"""Trait distinguishing spin-polarised and non-spin-polarised metadata."""
 abstract type SpinTrait <: AbstractTrait end
+
+"""Singleton indicating no spin polarisation."""
 struct NoSpin <: SpinTrait end
+
+"""Singleton indicating spin-polarised metadata (carries a `SpinsMetadata`)."""
 struct HasSpin <: SpinTrait end
 
 ### BASIC METADATA CONTAINER ###
 
+"""
+    BasicMetadataContainer{O,X,S,B,Y,A}
+
+Holds the core metadata fields shared by all metadata types: operator kind, source format,
+sparsity pattern, basis set, spherical harmonics convention, and atomic structure.
+
+Every concrete `AbstractMetadata` subtype wraps a `BasicMetadataContainer` in its `common`
+field, accessed via [`op_basic_metadata`](@ref).
+"""
 struct BasicMetadataContainer{
     O<:OperatorKind,
     X<:AbstractSource,
@@ -41,8 +61,25 @@ op_hermicity(common::BasicMetadataContainer) = op_hermicity(op_sparsity(common))
 
 ### METADATA TYPES ###
 
+"""
+    AbstractMetadata{O,X,S,B,Y,A}
+
+Abstract supertype for all operator metadata. Type parameters encode the operator kind (`O`),
+source format (`X`), sparsity pattern (`S`), basis set (`B`), SH convention (`Y`), and
+atomic structure (`A`).
+
+Concrete subtypes, such as [`RealMetadata`](@ref), [`RecipMetadata`](@ref),
+[`SpinRealMetadata`](@ref), [`SpinRecipMetadata`](@ref), differ in which extra fields
+they carry (k-point, spin information, or both). Traits, e.g. `SpaceTrait` and `SpinTrait`,
+encode these differences for dispatch.
+"""
 abstract type AbstractMetadata{O,X,S,B,Y,A} end
 
+"""
+    RealMetadata{O,X,S,B,Y,A}
+
+Real-space, non-spin-polarised metadata. Wraps only a `BasicMetadataContainer`.
+"""
 struct RealMetadata{
     O<:OperatorKind,
     X<:AbstractSource,
@@ -57,6 +94,12 @@ trait(::Type{SpaceTrait}, ::Type{<:RealMetadata}) = RealSpace()
 trait(::Type{SpinTrait}, ::Type{<:RealMetadata}) = NoSpin()
 extrafield_traittypes(::Type{<:RealMetadata}) = []
 
+"""
+    RecipMetadata{O,X,S,B,Y,A,K}
+
+Reciprocal-space, non-spin-polarised metadata. Extends `BasicMetadataContainer` with a
+k-point vector.
+"""
 struct RecipMetadata{
     O<:OperatorKind,
     X<:AbstractSource,
@@ -73,6 +116,11 @@ trait(::Type{SpaceTrait}, ::Type{<:RecipMetadata}) = RecipSpace()
 trait(::Type{SpinTrait}, ::Type{<:RecipMetadata}) = NoSpin()
 extrafield_traittypes(::Type{<:RecipMetadata}) = [SpaceTrait]
 
+"""
+    SpinRealMetadata{O,X,S,B,Y,A,P}
+
+Real-space, spin-polarised metadata. Extends `BasicMetadataContainer` with spin information.
+"""
 struct SpinRealMetadata{
     O<:OperatorKind,
     X<:AbstractSource,
@@ -89,6 +137,12 @@ trait(::Type{SpaceTrait}, ::Type{<:SpinRealMetadata}) = RealSpace()
 trait(::Type{SpinTrait}, ::Type{<:SpinRealMetadata}) = HasSpin()
 extrafield_traittypes(::Type{<:SpinRealMetadata}) = [SpinTrait]
 
+"""
+    SpinRecipMetadata{O,X,S,B,Y,A,P,K}
+
+Reciprocal-space, spin-polarised metadata. Extends `BasicMetadataContainer` with both
+spin information and a k-point vector.
+"""
 struct SpinRecipMetadata{
     O<:OperatorKind,
     X<:AbstractSource,
@@ -136,13 +190,26 @@ op_atoms(metadata::AbstractMetadata) = op_atoms(op_basic_metadata(metadata))
 op_hermicity(metadata::AbstractMetadata) = op_hermicity(op_basic_metadata(metadata))
 
 ### DATA ###
-# Metadata describes what type of data will be present, so this struct is only for making
-# dispatch related to data self-documenting and more readable
 
+"""
+    DataContainer{T,N,B,X,S}
+
+Type-tagged wrapper around operator data arrays. The type parameters encode the element type
+(`T`), dimensionality (`N`), concrete body type (`B`), source format (`X`), and sparsity
+pattern (`S`). This enables dispatch on data format without inspecting the body directly.
+
+Use [`unwrap_data`](@ref) to access the underlying array/dictionary and
+[`wrap_data`](@ref) to construct a `DataContainer` from a raw body.
+"""
 struct DataContainer{T,N,B,X<:AbstractSource,S<:AbstractSparsity}
     body::B
 end
 
+"""
+    unwrap_data(data::DataContainer) -> body
+
+Return the underlying array or dictionary stored in the `DataContainer`.
+"""
 unwrap_data(data::DataContainer) = data.body
 
 ### COMMON DATA TYPES ###
@@ -150,6 +217,13 @@ unwrap_data(data::DataContainer) = data.body
 const CSCRealData{T} = DataContainer{T,1,<:AbstractVector{T},<:Any,<:CSCRealSparsity}
 const DenseRecipData{T} = DataContainer{T,2,<:AbstractMatrix{T},<:Any,<:DenseRecipSparsity}
 
+"""
+    wrap_data(::Type{M}, body) where {M<:AbstractMetadata}
+    wrap_data(::Type{X}, ::Type{S}, body)
+
+Wrap a raw array or dictionary into a [`DataContainer`](@ref), tagging it with the source
+and sparsity types inferred from metadata type `M` (or provided directly as `X` and `S`).
+"""
 function wrap_data(::Type{M}, body) where {M<:AbstractMetadata}
     return wrap_data(op_source_type(M), op_sparsity_type(M), body)
 end
@@ -176,14 +250,34 @@ end
 
 ### OPERATOR TRAITS ###
 
+"""Trait distinguishing operators that carry keydata from those that do not."""
 abstract type KeyedTrait <: AbstractTrait end
+
+"""Singleton indicating an operator carries keyed data (e.g. per-atom-pair blocks)."""
 struct HasKeydata <: KeyedTrait end
+
+"""Singleton indicating an operator has no keyed data."""
 struct NoKeydata <: KeyedTrait end
 
 ### OPERATOR ###
 
+"""
+    AbstractOperator{O,M,D}
+
+Abstract supertype for all operators. Type parameters encode the operator kind (`O`),
+metadata type (`M`), and data container type (`D`).
+"""
 abstract type AbstractOperator{O,M,D} end
 
+"""
+    Operator{O,M,D}
+
+An operator that holds metadata and a single data container.
+
+`trait(KeyedTrait, Operator) → NoKeydata()`.
+
+See also [`KeyedOperator`](@ref), [`build_operator`](@ref).
+"""
 struct Operator{
     O<:OperatorKind,
     M<:AbstractMetadata{O},
@@ -201,6 +295,16 @@ end
 trait(::Type{KeyedTrait}, ::Type{<:Operator}) = NoKeydata()
 extrafield_traittypes(::Type{<:Operator}) = []
 
+"""
+    KeyedOperator{O,M,D,KD}
+
+An operator with keyed data. Holds metadata, a data container, and an additional keydata
+container (e.g. per-atom-pair block matrices indexed by `(i, j)` pairs).
+
+`trait(KeyedTrait, KeyedOperator) → HasKeydata()`.
+
+See also [`Operator`](@ref), [`build_operator`](@ref).
+"""
 struct KeyedOperator{
     O<:OperatorKind,
     M<:AbstractMetadata{O},
@@ -227,6 +331,12 @@ function Base.show(io::IO, operator::AbstractOperator)
     return print(io, ")")
 end
 
+"""
+    synchronise_data!(operator, comm::MPI.Comm)
+
+All-reduce the operator's data across MPI communicator `comm`, summing contributions from
+different ranks (e.g. after distributing k-points across processes).
+"""
 function synchronise_data!(operator::AbstractOperator, comm::MPI.Comm)
     data = op_data(operator)
     return synchronise_data!(data, comm)

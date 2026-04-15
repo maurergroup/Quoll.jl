@@ -1,4 +1,16 @@
-# Convention defined as a conversion from wiki to a given format
+"""
+    SHConvention{lmax,T}
+
+Spherical harmonics ordering/phase convention, expressed as a transformation **from** the
+wiki (reference) ordering **to** a target format. For each angular momentum `l`, stores:
+
+- `orders` — permutation vector mapping wiki index → format index.
+- `shifts` — precomputed index shifts for applying the permutation to a full basis.
+- `phases` — sign factors (±1) applied after reordering.
+
+Two conventions can be composed with `∘` and inverted with `inv`. Use `isidentity` to check
+if a convention is a no-op.
+"""
 struct SHConvention{lmax,T}
     orders::T
     shifts::T
@@ -24,6 +36,11 @@ function SHConvention(orders, phases)
     return SHConvention{lmax}(_orders, _shifts, _phases)
 end
 
+"""
+    isidentity(shconv::SHConvention) -> Bool
+
+Return `true` if the convention is a no-op (identity ordering with all-positive phases).
+"""
 function isidentity(shconv::SHConvention)
     for (orders_l, phases_l) in zip(shconv.orders, shconv.phases)
         if !issorted(orders_l) || any(phases_l .< 0)
@@ -43,6 +60,11 @@ function compute_shifts(orders)
     )
 end
 
+"""
+    inv(shconv::SHConvention) -> SHConvention
+
+Return the inverse convention (format → wiki), such that `inv(c) ∘ c` is the identity.
+"""
 function Base.inv(shconv::SHConvention{lmax}) where {lmax}
     inv_orders = tuple(
         (
@@ -66,8 +88,12 @@ function make_static(vec, ::Val{l}) where {l}
     return SVector{2l + 1,Int}(vec)
 end
 
-# SHConvention is not callable and the result doesn't return ComposedFunction,
-# so not sure if it's a good idea to overload the composition operator
+"""
+    shconv2 ∘ shconv1 -> SHConvention
+
+Compose two SH conventions. The result applies `shconv1` first, then `shconv2`. If the two
+conventions have different `lmax`, the lower value is used.
+"""
 function Base.:(∘)(
     shconv2::T1, shconv1::T2
 ) where {T1<:SHConvention{lmax1},T2<:SHConvention{lmax2}} where {lmax1,lmax2}
@@ -104,6 +130,11 @@ get_order(l, ib_sub, shconv::SHConvention) = shconv.orders[l + 1][ib_sub]
 get_shift(l, ib_sub, shconv::SHConvention) = shconv.shifts[l + 1][ib_sub]
 get_phase(l, ib_sub, shconv::SHConvention) = shconv.phases[l + 1][ib_sub]
 
+"""
+    precompute_shifts(basis, shconv) -> ImmutableDict
+
+Precompute per-species index shift vectors for applying the SH convention to a full basis set.
+"""
 function precompute_shifts(basis::SpeciesAnyDict, shconv::SHConvention)
     shifts = Dictionary{ChemicalSpecies,Vector{Int}}()
     for z in keys(basis)
@@ -114,8 +145,13 @@ function precompute_shifts(basis::SpeciesAnyDict, shconv::SHConvention)
     return Base.ImmutableDict(pairs(shifts)...)
 end
 
-# Orders for the whole basis set, contrary to `get_order` which computes orders
-# only in a given subblock (which is why shifts are used instead of `get_order` directly)
+"""
+    precompute_orders(basis, shconv) -> ImmutableDict
+
+Precompute per-species permutation vectors for the full basis set under the given SH
+convention. Unlike `get_order` (which operates within a single angular-momentum subblock),
+these are global indices into the species' basis.
+"""
 function precompute_orders(basis::SpeciesAnyDict, shconv::SHConvention)
     orders = Dictionary{ChemicalSpecies,Vector{Int}}()
     for z in keys(basis)
@@ -128,6 +164,13 @@ function precompute_orders(basis::SpeciesAnyDict, shconv::SHConvention)
     return Base.ImmutableDict(pairs(orders)...)
 end
 
+"""
+    precompute_shphases(basis, shconv, Val(D)=Val(1), T=Float64)
+
+Precompute per-species sign phase vectors (±1) for the SH convention. When `D=1`, returns
+a per-species dictionary of vectors. When `D=2`, returns a per-species-pair dictionary of
+outer-product phase matrices (used for matrix-valued data).
+"""
 function precompute_shphases(
     basis::SpeciesAnyDict, shconv::SHConvention,
     ::Val{D}=Val(1), ::Type{T}=Float64,
@@ -159,7 +202,12 @@ function precompute_shphases!(phases::AbstractDictionary, ::Val{2})
     return Base.ImmutableDict(pairs(phases_pairs)...)
 end
 
-# SH conversion for a matrix M_z₁z₂ can be performed as P_z₁ * M_z₁z₂ * (P_z₂)ᵀ
+"""
+    precompute_signed_perm_matrices(basis, shconv, T=Float64)
+
+Compute per-species signed permutation matrices for the SH convention. An SH conversion of
+a matrix `M_{z₁z₂}` can be performed as `P_{z₁} * M_{z₁z₂} * P_{z₂}ᵀ`.
+"""
 function precompute_signed_perm_matrices(
     basis::SpeciesAnyDict, shconv::SHConvention, ::Type{T}=Float64
 ) where {T}
@@ -193,6 +241,12 @@ function compute_perm_matrix(
     return Matrix{T}(I(nbasis)[orders, :])
 end
 
+"""
+    convert_speciesdict_shconv(dict, basis, shconv)
+
+Return a deep copy of `dict` with per-species vectors permuted according to the SH
+convention. The in-place variant `convert_speciesdict_shconv!` modifies `dict` directly.
+"""
 function convert_speciesdict_shconv(
     in_d::SpeciesAnyDict, basis::SpeciesAnyDict, shconv::SHConvention
 )

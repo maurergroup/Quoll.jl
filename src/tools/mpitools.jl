@@ -24,6 +24,16 @@ abstract type AbstractWorkSplit end
 struct DefaultSplit <: AbstractWorkSplit end
 struct FHIaimsLAPACKSplit <: AbstractWorkSplit end
 
+"""
+    split_work(N, comm, split_method)
+    split_work(N, N_comm, my_rank, split_method)
+
+Distribute `N` work items across MPI ranks. Returns a vector of indices assigned to this
+rank. Available strategies:
+
+- `DefaultSplit()` — balanced distribution with remainder spread across the first ranks.
+- `FHIaimsLAPACKSplit()` — round-robin distribution matching FHI-aims' LAPACK work split.
+"""
 function split_work(N::Integer, comm::MPI.Comm, split_method::AbstractWorkSplit)
     N_comm = MPI.Comm_size(comm)
     my_rank = MPI.Comm_rank(comm)

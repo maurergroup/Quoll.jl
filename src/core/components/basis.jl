@@ -1,4 +1,11 @@
-# NOTE: m is always in wiki sh convention
+"""
+    BasisMetadata{E}
+
+Metadata for a single basis function: chemical species `z`, principal quantum number `n`,
+angular momentum `l`, magnetic quantum number `m` (always in wiki SH convention), and
+optional `extras` (e.g. degeneracy labels). Two `BasisMetadata` are equal if all fields
+match; they [`share_subblock`](@ref) if everything except `m` matches.
+"""
 struct BasisMetadata{E}
     z::ChemicalSpecies
     n::Int
@@ -46,7 +53,12 @@ function Base.isequal(b1::BasisMetadata, b2::BasisMetadata)
     )
 end
 
-# Only m can differ
+"""
+    share_subblock(b1::BasisMetadata, b2::BasisMetadata) -> Bool
+
+Return `true` if `b1` and `b2` belong to the same angular momentum subblock (same species,
+`n`, `l`, and extras — only `m` may differ).
+"""
 function share_subblock(b1::BasisMetadata, b2::BasisMetadata)
     return (
         isequal(getfield(b1, :z), getfield(b2, :z)) &&
@@ -60,6 +72,13 @@ function Base.show(io::IO, basisf::BasisMetadata)
     return print(io, "$(basisf.z)$(basisf.n)$(basisf.l)$(basisf.m)")
 end
 
+"""
+    BasisSetMetadata{B,A}
+
+A basis set. Contains a `basis` dictionary mapping each `ChemicalSpecies` to its vector
+of [`BasisMetadata`](@ref) entries, and an `atom2species` vector mapping atom indices
+to species.
+"""
 struct BasisSetMetadata{B<:SpeciesAnyDict,A<:AbstractVector{ChemicalSpecies}}
     basis::B
     atom2species::A
@@ -75,10 +94,23 @@ end
 
 get_unique_species(basisset::BasisSetMetadata) = unique(basisset.atom2species)
 
+"""
+    get_angular_momenta(basis) -> Vector{Int}
+
+Return the angular momentum `l` of each subblock's representative basis function.
+"""
 function get_angular_momenta(basis::AbstractVector{T}) where {T<:BasisMetadata}
     return getfield.(get_basis_per_subblock(basis), :l)
 end
 
+"""
+    get_subblock_ranges(basisset::BasisSetMetadata)
+    get_subblock_ranges(basis_z::AbstractVector{<:BasisMetadata})
+
+Return contiguous index ranges for each angular momentum subblock. The `BasisSetMetadata`
+form returns a `Dictionary{ChemicalSpecies, Vector{UnitRange{Int}}}`. It is assumed that
+all basis functions belonging to a sublock are next to each other.
+"""
 function get_subblock_ranges(basisset::BasisSetMetadata)
     ranges_dict = Dictionary{ChemicalSpecies,Vector{UnitRange{Int}}}()
     for z in keys(basisset.basis)
@@ -87,7 +119,6 @@ function get_subblock_ranges(basisset::BasisSetMetadata)
     return ranges_dict
 end
 
-# Assuming that all basis functions belonging to a subblock are next to each other
 function get_subblock_ranges(basis_z::AbstractVector{<:BasisMetadata})
     # Get a list which shows whether the next basis function belongs to the same subblock.
     # If false, then the next basis function belongs to a different subblock,
@@ -115,8 +146,13 @@ function get_subblock_ranges(basis_z::AbstractVector{<:BasisMetadata})
     return ranges
 end
 
-# Get indices of each basis function in a subblock. This is different from m
-# because ms can be reordered due to a spherical harmonics convention
+"""
+    get_indices_in_subblock(basisset::BasisSetMetadata)
+    get_indices_in_subblock(basis_z::AbstractVector{<:BasisMetadata})
+
+Return the 1-based position of each basis function within its subblock. Unlike `m`, this
+reflects the actual ordering after SH convention reordering.
+"""
 function get_indices_in_subblock(basisset::BasisSetMetadata)
     indices_dict = Dictionary{ChemicalSpecies,Vector{Int}}()
     for z in keys(basisset.basis)
@@ -137,14 +173,25 @@ function get_indices_in_subblock(basis_z::AbstractVector{<:BasisMetadata})
     return norm_ranges
 end
 
-# Reorder basis functions based on the spherical harmonics convention,
-# assuming input basis is in the wiki format
+"""
+    convert_basisset_shconv(basisset, shconv) -> BasisSetMetadata
+
+Reorder basis functions according to the spherical harmonics convention `shconv`. The input
+basis is assumed to be in the wiki (standard) convention.
+"""
 function convert_basisset_shconv(basisset::BasisSetMetadata, shconv::SHConvention)
     in_basis = basisset.basis
     out_basis = convert_speciesdict_shconv(in_basis, in_basis, shconv)
     return BasisSetMetadata(out_basis, basisset.atom2species)
 end
 
+"""
+    lift_arbitrary_degeneracy(basis)
+    lift_arbitrary_degeneracy(basis_z)
+
+When multiple subblocks share the same `(z, n, l)` (arbitrary degeneracy), add a `:dgen`
+label to the `extras` field of each basis function to distinguish them.
+"""
 function lift_arbitrary_degeneracy(
     basis::Base.ImmutableDict{ChemicalSpecies,B}
 ) where {K,V,E<:Base.ImmutableDict{K,V},T<:BasisMetadata{E},B<:Vector{T}}
@@ -222,6 +269,12 @@ function lift_arbitrary_degeneracy(
     return newbasis_z
 end
 
+"""
+    is_arbitrary_degeneracy(basisset) -> Bool
+    is_arbitrary_degeneracy(basis_z) -> Bool
+
+Check whether any species has multiple subblocks sharing the same `(n, l)` quantum numbers.
+"""
 is_arbitrary_degeneracy(basisset::BasisSetMetadata) = is_arbitrary_degeneracy(basisset.basis)
 
 function is_arbitrary_degeneracy(basis::SpeciesAnyDict)
@@ -254,7 +307,14 @@ function get_basis_per_subblock(basis_z::AbstractVector{<:BasisMetadata})
     return unique(basis_per_subblock_repeated)
 end
 
-# Make a subbasisset based on the masks for each chemical species
+"""
+    reduce_basisset(basisset, subbasis; inverted=false) -> BasisSetMetadata
+    reduce_basisset(basisset, subbasis_masks) -> BasisSetMetadata
+
+Return a new `BasisSetMetadata` containing only the basis functions selected by `subbasis`
+(a vector of `BasisMetadata` to keep). If `inverted=true`, keep the complement instead.
+The second form accepts precomputed per-species `BitVector` masks.
+"""
 function reduce_basisset(
     basisset::BasisSetMetadata, subbasis::AbstractVector{<:BasisMetadata};
     inverted=false,
@@ -276,7 +336,12 @@ function reduce_basisset(
     )
 end
 
-# Returns Dictionary{ChemicalSpecies, BitVector}
+"""
+    get_subbasis_masks(basisset, subbasis; inverted=false) -> Dictionary{ChemicalSpecies, BitVector}
+
+Compute per-species boolean masks indicating which basis functions belong to `subbasis`.
+If `inverted=true`, the masks select the complement (i.e. everything *not* in `subbasis`).
+"""
 function get_subbasis_masks(
     basisset::BasisSetMetadata, subbasis::AbstractVector{<:BasisMetadata};
     inverted=false,
@@ -297,7 +362,13 @@ function get_subbasis_masks(
     end
 end
 
-# Returns BitVector to be used with dense operators
+"""
+    get_dense_subbasis_mask(basisset, subbasis; inverted=false) -> BitVector
+    get_dense_subbasis_mask(basisset, subbasis_masks) -> BitVector
+
+Flatten per-species subbasis masks into a single `BitVector` over all atoms (following
+`atom2species` ordering), suitable for indexing into dense matrices.
+"""
 function get_dense_subbasis_mask(
     basisset::BasisSetMetadata, subbasis::AbstractVector{<:BasisMetadata};
     inverted=false,
@@ -312,11 +383,21 @@ function get_dense_subbasis_mask(
     return reduce(vcat, (subbasis_masks[z] for z in basisset.atom2species))
 end
 
+"""
+    get_atom2nbasis(basisset) -> Vector{Int}
+
+Return the number of basis functions per atom.
+"""
 function get_atom2nbasis(basisset::BasisSetMetadata)
     return get_atom2nbasis(basisset.basis, basisset.atom2species)
 end
 get_atom2nbasis(basis, atom2species) = [length(basis[z]) for z in atom2species]
 
+"""
+    get_atom2basis(basisset) -> Vector{UnitRange{Int}}
+
+Return the global basis function index range for each atom.
+"""
 function get_atom2basis(basisset::BasisSetMetadata)
     return get_atom2basis(basisset.basis, basisset.atom2species)
 end
@@ -335,6 +416,11 @@ function get_atom2basis(atom2nbasis)
     ]
 end
 
+"""
+    get_basis2atom(basisset) -> Vector{Int}
+
+Return the atom index for each global basis function index.
+"""
 function get_basis2atom(basisset::BasisSetMetadata)
     return get_basis2atom(basisset.basis, basisset.atom2species)
 end
@@ -348,7 +434,11 @@ function get_basis2atom(atom2nbasis)
     return reduce(vcat, [fill(iat, nbasis) for (iat, nbasis) in enumerate(atom2nbasis)])
 end
 
-# Get a number of basis functions for a given chemical species
+"""
+    get_species2nbasis(basisset) -> ImmutableDict{ChemicalSpecies, Int}
+
+Return the number of basis functions per chemical species.
+"""
 function get_species2nbasis(basisset::BasisSetMetadata)
     d = Base.ImmutableDict(
         (
@@ -359,7 +449,12 @@ function get_species2nbasis(basisset::BasisSetMetadata)
     return d
 end
 
-# Get a number of basis functions belonging to atoms with a lower index for every atom
+"""
+    get_atom2offset(basisset) -> Vector{Int}
+
+Return the cumulative basis function offset for each atom (number of basis functions
+belonging to atoms with lower index).
+"""
 function get_atom2offset(basisset::BasisSetMetadata)
     atom2basis = get_atom2basis(basisset)
     return get_atom2offset(atom2basis)

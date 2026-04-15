@@ -1,3 +1,10 @@
+"""
+    convert_to_atomarray(dict, atom2species_or_natoms)
+
+Convert a species-keyed or atom-pair-keyed dictionary to a flat array (or matrix) indexed by
+atom index. Missing entries are filled with a sentinel value. Used to convert dictionary
+lookups to array indexing in performance-critical loops.
+"""
 function convert_to_atomarray(d::SpeciesAnyDict{V}, atom2species) where {V}
     natoms = length(atom2species)
     sentinel = get_sentinel_value(V)

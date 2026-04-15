@@ -1,8 +1,31 @@
 ### OPERATOR ###
 
-# This function implies only metadata and data needs to be converted,
-# everything else (e.g. keydata) can be built from metadata. Might not be true
-# if operators have something like gradients attached
+"""
+    convert_operator(::Type{OPₒᵤₜ}, ::Type{Mₒᵤₜ}, in_operator; kwargs...) -> OPₒᵤₜ
+
+Convert an operator to a different format in a single call. This is the main entry point
+for format conversion, composing three stages:
+
+1. [`convert_metadata`](@ref) — convert source, SH convention, sparsity, basis set.
+2. [`build_operator`](@ref) — allocate the output operator with zero-initialised data.
+3. [`convert_data!`](@ref) — transfer and transform the actual matrix data.
+
+# Arguments
+- `OPₒᵤₜ`: output operator type (`<:KeyedOperator`).
+- `Mₒᵤₜ`: output metadata type (e.g. `CanonicalBlockRealMetadata`, `DeepHBlockRealMetadata`).
+  May be a union type; the concrete subtype is chosen based on available extra fields.
+- `in_operator`: the input operator to convert.
+
+# Keyword arguments
+- `radii=nothing`: if given, build output sparsity from a neighbour list with these radii
+  instead of converting the input sparsity.
+- `hermitian=nothing`: override hermicity of the output (defaults to input's hermicity).
+- `float=nothing`: override the floating-point element type (defaults to input's).
+- `out_shconv=nothing`: explicit output SH convention (defaults to the output source's default).
+- `source_kwargs=NamedTuple()`: extra keyword arguments for constructing the output source struct.
+- `operator_extra_kwargs=NamedTuple()`: passed to `build_operator_extra`.
+- `metadata_extra_kwargs=NamedTuple()`: passed to `convert_metadata_extra` (e.g. `kpoint`).
+"""
 function convert_operator(
     ::Type{OPₒᵤₜ}, ::Type{Mₒᵤₜ}, in_operator::OPᵢₙ;
     radii=nothing, hermitian=nothing, float=nothing, out_shconv=nothing,
@@ -37,10 +60,20 @@ end
 
 ### DATA ###
 
-# Sparsity is normally used during conversion. This would imply that we need
-# to use sparsity as trait too, but we can assume a data format implies a particular
-# sparsity type.
-# However, keydata does not imply sparsity, which is why we need data traits
+"""
+    convert_data!(out_operator, in_operator)
+
+Transfer and transform data from `in_operator` into `out_operator` (mutating `out_operator`
+in place). Currently dispatches on the `KeyedTrait` of both operators to select the correct
+data types for conversion:
+
+- `(NoKeydata, NoKeydata)` → route on `(Dₒᵤₜ, Dᵢₙ)`
+- `(HasKeydata, NoKeydata)` → route on `(KDₒᵤₜ, Dₒᵤₜ, Dᵢₙ)`
+- `(NoKeydata, HasKeydata)` → route on `(Dₒᵤₜ, KDᵢₙ, Dᵢₙ)`
+- `(HasKeydata, HasKeydata)` → route on `(KDₒᵤₜ, Dₒᵤₜ, KDᵢₙ, Dᵢₙ)`
+
+Concrete conversion methods are defined per format pair in `src/conversions/`.
+"""
 function convert_data!(
     out_operator::OPₒᵤₜ,
     in_operator::OPᵢₙ,
@@ -126,6 +159,27 @@ end
 
 ### METADATA ###
 
+"""
+    convert_metadata(::Type{Mₒᵤₜ}, in_metadata; kwargs...) -> AbstractMetadata
+
+Convert metadata from one format to another. This is a three-stage pipeline:
+
+1. [`convert_metadata_basic`](@ref) — convert source, SH convention, sparsity, basis.
+2. `convert_metadata_extra` — convert extra fields (k-point, spins) via trait dispatch.
+3. `convert_metadata_final` — assemble the concrete output metadata type.
+
+`Mₒᵤₜ` may be a union type (e.g. `CanonicalBlockRealMetadata`); the concrete subtype is
+chosen automatically based on which extra fields are present.
+
+# Keyword arguments
+- `radii=nothing`: build sparsity from neighbour list instead of converting.
+- `hermitian=nothing`: override hermicity (defaults to input's).
+- `out_shconv=nothing`: explicit output SH convention.
+- `subbasis=nothing`: reduce basis to this subset of orbitals.
+- `inverted=false`: if `true`, keep the complement of `subbasis`.
+- `source_kwargs=NamedTuple()`: extra arguments for constructing the output source.
+- `extra_kwargs=NamedTuple()`: extra arguments for trait-based conversion (e.g. `kpoint`).
+"""
 function convert_metadata(
     ::Type{Mₒᵤₜ}, in_metadata::AbstractMetadata;
     radii=nothing, hermitian=nothing, out_shconv=nothing,
@@ -159,6 +213,13 @@ end
 
 ### METADATA BASIC ###
 
+"""
+    convert_metadata_basic(::Type{Mₒᵤₜ}, in_metadata; kwargs...) -> BasicMetadataContainer
+
+Convert the core metadata fields: derives the output source, computes the SH convention
+delta, converts sparsity (optionally from radii), reorders the basis set to the output
+SH convention, and optionally reduces it with a subbasis.
+"""
 function convert_metadata_basic(
     ::Type{Mₒᵤₜ}, in_metadata::Mᵢₙ;
     radii=nothing, hermitian=nothing, out_shconv=nothing,
@@ -198,6 +259,13 @@ function convert_metadata_basic(
     )
 end
 
+"""
+    convert_sparsity(::Type{Sₒᵤₜ}, in_metadata; radii=nothing, hermitian=nothing)
+
+Metadata-level sparsity conversion wrapper. If `radii` is provided, builds a new sparsity
+pattern from a neighbour list; otherwise converts the input metadata's existing sparsity to
+type `Sₒᵤₜ`, optionally changing hermicity.
+"""
 function convert_sparsity(
     ::Type{Sₒᵤₜ}, in_metadata::AbstractMetadata;
     radii=nothing, hermitian=nothing,
@@ -224,6 +292,12 @@ end
 
 ### METADATA EXTRA ###
 
+"""
+    convert_metadata_extra(::Type{Mₒᵤₜ}, in_metadata, out_basic_metadata; kwargs...)
+
+Convert extra metadata fields (k-point, spins) based on `extrafield_traittypes(Mₒᵤₜ)`.
+Traits are sorted alphabetically and each dispatches to a trait-specific handler.
+"""
 function convert_metadata_extra(
     ::Type{Mₒᵤₜ}, in_metadata::AbstractMetadata, out_basic_metadata::BasicMetadataContainer;
     subbasis=nothing, inverted=false, extra_kwargs=NamedTuple(),
@@ -381,13 +455,18 @@ function convert_spins(
 end
 
 ### METADATA FINAL ###
-# Often it's more convenient to use a union as the output metadata type
-# because this doesn't require knowing whether the data has spin degrees of freedom
-# or not during the call. Therefore, methods that accept unions were defined.
-# However, those methods work for non-union Mₒᵤₜ types out of the box.
 
-# Conversions for unions
+"""
+    convert_metadata_final(::Type{Mₒᵤₜ}, out_basic_metadata, extra_args...)
 
+Assemble the final concrete metadata type from the basic metadata container and any extra
+fields (k-point, spins). When `Mₒᵤₜ` is a union type, the concrete subtype is chosen based
+on which extra arguments are present. For example:
+- No extras → `RealMetadata`
+- Spins only → `SpinRealMetadata`
+- K-point only → `RecipMetadata`
+- Both → `SpinRecipMetadata`
+"""
 function convert_metadata_final(
     ::Type{Mₒᵤₜ}, out_basic_metadata::BasicMetadataContainer
 ) where {Mₒᵤₜ<:Union{<:RealMetadata,<:SpinRealMetadata}}

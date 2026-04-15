@@ -1,5 +1,10 @@
-# Assuming 'U' hermicity
+"""
+    AbstractSparsity
 
+Abstract supertype for all sparsity patterns. All concrete subtypes store a `hermitian`
+flag (accessible via `op_hermicity`) and, for real-space types, an `images` vector of
+lattice translation vectors.
+"""
 abstract type AbstractSparsity end
 op_hermicity(sparsity::AbstractSparsity) = sparsity.hermitian
 op_images(sparsity::AbstractSparsity) = sparsity.images
@@ -39,8 +44,12 @@ end
 
 ### SPARSITY FROM NEIGHBOURLIST ###
 
-# Assumes fractional coordinates of all atoms are [0.0, 1.0)
-# if T is unitless assumes Å
+"""
+    build_sparsity(::Type{S}, atoms, radii; hermitian=false)
+
+Build a sparsity pattern of type `S` from an atomic system and per-species interaction
+radii. Constructs a neighbour list and retains pairs within the sum of their radii.
+"""
 function build_sparsity(
     ::Type{S}, atoms::AbstractSystem, radii::SpeciesAnyDict;
     hermitian=false,
@@ -115,8 +124,14 @@ end
 
 ### SPARSITY CONVERSIONS ###
 
-# Handles in_sparsity == out_sparsity conversions,
-# only hermicity needs to be changed in such cases
+"""
+    convert_sparsity(::Type{Sₒᵤₜ}, in_sparsity, basisset; hermitian=false)
+
+Convert a sparsity pattern to type `Sₒᵤₜ`, optionally changing hermicity. When input and
+output types match, only the hermicity is adjusted. Cross-type conversions (e.g.
+`CSCRealSparsity → BlockRealSparsity`, `BlockRealSparsity → DenseRecipSparsity`) are also
+supported.
+"""
 function convert_sparsity(
     ::Type{S}, in_sparsity::S, ::BasisSetMetadata;
     hermitian=false,
@@ -128,7 +143,6 @@ function convert_sparsity(
     end
 end
 
-# TODO: this is wrong right now
 function convert_sparsity(
     ::Type{Sₒᵤₜ},
     in_sparsity::CSCRealSparsity,
@@ -136,20 +150,27 @@ function convert_sparsity(
     hermitian=false,
 ) where {Sₒᵤₜ<:BlockRealSparsity}
     basis2atom = get_basis2atom(basisset)
-    out_sparsity = BlockRealSparsity(
-        in_sparsity.colcellptr, in_sparsity.rowval, in_sparsity.images, basis2atom, hermitian
-    )
+    if in_sparsity.hermitian
+        out_sparsity = BlockRealSparsity(
+            in_sparsity.colcellptr, in_sparsity.rowval, in_sparsity.images, basis2atom
+        )
+    else
+        throw(error("Currently, converting non-hermitian CSCRealSparsity to
+        BlockRealSparsity is not supported."))
+    end
     # Pass through `convert_sparsity` to convert hermicity
     return convert_sparsity(Sₒᵤₜ, out_sparsity, basisset; hermitian=hermitian)
 end
 
-# NOTE: Tried using LittleSet for a 2 atom system and it was ~10 times slower.
-# For more atoms where unit cells are larger LittleSet might outperform regular Set.
-# One could choose the type of set to use based on the number of images inside `images`
-# NOTE: when hermitian = true, ij2images keys (ij pairs) are already in the upper
-# triangle as required.
+# NOTE:
+# - Tried using LittleSet for a 2 atom system and it was ~10 times slower.
+#   For more atoms where unit cells are larger LittleSet might outperform regular Set.
+#   One could choose the type of set to use based on the number of images inside `images`
+# - When hermitian = true, ij2images keys (ij pairs) are already in the upper
+#   triangle as required
+# - Currently this function only works when the CSC sparsity is hermitian
 function BlockRealSparsity(
-    colcellptr::Array{T,3}, rowval::Vector{T}, images, basis2atom::Vector{T}, hermitian
+    colcellptr::Array{T,3}, rowval::Vector{T}, images, basis2atom::Vector{T}
 ) where {T<:Integer}
     natoms = maximum(basis2atom)
     ij2images_set = [Set{SVector{3,Int}}() for _ in 1:natoms, _ in 1:natoms]
@@ -179,14 +200,10 @@ function BlockRealSparsity(
         collect.(ij2images_set[ij_nonempty_cartesian]),
     )
 
-    if hermitian
-        # Make on-site atom pair sparsity non-hermitian even when hermitian == true.
-        # If hermitian = false, the loops above must have found all the nonhermitian
-        # images for on-site atom pairs.
-        make_onsite_nonhermitian!(ij2images)
-    end
+    # Make on-site atom pair sparsity non-hermitian even when hermitian == true.
+    make_onsite_nonhermitian!(ij2images)
 
-    return BlockRealSparsity(ij2images, images, hermitian)
+    return BlockRealSparsity(ij2images, images, false)
 end
 
 function convert_sparsity(
@@ -256,7 +273,11 @@ end
 
 ### UTILITY FUNCTIONS ###
 
-# A map from image indices in `images` to local image indices in `ij2images` for a given ij
+"""
+    get_iglobal2ilocal(sparsity::BlockRealSparsity)
+
+Return per-pair index maps from global image indices to local image indices in `ij2images`.
+"""
 function get_iglobal2ilocal(sparsity::BlockRealSparsity)
     return get_iexternal2ilocal(sparsity.images, sparsity)
 end

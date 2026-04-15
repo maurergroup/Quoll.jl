@@ -1,8 +1,14 @@
+"""
+    KGrid{T,W}
 
-# TODO: move some of the functions from here to atomtools.jl
-# and some file containing symmetry operations like obtaining rotations
-# and checking if the system has inversion symmetry or not (relevant for Brillouin.jl)
-
+Container for an irreducible k-point grid with integration weights.
+    
+Fields:
+- `kpoints::T` — collection of irreducible k-point coordinate vectors (fractional).
+- `weights::W` — integration weights summing to 1.
+- `time_reversal::Bool` — whether time-reversal symmetry was used to reduce the grid.
+- `crystal_symmetry::Bool` — whether crystal point-group symmetry was used to reduce the grid.
+"""
 struct KGrid{T,W}
     kpoints::T
     weights::W
@@ -14,6 +20,27 @@ get_nkpoints(kgrid::KGrid) = length(kgrid.kpoints)
 get_kpoints(kgrid::KGrid, ik) = kgrid.kpoints[ik]
 get_weights(kgrid::KGrid, ik) = kgrid.weights[ik]
 
+"""
+    construct_kgrid(atoms; density, mesh, shift, time_reversal, crystal_symmetry, symprec)
+
+Build an irreducible k-point grid for the given atomic system using Spglib.
+
+Returns a [`KGrid`](@ref) with irreducible k-points and integration weights. The grid
+is reduced using the requested symmetries and validated by checking that all reducible
+k-points can be regenerated. Falls back to no symmetries if validation fails.
+
+Built based on the implementation in [DFTK.jl](https://github.com/JuliaMolSim/DFTK.jl).
+
+# Keyword arguments
+- `density=nothing` — reciprocal-space density (points per Å⁻¹ per axis). Ignored if `mesh`
+  is given.
+- `mesh=nothing` — explicit Monkhorst–Pack grid dimensions `[n₁, n₂, n₃]`. Takes priority
+  over `density`.
+- `shift=falses(3)` — half-grid shift per axis (`true` shifts by half a grid spacing).
+- `time_reversal=false` — exploit time-reversal symmetry (k ↔ −k) to further reduce the grid.
+- `crystal_symmetry=false` — exploit crystal point-group symmetry to reduce the grid.
+- `symprec=1e-5` — symmetry detection tolerance (Å) passed to Spglib.
+"""
 function construct_kgrid(
     atoms::AbstractSystem;
     density=nothing,
@@ -70,7 +97,9 @@ function construct_kgrid(
 end
 
 """
-Bring ``k``-point coordinates into the range [-0.5, 0.5)
+    normalize_kpoint_coordinate(k)
+
+Wrap fractional k-point coordinates into the range [-0.5, 0.5). Accepts a scalar or vector.
 """
 function normalize_kpoint_coordinate(x::Real)
     x = x - round(Int, x, RoundNearestTiesUp)
@@ -114,7 +143,12 @@ function get_recip_mesh(real_lattice, density)
     return ceil.(Int, recip_basis_lengths .* density)
 end
 
-# Returns a matrix
+"""
+    precompute_phases(kpoints, images) -> Matrix{ComplexF64}
+
+Compute Bloch phase factors ``e^{2πi \\mathbf{T} \\cdot \\mathbf{k}}`` for all
+image–k-point pairs. Returns a `(nimages, nkpoints)` matrix.
+"""
 function precompute_phases(ks, ts)
     K = reduce(hcat, ks)
     T = reduce(hcat, ts)

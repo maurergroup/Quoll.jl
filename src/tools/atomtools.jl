@@ -1,3 +1,10 @@
+"""
+    recentre(atoms) -> AbstractSystem
+
+Wrap atom positions into the unit cell centred at [0.5, 0.5, 0.5] in fractional
+coordinates. Only supports fully periodic systems. Returns a new system with recentred
+positions.
+"""
 function recentre(atoms::AbstractSystem)
     # Currently the following function does not support recentering
     # for systems with open boundary conditions
@@ -24,10 +31,20 @@ function recentre(atoms::AbstractSystem)
     return recentered_atoms
 end
 
+"""
+    get_real_lattice(atoms) -> Matrix
+
+Return the real-space lattice as a matrix with basis vectors as columns.
+"""
 function get_real_lattice(atoms::AbstractSystem)
     return stack(cell_vectors(atoms))
 end
 
+"""
+    get_recip_lattice(atoms_or_real_lattice) -> Matrix
+
+Return the reciprocal-space lattice satisfying `AᵀB = 2πI`, with basis vectors as columns.
+"""
 function get_recip_lattice(atoms::AbstractSystem)
     real_lattice = get_real_lattice(atoms)
     return get_recip_lattice(real_lattice)
@@ -39,14 +56,23 @@ function get_recip_lattice(real_lattice)
     return transpose(ustrip.(real_lattice)) \ (2π * I(3))
 end
 
-# Strip units for matrix division because it doesn't always work with units.
-# Resulting fractional coordinates do not have units which is correct
+"""
+    get_frac_positions(atoms) -> Matrix
+
+Return atom positions in fractional coordinates (unitless). Each column is one atom.
+"""
 function get_frac_positions(atoms::AbstractSystem)
     real_lattice = get_real_lattice(atoms)
     real_positions = ustrip.(stack(position(atoms, :)))
     return ustrip.(real_lattice) \ ustrip.(real_positions)
 end
 
+"""
+    get_species2atom(atoms) -> Dictionary
+
+Return a dictionary mapping each unique `ChemicalSpecies` to the vector of atom indices of
+that species.
+"""
 function get_species2atom(atoms::AbstractSystem)
     all_species = species(atoms, :)
     unique_species = Indices(unique(all_species))

@@ -1,11 +1,25 @@
 ### LOADING ###
 
+"""
+    load_operators(::Type{OP}, ::Type{M}, dir, kinds) -> Vector{OP}
+
+Load multiple operators from disk. Calls [`load_operator`](@ref) for each `OperatorKind` in
+`kinds`.
+"""
 function load_operators(
     ::Type{OP}, ::Type{M}, dir::AbstractString, kinds::AbstractVector{<:OperatorKind}
 ) where {OP<:AbstractOperator,M<:AbstractMetadata}
     return load_operator.(OP, M, dir, kinds)
 end
 
+"""
+    load_operator(::Type{OP}, ::Type{M}, dir, kind) -> OP
+
+Load a single operator of type `OP` from directory `dir`. Loads metadata and data for the
+given `OperatorKind`, then assembles via [`build_operator`](@ref). Format-specific loading
+is dispatched through `load_metadata_basic`, `load_metadata`, and `load_data` methods
+defined per format.
+"""
 function load_operator(
     ::Type{OP}, ::Type{M}, dir::AbstractString, kind::OperatorKind
 ) where {OP<:AbstractOperator,M<:AbstractMetadata}
@@ -31,11 +45,22 @@ end
 
 ### WRITING ###
 
+"""
+    write_operators(::Type{M}, dir, operators)
+
+Write a collection of operators to disk in the format determined by metadata type `M`.
+Creates the directory if it doesn't exist.
+"""
 function write_operators end
 
 ### PARSING ###
 
-# Find available operators in the supplied dir
+"""
+    find_operatorkinds(::Type{M}, dir) -> Vector{OperatorKind}
+
+Scan directory `dir` for available operator data files matching metadata format `M`.
+Returns the list of `OperatorKind`s whose files are found on disk.
+"""
 function find_operatorkinds(::Type{M}, dir::AbstractString) where {M<:AbstractMetadata}
     found_operatorkinds = OperatorKind[]
     for operatorkind in get_avail_operatorkinds(M)

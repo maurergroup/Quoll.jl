@@ -1,3 +1,18 @@
+"""
+    FC99V <: AbstractBasisProjection
+
+Frozen-core method with a valence correction [1]. Similar to [`LaikovCore`](@ref) but uses
+the raw core-valence overlap `S₁₂` directly instead of the orthogonalised `Ŝ₁₂ = S₁₁⁻¹ S₁₂`:
+
+    Ō₂₂ = O₂₂ + A₂₂ + A₂₂'
+
+where `A₂₂ = S₁₂' * (½ O₁₁ S₁₂ - O₁₂)`.
+
+Requires exactly one `Overlap` operator among the input operators.
+
+# References
+[1] doi.org/10.1063/5.0050296
+"""
 struct FC99V <: AbstractBasisProjection end
 
 function compute_valence_data(
