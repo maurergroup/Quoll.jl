@@ -1,4 +1,6 @@
-# Simple regression test for basic functionality through the input file
+# Advanced functionality through the input file, including core orbital projection,
+# and neighbourlist-based sparsity. This approach is used in the original MACE-H paper
+# (doi.org/10.1038/s41524-026-02020-1).
 
 using DelimitedFiles
 using JSON
@@ -8,26 +10,47 @@ using LazyArtifacts
 using Test
 using Main.TestUtils
 
-np = 2
+np = 4
 project = joinpath(@__DIR__, "../../app")
 app = joinpath(@__DIR__, "../../app/quoll.jl")
 
 inputfile = """
 [input]
 format = "FHI-aims"
-directory = "siliconcarbide_fhi/siliconcarbide_fhi"
+directory = "gold_fhi/gold_fhi"
 operators = ["H", "S"]
+radii = ["Au 5.0 ang"]
 
 [output]
 format = "DeepH"
-directory = "siliconcarbide_deeph_converted"
+directory = "gold_deeph_laikov_converted"
 hermitian = false
+
+[kpoint_grid]
+mesh = [7, 7, 7]
+
+[basis_projection]
+projected_basis = [
+    "Au (1, 0, 0) type = atomic",
+    "Au (2, 0, 0) type = atomic",
+    "Au (3, 0, 0) type = atomic",
+    "Au (4, 0, 0) type = atomic",
+    "Au (5, 0, 0) type = atomic",
+    "Au (2, 1, *) type = atomic",
+    "Au (3, 1, *) type = atomic",
+    "Au (4, 1, *) type = atomic",
+    "Au (5, 1, *) type = atomic",
+    "Au (3, 2, *) type = atomic",
+    "Au (4, 2, *) type = atomic",
+    "Au (4, 3, *) type = atomic",
+]
+method = "LaikovCore"
 """
 
 test_data = artifact"test_data"
 tarballs = [
-    joinpath(test_data, "siliconcarbide_fhi.tar.gz")
-    joinpath(test_data, "siliconcarbide_deeph.tar.gz")
+    joinpath(test_data, "gold_fhi.tar.gz")
+    joinpath(test_data, "gold_deeph_laikov.tar.gz")
 ]
 
 setupteardown_tmp(tarballs = tarballs) do
@@ -35,8 +58,8 @@ setupteardown_tmp(tarballs = tarballs) do
     write(inputfile_path, inputfile)
     run.(mpiexec_quollapp(app, project, inputfile_path; np=np))
 
-    dir_ref = joinpath("siliconcarbide_deeph", "siliconcarbide_deeph")
-    dir = "siliconcarbide_deeph_converted"
+    dir_ref = joinpath("gold_deeph_laikov", "gold_deeph_laikov")
+    dir = "gold_deeph_laikov_converted"
 
     @testset "hamiltonians.h5" begin
         db_ref = h5open(joinpath(dir_ref, "hamiltonians.h5"))
