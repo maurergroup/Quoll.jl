@@ -27,6 +27,36 @@ const basisset = let a = ChemicalSpecies(:H1), b = ChemicalSpecies(:H2)
     )
 end
 
+const basisset_soc = let a = ChemicalSpecies(:H1), b = ChemicalSpecies(:H2)
+    Quoll.BasisSetMetadata(
+        dictionary([
+            a => [
+                Quoll.BasisMetadata(a, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 1, nothing)
+                Quoll.BasisMetadata(a, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 1, nothing)
+            ],
+            b => [
+                Quoll.BasisMetadata(b, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 1, nothing)
+                Quoll.BasisMetadata(b, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 1, nothing)
+            ],
+        ]),
+        [a, b, b, a],
+    )
+end
+
 @testset "SpinsMetadata" begin
     a = ChemicalSpecies(:H1)
     b = ChemicalSpecies(:H2)
@@ -61,7 +91,7 @@ end
         spins = Quoll.SpinsMetadata(
             DummySource(),
             Hamiltonian(source = :foo, spin = :soc),
-            basisset,
+            basisset_soc,
         )
         @test spins.soc == true
         @test spins.spins == Base.ImmutableDict(
