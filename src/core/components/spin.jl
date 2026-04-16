@@ -74,7 +74,10 @@ function SpinsMetadata(
 )
     spins_dict = Base.ImmutableDict(
         (
-            z => vcat(fill(⬆, length(atom_basis)), fill(⬇, length(atom_basis)))
+            z => vcat(
+                fill(⬆, round(Int, length(atom_basis) / 2)),
+                fill(⬇, round(Int, length(atom_basis) / 2)),
+            )
             for (z, atom_basis) in pairs(basis)
         )...,
     )

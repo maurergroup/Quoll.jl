@@ -238,3 +238,9 @@ function convert_data!(
         end
     end
 end
+
+function convert_spins_source(
+    in_spins::SpinsMetadata, ::BasisSetMetadata, ::DeepHSource, ::CanonicalSource
+)
+    return in_spins
+end

@@ -8,7 +8,6 @@ end
     include("fhi_canon_laikov_deeph_gold.jl")
 end
 
-# TODO: Test with spins and fourier transform (not through input file)
-# @safetestset "Bismuth telluride DeepHBlockSpin -> CanonicalBlockSpin -> CanonicalDenseRecipSpin" begin
-#     include("deeph_canon_recip_bismuthtelluride.jl")
-# end
+@safetestset "Bismuth telluride DeepHBlockSpin -> CanonicalBlockSpin -> CanonicalDenseRecipSpin" begin
+    include("deeph_canon_recip_bismuthtelluride.jl")
+end

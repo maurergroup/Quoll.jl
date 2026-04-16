@@ -96,7 +96,7 @@ function load_metadata_basic(
     source = DeepHSource()
     atoms = load_atoms(source, dir)
     sparsity = BlockRealSparsity(M, dir, kind)
-    basisset = BasisSetMetadata(source, dir, atoms)
+    basisset = BasisSetMetadata(source, dir, atoms, kind)
     shconv = default_shconv(source)
     return BasicMetadataContainer(kind, source, sparsity, basisset, shconv, atoms)
 end
@@ -177,7 +177,7 @@ end
 end
 
 @memoize function BasisSetMetadata(
-    source::DeepHSource, dir::AbstractString, atoms::AbstractSystem
+    source::DeepHSource, dir::AbstractString, atoms::AbstractSystem, kind::OperatorKind
 )
     p = joinpath(dir, "orbital_types.dat")
     @argcheck ispath(p)
@@ -212,6 +212,13 @@ end
                 end
                 l_counts[l] += 1
             end
+        end
+    end
+
+    # If SOC data is being loaded, double the basis set
+    if haskey(kind, :spin) && isequal(kind.spin, :soc)
+        for z in keys(basis)
+            push!(basis[z], basis[z]...)
         end
     end
 
