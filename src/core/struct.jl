@@ -32,7 +32,7 @@ Holds the core metadata fields shared by all metadata types: operator kind, sour
 sparsity pattern, basis set, spherical harmonics convention, and atomic structure.
 
 Every concrete `AbstractMetadata` subtype wraps a `BasicMetadataContainer` in its `common`
-field, accessed via [`op_basic_metadata`](@ref).
+field, accessed via `op_basic_metadata`.
 """
 struct BasicMetadataContainer{
     O<:OperatorKind,
