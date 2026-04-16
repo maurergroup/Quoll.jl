@@ -32,10 +32,11 @@ end
 # Setup:
 # - create temporary directory /tmp/<...>
 # - go to that directory
-# - extract each tarball in /tmp/<...>/<tarball_name>
+# - copy each artifact directory into /tmp/<...>/<name>/
+#   OR extract each tarball into /tmp/<...>/<tarball_name>/
 # Teardown:
 # - move back to the original directory
-function setupteardown_tmp(f; tarballs = [])
+function setupteardown_tmp(f; tarballs = [], artifact_dirs = [])
     starting_dir = pwd()
     tarballs = abspath.(tarballs)
     try
@@ -44,6 +45,11 @@ function setupteardown_tmp(f; tarballs = [])
 
         # Move to the temporary directory
         cd(tempdir)
+
+        # Copy artifact directories into temp dir
+        for (name, artifact_path) in artifact_dirs
+            cp(artifact_path, joinpath(tempdir, name))
+        end
 
         # Extract any supplied tarballs
         for tpath in tarballs

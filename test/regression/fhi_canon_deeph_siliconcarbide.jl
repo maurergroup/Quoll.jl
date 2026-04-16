@@ -3,6 +3,7 @@
 using DelimitedFiles
 using JSON
 using HDF5
+using LazyArtifacts
 
 using Test
 using Main.TestUtils
@@ -23,10 +24,10 @@ directory = "siliconcarbide_deeph_converted"
 hermitian = false
 """
 
-SiC_examples = joinpath(@__DIR__, "../../examples/siliconcarbide")
+test_data = artifact"test_data"
 tarballs = [
-    joinpath(SiC_examples, "siliconcarbide_fhi.tar.gz")
-    joinpath(SiC_examples, "siliconcarbide_deeph.tar.gz")
+    joinpath(test_data, "siliconcarbide_fhi.tar.gz")
+    joinpath(test_data, "siliconcarbide_deeph.tar.gz")
 ]
 
 setupteardown_tmp(tarballs = tarballs) do
