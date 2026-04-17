@@ -109,6 +109,11 @@ function build_sparsity(
         push!(ij2images[ii], SA[0, 0, 0])
     end
 
+    # ij2images dictionary keys are constructed from the largest cutoff, which means
+    # there is a chance that no images will be present for some of the keys. Such keys
+    # need to be filtered out
+    filter!(images_ij -> length(images_ij) > 0, ij2images)
+
     return BlockRealSparsity(ij2images, unique(nlist.S), hermitian)
 end
 

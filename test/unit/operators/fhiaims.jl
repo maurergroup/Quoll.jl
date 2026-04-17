@@ -110,43 +110,77 @@ end
     end
 
     @testset "CSCRealSparsity" begin
-        rs_indices = """
-        n_hamiltonian_matrix_size: 7
-        n_cells_in_hamiltonian: 4
-        n_basis: 2
-        cell_index
-                0          0          0
-                0          0          1
-                0          0         -1
-        999999999  999999999  999999999
-        index_hamiltonian(1,:,:)
-                1          2
-                4          0
-                5          6
-                0         -1
-        index_hamiltonian(2,:,:)
-                1          3
-                4         -1
-                5          6
-                0         -1
-        column_index_hamiltonian
-                1
-                1
-                2
-                1
-                1
-                1
-                0
-        """
-        setupteardown_tmp() do
-            open("rs_indices.out", "w") do io
-                write(io, rs_indices)
+
+        @testset "Periodic system" begin
+            rs_indices = """
+            n_hamiltonian_matrix_size: 7
+            n_cells_in_hamiltonian: 4
+            n_basis: 2
+            cell_index
+                    0          0          0
+                    0          0          1
+                    0          0         -1
+            999999999  999999999  999999999
+            index_hamiltonian(1,:,:)
+                    1          2
+                    4          0
+                    5          6
+                    0         -1
+            index_hamiltonian(2,:,:)
+                    1          3
+                    4         -1
+                    5          6
+                    0         -1
+            column_index_hamiltonian
+                    1
+                    1
+                    2
+                    1
+                    1
+                    1
+                    0
+            """
+            setupteardown_tmp() do
+                open("rs_indices.out", "w") do io
+                    write(io, rs_indices)
+                end
+                sparsity = Quoll.CSCRealSparsity(Quoll.FHIaimsSource(), pwd())
+                @test sparsity.rowval == [1, 1, 2, 1, 1, 1]
+                @test sparsity.colcellptr[1, :, :] == [1 2; 4 0; 5 6]
+                @test sparsity.colcellptr[2, :, :] == [1 3; 4 -1; 5 6]
+                @test sparsity.images == [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]]
             end
-            sparsity = Quoll.CSCRealSparsity(Quoll.FHIaimsSource(), pwd())
-            @test sparsity.rowval == [1, 1, 2, 1, 1, 1]
-            @test sparsity.colcellptr[1, :, :] == [1 2; 4 0; 5 6]
-            @test sparsity.colcellptr[2, :, :] == [1 3; 4 -1; 5 6]
-            @test sparsity.images == [SA[0, 0, 0], SA[0, 0, 1], SA[0, 0, -1]]
+        end
+
+        @testset "Isolated system" begin
+            rs_indices = """
+            n_hamiltonian_matrix_size: 4
+            n_cells_in_hamiltonian: 2
+            n_basis: 2
+            cell_index (not used in aperiodic systems)
+            index_hamiltonian(1,:,:)
+                    1          2
+                    0         -1
+            index_hamiltonian(2,:,:)
+                    1          3
+                    0         -1
+            column_index_hamiltonian
+                    1
+                    1
+                    2
+                    2
+                    0
+            """
+            setupteardown_tmp() do
+                open("rs_indices.out", "w") do io
+                    write(io, rs_indices)
+                end
+                sparsity = Quoll.CSCRealSparsity(Quoll.FHIaimsSource(), pwd())
+                @test sparsity.rowval == [1, 1, 2, 2]
+                @test sparsity.colcellptr[1, :, :] == [1 2;]
+                @test sparsity.colcellptr[2, :, :] == [1 3;]
+                @test sparsity.images == [SA[0, 0, 0]]
+            end
         end
     end
 

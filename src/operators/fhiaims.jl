@@ -108,7 +108,7 @@ op_sparsity_type(::Type{<:FHIaimsDenseRecipMetadata}) = DenseRecipSparsity
 
 # For all functions here we use source for dispatch instead of M<:FHIaimsCSCRealMetadata
 # We do this because in this particular case all methods could be reused with other
-# FHI-aims operators. If this was not the case, M would be used for dispatch instead
+# FHI-aims operators. If this was not the case, M would be used for dispatch instead.
 function load_metadata_basic(
     ::Type{<:FHIaimsCSCRealMetadata}, dir::AbstractString, kind::OperatorKind
 )
@@ -219,13 +219,17 @@ end
     colcellptr = Array{Int,3}(undef, 2, n_cells, n_basis)
     rowval = Vector{Int}(undef, nnz)
 
-    @assert occursin("cell_index", readline(f))
-    for _ in 1:n_cells
-        push!(cells, SVector{3}(parse.(Int, split(readline(f)))))
+    cell_index_line = readline(f)
+    @assert occursin("cell_index", cell_index_line)
+    if occursin("not used in aperiodic systems", cell_index_line)
+        push!(cells, SVector{3}([0, 0, 0]))
+    else
+        for _ in 1:n_cells
+            push!(cells, SVector{3}(parse.(Int, split(readline(f)))))
+        end
+        # Jump over the invalid cell
+        readline(f)
     end
-
-    # Jump over the invalid cell
-    readline(f)
 
     @assert occursin("index_hamiltonian(1,:,:)", readline(f))
     for i in 1:n_cells
