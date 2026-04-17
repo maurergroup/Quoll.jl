@@ -120,25 +120,60 @@ end
             cell_vectors,
         )
 
-        basis_metadata = Quoll.BasisSetMetadata(Quoll.DeepHSource(), pwd(), atoms)
+        @testset "No spin" begin
+            kind = Quoll.Hamiltonian(spin=:none)
+            basis_metadata = Quoll.BasisSetMetadata(Quoll.DeepHSource(), pwd(), atoms, kind)
 
-        # Note the reordering of p functions
-        @test basis_metadata.basis[z1] ==
-            [
-            Quoll.BasisMetadata(z1, 1, 0, 0, nothing)
-            Quoll.BasisMetadata(z1, 2, 0, 0, nothing)
-            Quoll.BasisMetadata(z1, 1, 1, 1, nothing)
-            Quoll.BasisMetadata(z1, 1, 1, -1, nothing)
-            Quoll.BasisMetadata(z1, 1, 1, 0, nothing)
-        ]
-        @test basis_metadata.basis[z2] ==
-            [
-            Quoll.BasisMetadata(z2, 1, 0, 0, nothing)
-            Quoll.BasisMetadata(z2, 1, 1, 1, nothing)
-            Quoll.BasisMetadata(z2, 1, 1, -1, nothing)
-            Quoll.BasisMetadata(z2, 1, 1, 0, nothing)
-        ]
-        @test basis_metadata.atom2species == [z1, z2]
+            # Note the reordering of p functions
+            @test basis_metadata.basis[z1] ==
+                [
+                Quoll.BasisMetadata(z1, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(z1, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(z1, 1, 1, 1, nothing)
+                Quoll.BasisMetadata(z1, 1, 1, -1, nothing)
+                Quoll.BasisMetadata(z1, 1, 1, 0, nothing)
+            ]
+            @test basis_metadata.basis[z2] ==
+                [
+                Quoll.BasisMetadata(z2, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(z2, 1, 1, 1, nothing)
+                Quoll.BasisMetadata(z2, 1, 1, -1, nothing)
+                Quoll.BasisMetadata(z2, 1, 1, 0, nothing)
+            ]
+            @test basis_metadata.atom2species == [z1, z2]
+        end
+
+        @testset "SOC" begin
+            kind = Quoll.Hamiltonian(spin=:soc)
+            basis_metadata = Quoll.BasisSetMetadata(Quoll.DeepHSource(), pwd(), atoms, kind)
+
+            # The basis set is doubled
+            @test basis_metadata.basis[z1] ==
+                [
+                Quoll.BasisMetadata(z1, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(z1, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(z1, 1, 1, 1, nothing)
+                Quoll.BasisMetadata(z1, 1, 1, -1, nothing)
+                Quoll.BasisMetadata(z1, 1, 1, 0, nothing)
+                Quoll.BasisMetadata(z1, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(z1, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(z1, 1, 1, 1, nothing)
+                Quoll.BasisMetadata(z1, 1, 1, -1, nothing)
+                Quoll.BasisMetadata(z1, 1, 1, 0, nothing)
+            ]
+            @test basis_metadata.basis[z2] ==
+                [
+                Quoll.BasisMetadata(z2, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(z2, 1, 1, 1, nothing)
+                Quoll.BasisMetadata(z2, 1, 1, -1, nothing)
+                Quoll.BasisMetadata(z2, 1, 1, 0, nothing)
+                Quoll.BasisMetadata(z2, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(z2, 1, 1, 1, nothing)
+                Quoll.BasisMetadata(z2, 1, 1, -1, nothing)
+                Quoll.BasisMetadata(z2, 1, 1, 0, nothing)
+            ]
+            @test basis_metadata.atom2species == [z1, z2]
+        end
     end
 end
 

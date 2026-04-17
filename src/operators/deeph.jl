@@ -360,12 +360,18 @@ function write_orbital_types(
     dir::AbstractString,
     operator::AbstractOperator{<:OperatorKind,<:DeepHBlockRealMetadata},
 )
+    kind = op_kind(operator)
     basisset = op_basisset(operator)
     open(joinpath(dir, "orbital_types.dat"), "w") do io
         for atom in op_atoms(operator)
-            writedlm(
-                io, transpose(get_angular_momenta(basis_species(basisset, species(atom))))
-            )
+            # In the case of SOC, only the first half of basis functions needs to be written
+            # because basisset.basis contains both up and down spin basis functions
+            ls = get_angular_momenta(basis_species(basisset, species(atom)))
+            fi = firstindex(ls)
+            if haskey(kind, :spin) && isequal(kind.spin, :soc)
+                ls = ls[fi : fi + length(ls)÷2 - 1]
+            end
+            writedlm(io, transpose(ls))
         end
     end
 end
