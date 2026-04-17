@@ -29,7 +29,10 @@ Returns a [`KGrid`](@ref) with irreducible k-points and integration weights. The
 is reduced using the requested symmetries and validated by checking that all reducible
 k-points can be regenerated. Falls back to no symmetries if validation fails.
 
-Built based on the implementation in [DFTK.jl](https://github.com/JuliaMolSim/DFTK.jl).
+The function works only for periodic, or fully non-periodic systems (in which case a gamma
+point is returned).
+
+The implementation is inspired by [DFTK.jl](https://github.com/JuliaMolSim/DFTK.jl).
 
 # Keyword arguments
 - `density=nothing` — reciprocal-space density (points per Å⁻¹ per axis). Ignored if `mesh`
@@ -50,6 +53,12 @@ function construct_kgrid(
     crystal_symmetry=false,
     symprec=1e-5,
 )
+    # Check the periodicity of the system
+    if !any(periodicity(atoms))
+        return KGrid([SVector{3}([0.0, 0.0, 0.0])], [1.0], false, false)
+    elseif !all(periodicity(atoms))
+        throw(error("`construct_kgrid` does not support systems with mixed boundary conditions"))
+    end
 
     # Get symmetry rotations
     spglib_cell = get_spglib_cell(atoms)
