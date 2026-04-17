@@ -3,6 +3,7 @@
 
 using Quoll
 using StaticArrays
+using LazyArtifacts
 
 using Test
 using Main.TestUtils
