@@ -168,7 +168,6 @@ end
                     1
                     1
                     2
-                    2
                     0
             """
             setupteardown_tmp() do
@@ -176,7 +175,7 @@ end
                     write(io, rs_indices)
                 end
                 sparsity = Quoll.CSCRealSparsity(Quoll.FHIaimsSource(), pwd())
-                @test sparsity.rowval == [1, 1, 2, 2]
+                @test sparsity.rowval == [1, 1, 2]
                 @test sparsity.colcellptr[1, :, :] == [1 2;]
                 @test sparsity.colcellptr[2, :, :] == [1 3;]
                 @test sparsity.images == [SA[0, 0, 0]]
