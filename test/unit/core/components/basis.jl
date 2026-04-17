@@ -50,6 +50,36 @@ const basisset_degen = let a = ChemicalSpecies(:H1), b = ChemicalSpecies(:H2)
     )
 end
 
+const basisset_soc = let a = ChemicalSpecies(:H1), b = ChemicalSpecies(:H2)
+    Quoll.BasisSetMetadata(
+        dictionary([
+            a => [
+                Quoll.BasisMetadata(a, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 1, nothing)
+                Quoll.BasisMetadata(a, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 1, nothing)
+            ],
+            b => [
+                Quoll.BasisMetadata(b, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 1, nothing)
+                Quoll.BasisMetadata(b, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 1, nothing)
+            ],
+        ]),
+        [a, b, b, a],
+    )
+end
+
 @testset "get_angular_momenta" begin
     ref_ells_a = [0, 0, 1]
     ref_ells_b = [0, 1]
@@ -150,11 +180,24 @@ end
         Quoll.BasisMetadata(b, 2, 1, 1, nothing)
         Quoll.BasisMetadata(a, 1, 0, 0, nothing)
     ]
-    subbasis_masks_ref = dictionary([
-        a => [1, 1, 0, 0, 0],
-        b => [1, 0, 0, 1],
-    ])
-    @test Quoll.get_subbasis_masks(basisset, subbasis) == subbasis_masks_ref
+
+    @testset "No spin" begin
+        subbasis_masks_ref = dictionary([
+            a => [1, 1, 0, 0, 0],
+            b => [1, 0, 0, 1],
+        ])
+        @test Quoll.get_subbasis_masks(basisset, subbasis) == subbasis_masks_ref
+    end
+
+    # SOC case: for a given basis function in the subbasis, we want both up and down spin
+    # basis functions to evaluate to true in the mask
+    @testset "SOC" begin
+        subbasis_masks_ref = dictionary([
+            a => [1, 1, 0, 0, 0, 1, 1, 0, 0, 0],
+            b => [1, 0, 0, 1, 1, 0, 0, 1],
+        ])
+        @test Quoll.get_subbasis_masks(basisset_soc, subbasis) == subbasis_masks_ref
+    end
 end
 
 @testset "get_dense_subbasis_mask" begin
