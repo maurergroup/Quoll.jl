@@ -39,6 +39,11 @@ global_color = first(my_idirs)
 config_comm = MPI.Comm_split(global_comm, global_color, global_rank)
 config_rank = MPI.Comm_rank(config_comm)
 
+# TODO: Add options for operator types that are passed into `load_operators` and
+# `convert_operator`, this would be important if a particular conversion method needs
+# to be selectedm, e.g. the conversion between Operator and KeyedOperator might not be
+# implemented
+
 for idir in my_idirs
     input_dir = input_dirs[idir]
 
@@ -65,6 +70,8 @@ for idir in my_idirs
         kgrid = construct_kgrid(atoms, operatorkinds, params)
 
         @info "Splitting k-points across MPI tasks"
+        # TODO: Add an option to change the k-point split, e.g. would be required
+        # if ScaLAPACK was used
         nkpoints = Quoll.get_nkpoints(kgrid)
         my_ikpoints = Quoll.split_work(nkpoints, config_comm, Quoll.FHIaimsLAPACKSplit())
     end
