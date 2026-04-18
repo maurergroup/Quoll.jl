@@ -89,4 +89,8 @@ include("Postprocessing.jl")
 include("Parser.jl")
 using .Parser
 
+### APP ###
+include("../app/logger.jl")
+include("../app/quoll.jl")
+
 end
