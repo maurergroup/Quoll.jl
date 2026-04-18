@@ -40,6 +40,7 @@ jobs:
         run: |
           using Pkg
           Pkg.Apps.develop(PackageSpec(path=pwd()))
+      - run: echo "$HOME/.julia/bin" >> $GITHUB_PATH
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         with:

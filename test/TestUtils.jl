@@ -84,7 +84,7 @@ end
 # Precompile = true could alleviate race conditions during precompilation if there are any
 # (MPI.jl known issue, but if I understand correctly it might have been fixed
 # in Base Julia already).
-function mpiexec_quollapp(inputfile; np, app_env, precompile = false)
+function mpiexec_quollapp(inputfile; np, precompile = false, app_env = nothing)
     cmd_list = Cmd[]
     if precompile
         push!(cmd_list, `$(Base.julia_cmd()) --project=$app_env -e 'using Pkg; Pkg.precompile()'`)
