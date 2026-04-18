@@ -33,7 +33,9 @@ tarballs = [
 setupteardown_tmp(tarballs = tarballs) do
     inputfile_path = "inputfile.toml"
     write(inputfile_path, inputfile)
-    run.(mpiexec_quollapp(app, project, inputfile_path; np=np))
+
+    # run.(mpiexec_quollapp(app, project, inputfile_path; np=np))
+    run.(mpiexec_quollapp(inputfile_path; np=np))
 
     dir_ref = joinpath("siliconcarbide_deeph", "siliconcarbide_deeph")
     dir = "siliconcarbide_deeph_converted"

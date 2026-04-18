@@ -81,22 +81,15 @@ function populate_from_dict!(v::AbstractVector, d::AbstractDictionary)
     setindex!(v, collect(values(d)), collect(keys(d)))
 end
 
-# Precompile = true could alleviate race conditions during precompilation
-# if there are any (MPI.jl known issue, but if I understand correctly
-# it might have been fixed in Base Julia already)
-function mpiexec_quollapp(app, project, inputfile; np, nt = 1, precompile = false)
+# Precompile = true could alleviate race conditions during precompilation if there are any
+# (MPI.jl known issue, but if I understand correctly it might have been fixed
+# in Base Julia already).
+function mpiexec_quollapp(inputfile; np, app_env, precompile = false)
     cmd_list = Cmd[]
     if precompile
-        push!(cmd_list, `$(Base.julia_cmd()) --project=$project -e 'using Pkg; Pkg.instantiate()'`)
-        push!(cmd_list, `$(Base.julia_cmd()) --project=$project -e 'using Pkg; Pkg.precompile()'`)
+        push!(cmd_list, `$(Base.julia_cmd()) --project=$app_env -e 'using Pkg; Pkg.precompile()'`)
     end
-    cmd_mpiexec = `
-        $(mpiexec()) -n $np
-        $(Base.julia_cmd()) -t $nt
-        --startup-file=no
-        --project=$project
-        $app $inputfile
-    `
+    cmd_mpiexec = `$(mpiexec()) -n $np quoll $inputfile`
     push!(cmd_list, cmd_mpiexec)
     return cmd_list
 end

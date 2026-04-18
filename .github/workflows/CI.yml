@@ -35,12 +35,11 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v3
-      - name: Configure app environment
-        shell: julia --project=app --color=yes {0}
+      - name: Configure app
+        shell: julia --project=. --color=yes {0}
         run: |
           using Pkg
-          Pkg.develop(PackageSpec(path=pwd()))
-          Pkg.instantiate()
+          Pkg.Apps.develop(PackageSpec(path=pwd()))
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         with:
