@@ -3,9 +3,6 @@ uuid = "9d051eb3-b680-40d1-9fd2-1a9acedfca1f"
 version = "0.1.0"
 authors = ["Valdas Vitartas <valdas.vitartas@warwick.ac.uk> and contributors"]
 
-[apps]
-quoll = { julia_flags = ["--threads=1"] }
-
 [deps]
 ASEconvert = "3da9722f-58c2-4165-81be-b4d7253e8fd2"
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
@@ -24,6 +21,7 @@ MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
 MPIPreferences = "3da0fdf6-3ccc-4f1b-acd9-58baa6c99267"
 Memoize = "c03570c3-d221-55d1-a50c-7939bbd78826"
 NeighbourLists = "2fcf5ba9-9ed4-57cf-b73f-ff513e316b9c"
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Spglib = "f761d5c5-86db-4880-b97f-9680a7cccfb5"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
@@ -51,6 +49,7 @@ MPI = "0.20"
 MPIPreferences = "0.1.11"
 Memoize = "0.4.4"
 NeighbourLists = "0.5"
+PrecompileTools = "1"
 Reexport = "1.2"
 SafeTestsets = "0.1"
 Spglib = "1.0.1"
@@ -59,6 +58,9 @@ StructArrays = "0.7"
 Unitful = "1.25"
 UnitfulAtomic = "1"
 julia = "1.12"
+
+[apps.quoll]
+julia_flags = ["--threads=1"]
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"

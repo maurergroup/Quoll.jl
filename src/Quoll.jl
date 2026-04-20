@@ -93,4 +93,7 @@ using .Parser
 include("../app/logger.jl")
 include("../app/quoll.jl")
 
+### PRECOMPILE WORKLOADS ###
+include("precompile.jl")
+
 end
