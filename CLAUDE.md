@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-Quoll.jl is a Julia package for loading, converting, and post-processing tight-binding / DFT operators (Hamiltonians, overlaps) across multiple electronic-structure codes (FHI-aims, DeepH, and a canonical internal format). The package ships a library (`src/`) and a thin MPI-parallel CLI driver (`app/quoll.jl`) that runs a TOML-configured pipeline over directories of operator data.
+Quoll.jl is a Julia package for loading, converting, and post-processing tight-binding / DFT operators (Hamiltonians, overlaps) across multiple electronic-structure codes (FHI-aims, DeepH, and a canonical internal format). The package ships a library (`src/`) and a thin MPI-parallel CLI Julia app (`quoll`) that runs a TOML-configured pipeline over directories of operator data.
 
 Julia version: `1.12` (see [Project.toml](Project.toml) compat). The package targets MPI-parallel runs on HPC systems — MPI and HDF5 are typically linked against system libraries via a local `LocalPreferences.toml` (gitignored; must be set up per-machine with `MPIPreferences.use_system_binary` and HDF5 system paths).
 
@@ -28,13 +28,13 @@ Regression tests download a large test-data artifact (see [Artifacts.toml](Artif
 
 ### Running the CLI app
 
-The CLI uses its own environment at [app/](app/) (which `dev`s the parent package). Canonical invocation:
+This is done through apps which were introduced in Julia v1.12. For example
 
 ```bash
-mpiexec -n <np> julia -t 1 --project=app app/quoll.jl <input_file.toml>
+mpiexec -n <np> quoll <input_file.toml>
 ```
 
-TOML input format is driven by `QuollParams` in [src/Parser.jl](src/Parser.jl); the top-level sections are `[input]`, `[output]`, `[kpoint_grid]`, `[basis_projection]`, `[postprocessing]`, `[error_metrics]`, `[symmetry]`. Subparameter schemas live in [src/parser/](src/parser/). The `examples/` directory (gitignored) contains runnable configurations if present on a given machine.
+TOML input format is driven by `QuollParams` in [src/Parser.jl](src/Parser.jl); the top-level sections are `[input]`, `[output]`, `[kpoint_grid]`, `[basis_projection]`, `[postprocessing]`, `[error_metrics]`, `[symmetry]`. Subparameter schemas live in [src/parser/](src/parser/).
 
 ### Formatting
 
@@ -42,7 +42,7 @@ Blue style via [.JuliaFormatter.toml](.JuliaFormatter.toml). Notable non-default
 
 ## Architecture
 
-### Pipeline (driven by [app/quoll.jl](app/quoll.jl))
+### Pipeline (driven by quoll app)
 
 1. Parse TOML → `QuollParams` ([src/Parser.jl](src/Parser.jl)).
 2. `find_operatorkinds` + `load_operators` — discover and load operator files in a format-specific layout.
