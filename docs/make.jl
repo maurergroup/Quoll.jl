@@ -12,7 +12,25 @@ makedocs(;
         edit_link = "main",
         assets = String[],
     ),
-    pages = ["Home" => "index.md"],
+    pages = [
+        "Home" => "index.md",
+        "Getting started" => [
+            "Installation" => "getting_started/installation.md",
+            "What the package does" => "getting_started/what_it_does.md",
+            "A first example" => "getting_started/example.md",
+            "Defining new methods" => "getting_started/defining_new_methods.md",
+        ],
+        "Tutorials" => [
+            "MACE-H / DeepH-E3 training data" => "tutorials/mace_h_deeph_e3.md",
+        ],
+        "Input file" => "input_file.md",
+        "API" => [
+            "Public API" => "api/public.md",
+            "Operator interface" => "api/operator_interface.md",
+            "Internal reference" => "api/internal.md",
+        ],
+        "Developer docs" => "developer.md",
+    ],
 )
 
 if get(ENV, "CI", nothing) == "true"

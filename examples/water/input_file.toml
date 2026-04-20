@@ -1,0 +1,9 @@
+[input]
+format = "FHI-aims"
+directory = "water_fhi"
+operators = ["H", "S"]
+
+[output]
+format = "DeepH"
+directory = "water_deeph"
+hermitian = false
