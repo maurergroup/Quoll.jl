@@ -24,7 +24,7 @@ pkg> app add .
 development copy of the `quoll` executable; this is only needed if you plan to
 run the regression tests locally, since they shell out to `mpiexec quoll`.
 
-If you are on a machine with system MPI / HDF5, also create the
+If you are on a machine with system MPI / HDF5, you might also need to create the
 `LocalPreferences.toml` described in [Installation](getting_started/installation.md).
 
 ## Contributing
@@ -33,7 +33,7 @@ Contributions are made via pull requests against `main`. A typical PR:
 
 1. Adds or changes code under `src/`.
 2. Adds matching tests under `test/unit/` or `test/regression/`.
-3. Runs cleanly under the formatter (`.JuliaFormatter.toml`).
+3. Loosely follows the format (`.JuliaFormatter.toml`).
 
 Nothing here is rigidly enforced, but tests in particular are appreciated — any
 new dispatch method or conversion path is likely to need at least a unit test
@@ -89,7 +89,7 @@ included from `test/unit/unittests.jl`. To add coverage:
 
 Regression tests live under
 [`test/regression/`](https://github.com/maurergroup/Quoll.jl/tree/main/test/regression)
-and run the `quoll` CLI end-to-end via `mpiexec`. Each one:
+and run the `quoll` CLI end-to-end via `mpiexec`. Most of them:
 
 1. Writes out a TOML input file to a temporary directory.
 2. Extracts reference data from the `test_data` artifact (see
@@ -102,20 +102,3 @@ New regression tests follow the same pattern. Tooling for updating the
 `test_data` artifact (uploading a new tarball, refreshing its hash in
 `Artifacts.toml`) is not fully automated yet, so for now just flag in the PR
 that you have new reference data and the maintainers will help wire it in.
-
-## Formatting
-
-Quoll uses [JuliaFormatter](https://domluna.github.io/JuliaFormatter.jl/) with
-a Blue-style base and a few overrides in
-[`.JuliaFormatter.toml`](https://github.com/maurergroup/Quoll.jl/blob/main/.JuliaFormatter.toml)
-(notably `always_use_return`, `align_assignment`, `align_matrix`). You can run
-it locally with:
-
-```julia-repl
-pkg> activate --temp
-pkg> add JuliaFormatter
-julia> using JuliaFormatter; format(".")
-```
-
-Fine-grained formatting details aren't strictly enforced, but sticking to the
-configured defaults keeps diffs small.

@@ -1,13 +1,14 @@
 # Input file
 
+```@meta
+CurrentModule = Quoll
+```
+
 When Quoll is run as an app (`quoll <input_file.toml>`), its behaviour is driven
 entirely by a TOML input file. This page documents every section and key that
 is currently wired into the pipeline. An example covering the most common
 options is included in the repository at
 [`input_file.toml`](https://github.com/maurergroup/Quoll.jl/blob/main/input_file.toml).
-
-The parser assembles the file into a [`QuollParams`](@ref Quoll.Parser.QuollParams)
-object. Only `[input]` is mandatory; all other sections are optional.
 
 !!! note
     A handful of keys are accepted by the parser but are not yet consumed by the
@@ -19,7 +20,7 @@ object. Only `[input]` is mandatory; all other sections are optional.
 
 ```toml
 [input]              # required — what to read
-[output]             # optional — what to write
+[output]             # required — what to write
 [kpoint_grid]        # optional — k-point grid used by projection
 [basis_projection]   # optional — core-orbital projection
 [symmetry]           # optional — symmetry options passed to k-grid construction
@@ -79,9 +80,7 @@ taken directly from the input operator data.
 
 ## `[output]`
 
-Describes the data Quoll should write. Omit this section to skip the write step
-entirely (useful for read-only analyses or when the pipeline is driven from the
-library).
+Describes the data Quoll should write.
 
 | Key          | Type     | Default   | Description                                                                  |
 | ------------ | -------- | --------- | ---------------------------------------------------------------------------- |
@@ -139,8 +138,7 @@ Each string has the shape:
   most common — the available types are those that appear in
   `basis-indices.out` (e.g. `atomic`, `hydro`, `ionic`).
 
-Example (gold; all core + semicore orbitals, from the repository's own
-[`input_file.toml`](https://github.com/maurergroup/Quoll.jl/blob/main/input_file.toml)):
+Example (gold; all core + semicore orbitals):
 
 ```toml
 projected_basis = [
@@ -162,8 +160,6 @@ projected_basis = [
 ### Requirements
 
 Core projection requires an `Overlap(source=:ref)` among the input operators.
-If the `hermitian` output flag is set, the input operators must be hermitian
-(they are by default for reference FHI-aims data).
 
 ## `[symmetry]`
 
@@ -173,12 +169,12 @@ Tweaks the symmetry reduction used when building the k-point grid.
 | ------------------ | ---------- | ----------- | --------------------------------------------------------------------------- |
 | `time_reversal`    | bool       | auto        | Use time-reversal (`k ↔ −k`) to reduce the grid. Auto: on when allowed by the requested operators. |
 | `crystal_symmetry` | bool       | auto        | Use crystal point-group symmetry to reduce the grid. Auto: on when there is no projection and the operators allow it. |
-| `space_group`      | int        | `nothing`   | Override the detected space group (1–230). Rarely needed.                   |
+| `space_group`      | int        | `nothing`   | Override the detected space group (1–230). Might be used for 2D band structures in the future. |
 | `symprec`          | float      | `1e-5`      | Symmetry-detection tolerance in Å passed to Spglib.                         |
 
 Quoll makes conservative automatic choices: spin-polarised operators turn off
-the symmetries that would mix spin channels, and basis-projection turns off
-crystal symmetry (which the projection code does not currently handle). You can
+the symmetries, and basis-projection turns off crystal symmetry (which the
+projection code does not currently handle). You can
 force either on by setting the corresponding key explicitly — but see
 [`src/parser/methods.jl`](https://github.com/maurergroup/Quoll.jl/blob/main/src/parser/methods.jl)
 for the cases where the parser will refuse.

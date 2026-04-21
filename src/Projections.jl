@@ -39,17 +39,13 @@ using ..Quoll:
 
 abstract type AbstractBasisProjection end
 
-function get_basis_projection end
-
-function perform_core_projection end
-
-export perform_core_projection
 include("projections/common.jl")
+export perform_core_projection
 
-export FC99V
 include("projections/fc99v.jl")
+export FC99V
 
-export LaikovCore
 include("projections/laikov.jl")
+export LaikovCore
 
 end

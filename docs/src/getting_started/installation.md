@@ -32,22 +32,16 @@ quoll input_file.toml
 
 See the [input file documentation](../input_file.md) for the TOML format.
 
-## MPI and HDF5
+## Message Passing Interface (MPI)
 
-Quoll is designed to run MPI-parallel pipelines against system MPI and HDF5
-libraries — this is almost always what you want on an HPC system. MPI and HDF5
-are selected via a `LocalPreferences.toml` file.
+Quoll.jl can make use of MPI, specifically by distributing different atomic configurations
+and k-points across MPI tasks. For example, converting the format for a single configuration
+would not benefit from MPI parallelisation, in the case when no operations are performed
+on multiple k-points.
 
-When Quoll is installed as an app, the app gets its own environment, typically at:
-
-```
-$JULIA_DEPOT_PATH/environments/apps/Quoll/
-```
-
-Place a `LocalPreferences.toml` alongside that environment's `Project.toml`.
-The repository includes an example
-[`LocalPreferences.toml`](https://github.com/maurergroup/Quoll.jl/blob/main/LocalPreferences.toml)
-that targets a specific HPC installation of OpenMPI and HDF5:
+Making MPI to work with the Quoll app might require additional setup steps. On HPC
+systems it could be beneficial to [set up MPI](https://juliaparallel.org/MPI.jl/stable/configuration/)
+with `LocalPreferences.toml`, for example:
 
 ```toml
 [MPIPreferences]
@@ -75,13 +69,13 @@ The two sections are independent:
   libraries to use instead of the bundled `HDF5_jll`. The libraries must be ABI
   compatible with the MPI implementation selected above.
 
-!!! note
-    After adding `[HDF5]`, `HDF5_jll` may fail to precompile because the prebuilt
-    JLL binary no longer matches the libraries you've pointed it at. This is
-    expected and harmless — the MPI-linked HDF5 library is still loaded at
-    runtime. Precompilation for `Quoll` and `HDF5.jl` themselves should still
-    succeed.
+When Quoll is installed as an app, the app gets its own environment, typically at:
 
+```
+$JULIA_DEPOT_PATH/environments/apps/Quoll/
+```
+
+To set up MPI with Quoll, place a `LocalPreferences.toml` alongside that environment's `Project.toml`.
 Once the preferences are in place, an MPI run looks like:
 
 ```bash
@@ -91,3 +85,10 @@ mpiexec -n <np> quoll input_file.toml
 where `<np>` is the number of MPI ranks. Quoll splits work first across input
 directories and then across k-points within each directory; see
 [What the package does](what_it_does.md) for more detail.
+
+!!! note
+    After adding `[HDF5]`, `HDF5_jll` may fail to precompile because the prebuilt
+    JLL binary no longer matches the libraries you've pointed it at. This is
+    expected and harmless — the MPI-linked HDF5 library is still loaded at
+    runtime. Precompilation for `Quoll` and `HDF5.jl` themselves should still
+    succeed.

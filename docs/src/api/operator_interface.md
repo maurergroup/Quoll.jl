@@ -44,7 +44,7 @@ To load operators from disk in your format, implement:
 `load_operator` (the entry point used by the pipeline) is already implemented
 generically — it composes the methods above.
 
-```@docs
+```@docs; canonical=false
 load_operator
 load_operators
 find_operatorkinds
@@ -58,15 +58,15 @@ into metadata-writing and data-writing helpers — see
 [`src/operators/deeph.jl`](https://github.com/maurergroup/Quoll.jl/blob/main/src/operators/deeph.jl)
 for the shape.
 
-```@docs
+```@docs; canonical=false
 write_operators
 ```
 
-## Allocating
+## Building
 
 For [`build_operator`](@ref) to produce zero-initialised operators in your format:
 
-```@docs
+```@docs; canonical=false
 build_data
 ```
 
@@ -78,7 +78,7 @@ format should work with `KeyedOperator`.
 To support conversion between your format and another, dispatch on the pair of
 metadata types (input and output):
 
-```@docs
+```@docs; canonical=false
 convert_metadata
 convert_metadata_basic
 convert_data!
@@ -90,14 +90,14 @@ go through `CanonicalBlockRealMetadata`, so the pair to implement is usually
 `(YourMetadata, CanonicalBlockRealMetadata)` and vice versa. Direct conversions
 to any other format are also supported — just add the method for that pair.
 
-## TOML parsing (optional)
+## TOML parsing
 
 If you want your format to be selectable from `input_file.toml`, register it
 with the parser's format lookup table:
 
 ```julia
 Quoll.get_readformat(::Val{:myformat}) = MyFormatMetadata
-Quoll.get_writeformat(::Val{:myformat}) = MyFormatMetadata  # if writable
+Quoll.get_writeformat(::Val{:myformat}) = MyFormatMetadata
 ```
 
 The string after `Val(` is matched against the `format` field after
@@ -114,9 +114,9 @@ Quoll.Projections.get_basis_projection(::Val{:myscheme}) = MyScheme
 
 Dispatch on behavioural traits rather than concrete types is used in a handful
 of places (real vs. reciprocal space, spin vs. no-spin, keyed vs. unkeyed
-operator). These are the traits you are most likely to need:
+operator).
 
-```@docs
+```@docs; canonical=false
 SpaceTrait
 SpinTrait
 KeyedTrait

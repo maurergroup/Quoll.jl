@@ -17,7 +17,7 @@ makedocs(;
         "Getting started" => [
             "Installation" => "getting_started/installation.md",
             "What the package does" => "getting_started/what_it_does.md",
-            "A first example" => "getting_started/example.md",
+            "First example" => "getting_started/example.md",
             "Defining new methods" => "getting_started/defining_new_methods.md",
         ],
         "Tutorials" => [
@@ -25,9 +25,15 @@ makedocs(;
         ],
         "Input file" => "input_file.md",
         "API" => [
-            "Public API" => "api/public.md",
+            "Quoll" => [
+                "Core" => "api/core.md",
+                "Components" => "api/components.md",
+                "Operators" => "api/operators.md",
+                "Tools" => "api/tools.md",
+            ],
+            "Quoll.Projections" => "api/projections.md",
+            "Quoll.Parser" => "api/parser.md",
             "Operator interface" => "api/operator_interface.md",
-            "Internal reference" => "api/internal.md",
         ],
         "Developer docs" => "developer.md",
     ],

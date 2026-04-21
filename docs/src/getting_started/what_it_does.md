@@ -1,5 +1,9 @@
 # What the package does
 
+```@meta
+CurrentModule = Quoll
+```
+
 Quoll loads, converts and writes **operators** expressed in an atomic-orbital
 basis. By *operator* we mean a matrix such as the Hamiltonian or overlap produced
 by an electronic-structure code — annotated with the metadata needed to interpret
@@ -12,9 +16,9 @@ Quoll currently ships with three built-in formats:
 
 | Source         | Typical use                              | Sparsity                          |
 | -------------- | ---------------------------------------- | --------------------------------- |
-| **FHI-aims**   | Reference electronic-structure output    | Compressed-sparse-column (real)   |
-| **DeepH**      | Machine-learning Hamiltonian format      | Atom-pair block (real)            |
-| **Canonical** | Quoll's internal pivot format             | Atom-pair block (real) or dense (recip) |
+| **FHI-aims**   | Reference electronic-structure output    | Compressed-sparse-column          |
+| **DeepH**      | Machine-learning Hamiltonian format      | Atom-pair block                   |
+| **Canonical**  | Quoll's internal pivot format            | Atom-pair block or dense          |
 
 Every format is represented by its own *metadata type* (`FHIaimsCSCRealMetadata`,
 `DeepHBlockRealMetadata`, `CanonicalBlockRealMetadata`, …). All metadata types
@@ -25,19 +29,9 @@ across formats.
 
 ## The canonical pivot
 
-Most conversions inside a Quoll pipeline go *through* the canonical format:
+Most conversions inside a Quoll pipeline go *through* the canonical format.
 
-```
-FHI-aims  ─┐                             ┌─ DeepH
-           ├─▶  Canonical  ─ (projection, ─┤
-Canonical ─┤     Fourier,     basis work) └─ Canonical (recip)
-           └─    ...)
-```
-
-This is the typical shape of a workflow that prepares DFT output for a
-machine-learning training pipeline: load from FHI-aims, convert to the canonical
-format, do the processing (core-basis projection, Fourier transforms, subblock
-reductions, …), then convert to DeepH and write to disk.
+![Format web](../assets/format_web.svg)
 
 Going via the canonical format is *not* required, however. `convert_operator`
 dispatches on the pair `(target metadata type, input operator)`, so any direct
@@ -52,9 +46,9 @@ stop.
 Thanks to Julia's multiple dispatch, **you do not need to edit Quoll.jl itself to
 add a new format, sparsity pattern, or operator flavour.** All of the operator
 machinery — `load_operator`, `build_operator`, `convert_operator`, `write_operators`,
-`perform_core_projection` — dispatches on your types. As long as you define the
-methods they expect for your new metadata type, the rest of the pipeline works
-unchanged.
+`perform_core_projection` — dispatches on your types. As long as you define
+the methods they expect for your new metadata type, the rest of the pipeline
+works unchanged.
 
 Which methods you actually need depends on what you want to do. Parsing methods
 are only required if you plan to use the app with a TOML input file;
@@ -74,12 +68,12 @@ others, consider contributing it back to Quoll.jl — see the
 When run as an app with `mpiexec -n <np> quoll input_file.toml`, Quoll executes
 roughly the following pipeline per input directory:
 
-1. **Parse** the TOML input into a [`QuollParams`](@ref Quoll.Parser.QuollParams) object.
+1. **Parse** the TOML input into a `QuollParams` object.
 2. **Find** operator files on disk with [`find_operatorkinds`](@ref).
 3. **Load** them into memory with [`load_operators`](@ref).
 4. **Convert** to the canonical block-real format.
-5. If required, construct a [k-point grid](@ref Quoll.construct_kgrid) and project
-   out core basis functions with [`perform_core_projection`](@ref).
+5. If required, construct a k-point grid with [`construct_kgrid`](@ref) and project
+   out core basis functions with [`perform_core_projection`](@ref Quoll.Projections.perform_core_projection).
 6. If an output format is requested, convert to it and
    [`write_operators`](@ref) to disk.
 

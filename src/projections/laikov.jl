@@ -13,6 +13,7 @@ Requires exactly one `Overlap` operator among the input operators.
 
 # References
 [1] doi.org/10.1002/qua.22767
+
 [2] doi.org/10.1038/s41524-026-02020-1
 """
 struct LaikovCore <: AbstractBasisProjection end

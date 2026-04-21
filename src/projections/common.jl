@@ -24,7 +24,6 @@ without MPI by suppling all the k-points.
 - `recip_format=CanonicalDenseNoSpinRecipMetadata` — metadata type for reciprocal-space
   intermediates.
 """
-# TODO: Would be quite different for a non-periodic system (no need for a k-point grid)
 function perform_core_projection(
     operators, projected_basis, kgrid::KGrid, my_ikpoints, comm::MPI.Comm;
     method::AbstractBasisProjection=LaikovCore(),
