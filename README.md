@@ -105,7 +105,7 @@ quoll input_file.toml
 mpiexec -n <np> quoll input_file.toml
 ```
 
-Ready-to-run examples live under [examples/](examples/).
+Ready-to-run examples live under [examples/](examples/). For more complicated cases, take a look at the regression tests.
 
 ## Documentation
 
