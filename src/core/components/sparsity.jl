@@ -114,7 +114,25 @@ function build_sparsity(
     # need to be filtered out
     filter!(images_ij -> length(images_ij) > 0, ij2images)
 
-    return BlockRealSparsity(ij2images, unique(nlist.S), hermitian)
+    # Finally, remap images such that each atom is assumed to be in the central unit cell
+    # (NeighbourLists.jl yields images where the images of original atoms is taken into
+    # account, whereas here we assume that each atom is in the central unit cell; this is 
+    # consistent with most machine learning methods and electronic structure packages)
+    Rs_original = get_images(atoms)
+    ij2images = map(keys(ij2images)) do ij
+        i, j = ij
+        ΔRji = Rs_original[j] - Rs_original[i]
+        map(ij2images[ij]) do img
+            img - ΔRji
+        end
+    end
+
+    images = unique(vcat(values(ij2images)...))
+    if hermitian
+        images = union(images, -images)
+    end
+
+    return BlockRealSparsity(ij2images, images, hermitian)
 end
 
 function get_maxedges(radii::SpeciesAnyDict{T}) where {T<:Number}

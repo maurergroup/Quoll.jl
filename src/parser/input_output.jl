@@ -73,7 +73,6 @@ function Configurations.from_dict(
     dirs,
 )
     # Ensure `dirs` is of type Vector{String}
-    # TODO: Change using traits
     @argcheck isa(dirs, String) || isa(dirs, Vector{String})
     return isa(dirs, String) ? [dirs] : dirs
 end

@@ -16,7 +16,7 @@ tarballs = [
 setupteardown_tmp(tarballs = tarballs) do
     dir = joinpath("bismuthtelluride_deeph", "bismuthtelluride_deeph")
     operatorkind = Quoll.Hamiltonian(source=:ref, spin=:soc)
-    kpoint = SVector{3}([0, 0.5, 0.5])
+    kpoint = SA[0, 0.5, 0.5]
 
     @info "Loading DeepH Operator"
     H_deeph = load_operator(

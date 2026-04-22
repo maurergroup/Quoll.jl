@@ -97,3 +97,21 @@ end
 
     @test sort(Quoll.get_species2atom(atoms)) == sort(species2atom_ref)
 end
+
+@testset "get_images" begin
+    cellvecs = SA[
+        SA[1.0, 0.0,   0.0],
+        SA[0.0, 1.0,   0.0],
+        SA[0.0, 0.0, 100.0],
+    ]u"Å"
+    atoms = periodic_system(
+        [
+            ChemicalSpecies(:H) => SA[1.05, 0.50, 1.00]u"Å",
+            ChemicalSpecies(:H) => SA[1.50, 1.05, 1.00]u"Å",
+        ],
+        cellvecs,
+    )
+
+    images_ref = [SA[1, 0, 0], SA[1, 1, 0]]
+    @test Quoll.get_images(atoms) == images_ref
+end

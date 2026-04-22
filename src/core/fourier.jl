@@ -42,8 +42,11 @@ function fourier_transform(
 ) where {OPₒᵤₜ<:AbstractOperator,Mₒᵤₜ<:AbstractMetadata}
     hermitian = op_hermicity(in_operator)
 
-    # Add the k-point to the extra metadata keyword arguments
-    ext_metadata_extra_kwargs = merge((; kpoint=kpoint), metadata_extra_kwargs)
+    # Add the k-point to the extra metadata keyword arguments. The k-point is also
+    # converted to a static array (this is what `convert_metadata_final()` expects;
+    # if `kpoint` is already static, this doesn't have an effect)
+    kpoint_static = SVector{3}(kpoint)
+    ext_metadata_extra_kwargs = merge((; kpoint=kpoint_static), metadata_extra_kwargs)
 
     # Convert metadata
     in_metadata = op_metadata(in_operator)

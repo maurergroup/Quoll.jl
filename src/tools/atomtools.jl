@@ -80,3 +80,14 @@ function get_species2atom(atoms::AbstractSystem)
         findall(isequal(z), all_species)
     end
 end
+
+"""
+    get_images(atoms) -> Matrix
+
+Return periodic images to which each atom belongs. Each column is one atom.
+"""
+function get_images(atoms)
+    frac_positions = Quoll.get_frac_positions(atoms)
+    images = floor.(Int, frac_positions)
+    return [SVector{3}(img) for img in eachcol(images)]
+end
