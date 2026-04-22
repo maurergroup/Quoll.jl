@@ -2,7 +2,6 @@ using Quoll
 using Test
 using Aqua
 
-# TODO: uncomment after the package is more stable
 @testset "Code quality (Aqua.jl)" begin
     Aqua.test_ambiguities(Quoll)
     Aqua.test_unbound_args(Quoll)
@@ -10,5 +9,4 @@ using Aqua
     Aqua.test_stale_deps(Quoll)
     Aqua.test_deps_compat(Quoll; ignore = [:Logging, :LinearAlgebra], check_extras = (; ignore = [:Test, :Tar]))
     Aqua.test_piracies(Quoll)
-    # Aqua.test_undocumented_names(Quoll)
 end
