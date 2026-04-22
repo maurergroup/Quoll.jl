@@ -14,8 +14,8 @@ that acts as a pivot between code-specific formats such as
 and it handles the bookkeeping around such operators — sparsity patterns, basis
 sets, spherical-harmonics conventions, k-point grids, and spin channels.
 
-A typical use case is producing training data for machine-learning electronic-
-structure models: for example, taking real-space Hamiltonians and overlaps from
+A typical use case is producing training data for machine-learning electronic-structure models:
+for example, taking real-space Hamiltonians and overlaps from
 an FHI-aims calculation, projecting out the core basis functions, and writing
 the result in the DeepH layout expected by
 [DeepH-E3](https://github.com/Xiaoxun-Gong/DeepH-E3) or
@@ -29,7 +29,7 @@ training pipelines.
   call.
 - **Extensible via dispatch.** Adding a new format, sparsity pattern, or
   operator flavour does not require forking Quoll — define the relevant methods
-  on your own metadata type and the rest of the pipeline works unchanged.
+  on your own metadata type, and the rest of the pipeline works unchanged.
 - **Core-basis projection** onto minimal core bases (`FC99V`, `LaikovCore`).
 - **Fourier transforms** between real- and reciprocal-space representations on
   user-specified k-point grids.
@@ -56,7 +56,7 @@ pkg> app add https://github.com/maurergroup/Quoll.jl.git
 This installs a `quoll` executable under `$JULIA_DEPOT_PATH/bin` (usually
 `~/.julia/bin`).
 
-On HPC systems you will typically want to bind MPI.jl and HDF5.jl to the
+On HPC systems, you will typically want to bind MPI.jl and HDF5.jl to the
 system libraries via a `LocalPreferences.toml`; see the
 [installation docs](https://maurergroup.github.io/Quoll.jl/dev/getting_started/installation/)
 for details.
