@@ -1,5 +1,6 @@
 module Quoll
 
+using MPI
 using Base
 using Reexport
 using ArgCheck
@@ -17,7 +18,6 @@ using AtomsBase
 using ASEconvert
 using NeighbourLists
 using Spglib
-using MPI
 
 ### CONSTANTS ###
 
