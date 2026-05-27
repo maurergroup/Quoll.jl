@@ -1,9 +1,8 @@
 """
     recentre(atoms) -> AbstractSystem
 
-Wrap atom positions into the unit cell centred at [0.5, 0.5, 0.5] in fractional
-coordinates. Only supports fully periodic systems. Returns a new system with recentred
-positions.
+Wrap atom positions to the [-0.5, 0.5) fractional coordinate range. Only supports fully
+periodic systems. Returns a new system with recentred positions.
 """
 function recentre(atoms::AbstractSystem)
     # Currently the following function does not support recentering
@@ -14,11 +13,12 @@ function recentre(atoms::AbstractSystem)
     atom_frac_pos = get_frac_positions(atoms)
 
     # Wrap fractional coordinates to [-0.5, 0.5) unit cell
-    # and shift back to [0.0, 1.0)
     wrapped_atom_frac_pos = atom_frac_pos .- 1e-8
     wrapped_atom_frac_pos = wrapped_atom_frac_pos .- round.(wrapped_atom_frac_pos) .+ 1e-8
-    center = SA[0.5, 0.5, 0.5]
-    wrapped_atom_frac_pos .+= center
+
+    # and shift back to [0.0, 1.0)
+    # center = SA[0.5, 0.5, 0.5]
+    # wrapped_atom_frac_pos .+= center
 
     # Remap fractional coordinates to atom positions
     wrapped_atom_pos = get_real_lattice(atoms) * wrapped_atom_frac_pos

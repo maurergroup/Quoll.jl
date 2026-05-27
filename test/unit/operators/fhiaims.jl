@@ -15,8 +15,7 @@ using Main.TestUtils
     # ||: [ 0.0, 1.0)
     #  |: [-0.5, 0.5)
     # |-----||--x₁-|x₂---|| →
-    # |x₂---||--x₁-|-----|| →
-    # |-----||x₂---|--x₁-||
+    # |x₂---||--x₁-|-----||
 
     geometry = """
     lattice_vector 1.0   0.0   0.0
@@ -32,8 +31,8 @@ using Main.TestUtils
     ]u"Å"
     recentered_atoms = periodic_system(
         [
-            Atom(:H, SA[0.40 + 0.50, 50.0, 50.0]u"Å"; charge=0u"e_au", magnetic_moment=0),
-            Atom(:H, SA[0.55 - 0.50, 50.0, 50.0]u"Å"; charge=0u"e_au", magnetic_moment=0),
+            Atom(:H, SA[0.40 + 0.00, 0.0, 0.0]u"Å"; charge=0u"e_au", magnetic_moment=0),
+            Atom(:H, SA[0.55 - 1.00, 0.0, 0.0]u"Å"; charge=0u"e_au", magnetic_moment=0),
         ],
         cell_vectors,
     )
