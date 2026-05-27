@@ -336,11 +336,13 @@ function convert_data!(
     if !isidentity # type2
         orders = precompute_orders(out_basisset, inv(Δshconv))
         shphases = precompute_shphases(out_basisset, inv(Δshconv), Val(2))
+
+        # Convert from dictionaries to arrays for faster access
+        orders_atomarray = convert_to_atomarray(orders, atom2species)
+        shphases_atomarray = convert_to_atomarray(shphases, atom2species)
     end
 
     # Convert from dictionaries to arrays for faster access
-    orders_atomarray = convert_to_atomarray(orders, atom2species)
-    shphases_atomarray = convert_to_atomarray(shphases, atom2species)
     out_keydata_atomarray = convert_to_atomarray(out_keydata_body, natoms)
     iexternal2ilocal_atomarray = convert_to_atomarray(iexternal2ilocal, natoms)
 
