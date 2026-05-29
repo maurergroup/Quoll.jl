@@ -43,9 +43,16 @@ function (@main)(ARGS)
         input_dir = input_dirs[idir]
 
         @info "Starting configuration $(basename(input_dir))"
-        @info "Loading operators"
 
+        @info "Looking for operators"
         operatorkinds = find_operatorkinds(input_dir, params)
+
+        if length(operatorkinds) == 0
+            @info "No operators found for the given configuration"
+            continue
+        end
+
+        @info "Loading operators"
         operators = load_operators(
             Quoll.Operator, params.input.format, input_dir, operatorkinds
         )
