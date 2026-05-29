@@ -366,11 +366,13 @@ function convert_data!(
                 ib_block = ib - atom2offset[iat]
                 ib_block2 = isidentity ? ib_block : orders_atomarray[iat][ib_block]
 
-                # We had checked whether R is in out_images, whereas here
-                # we check whether R is in out_images_ij.
+                # We had checked whether R is in out_images, whereas here we check whether
+                # R is in out_images_ij (and first whether ij is part of sparsity at all).
                 # This check alone here would be enough, but we can possibly
                 # save some additional time if we do the check outside the loop as well
-                iR_local = iexternal2ilocal_atomarray[iat, jat][iR]
+                iR_external_iR_local_ij = iexternal2ilocal_atomarray[iat, jat]
+                !(length(iR_external_iR_local_ij) == 0) || continue
+                iR_local = iR_external_iR_local_ij[iR]
                 !isnothing(iR_local) || continue
 
                 out_keydata_atomarray[iat, jat][ib_block2, jb_block2, iR_local] =
