@@ -1,7 +1,7 @@
 """
     recentre(atoms) -> AbstractSystem
 
-Wrap atom positions to the [-0.5, 0.5) fractional coordinate range. Only supports fully
+Wrap atom positions to the (-0.5, 0.5] fractional coordinate range. Only supports fully
 periodic systems. Returns a new system with recentred positions.
 """
 function recentre(atoms::AbstractSystem)
