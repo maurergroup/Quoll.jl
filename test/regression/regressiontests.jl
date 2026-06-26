@@ -12,6 +12,6 @@ end
     include("fhi_canon_laikov_deeph_water.jl")
 end
 
-@safetestset "Bismuth telluride DeepHBlockSpin -> CanonicalBlockSpin -> CanonicalDenseRecipSpin" begin
+@safetestset "Bismuth telluride DeepHBlockSpin -> CanonicalBlockSpin -fourier,inv_fourier-> CanonicalBlockSpin -> DeepHBlockSpin" begin
     include("deeph_canon_recip_bismuthtelluride.jl")
 end

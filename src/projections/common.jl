@@ -31,6 +31,7 @@ function perform_core_projection(
     recip_format::Type{Mₖ}=CanonicalDenseNoSpinRecipMetadata,
 ) where {OPₖ<:AbstractOperator,Mₖ<:AbstractMetadata}
     @argcheck !(kgrid.crystal_symmetry)
+    symmetry = grid_symmetry(kgrid)
 
     my_kpoints = view(kgrid.kpoints, my_ikpoints)
     my_weights = view(kgrid.weights, my_ikpoints)
@@ -108,7 +109,9 @@ function perform_core_projection(
         # Back-transform the reciprocal valence-only operators to real space
         for (v_operator, recip_v_operator, phases) in
             zip(v_operators, recip_v_operators, phases_list)
-            inv_fourier_transform_data!(v_operator, recip_v_operator, phases[ik], weight)
+            inv_fourier_transform_data!(
+                v_operator, recip_v_operator, phases[ik], weight, symmetry
+            )
         end
     end
 

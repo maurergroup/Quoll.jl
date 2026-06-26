@@ -304,7 +304,7 @@ using Dictionaries
             Operator, _pc_recip_v_meta; value=zero(ComplexF64),
         )
         inv_fourier_transform_data!(
-            _pc_v_h_real, _pc_recip_v, _pc_phases[:, 1], 1.0,
+            _pc_v_h_real, _pc_recip_v, _pc_phases[:, 1], 1.0, KGridSymmetry{true,false}(),
         )
 
         ### ---------- TOML PARSING ---------- ###

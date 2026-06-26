@@ -21,6 +21,32 @@ get_kpoints(kgrid::KGrid, ik) = kgrid.kpoints[ik]
 get_weights(kgrid::KGrid, ik) = kgrid.weights[ik]
 
 """
+    KGridSymmetry{TimeReversal,Crystal}
+
+Holy-trait singleton encoding which symmetries were used to reduce a k-point grid. The two
+`Bool` type parameters (time-reversal and crystal point-group symmetry) are independent and
+can both be active. It is used to select the correct contraction in the inverse Fourier
+transform, where the way the full real-space matrix is reconstructed from irreducible k-points
+depends on the reduction symmetry. See [`grid_symmetry`](@ref).
+"""
+struct KGridSymmetry{TimeReversal,Crystal} end
+
+has_time_reversal(::KGridSymmetry{TimeReversal,Crystal}) where {TimeReversal,Crystal} =
+    TimeReversal
+has_crystal_symmetry(::KGridSymmetry{TimeReversal,Crystal}) where {TimeReversal,Crystal} =
+    Crystal
+
+"""
+    grid_symmetry(kgrid::KGrid) -> KGridSymmetry
+
+Map a [`KGrid`](@ref)'s reduction flags to the corresponding [`KGridSymmetry`](@ref) trait
+singleton.
+"""
+function grid_symmetry(kgrid::KGrid)
+    return KGridSymmetry{kgrid.time_reversal,kgrid.crystal_symmetry}()
+end
+
+"""
     construct_kgrid(atoms; density, mesh, shift, time_reversal, crystal_symmetry, symprec)
 
 Build an irreducible k-point grid for the given atomic system using Spglib.

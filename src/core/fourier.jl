@@ -185,11 +185,15 @@ end
 ### INVERSE FOURIER TRANSFORM ###
 
 """
-    inv_fourier_transform_data!(out_operator, in_operator, phases_k, weight)
+    inv_fourier_transform_data!(out_operator, in_operator, phases_k, weight, symmetry)
 
 Perform the inverse Fourier transform, accumulating the contribution of `in_operator`
 (at a single k-point) into the real-space `out_operator`, weighted by `weight`.
 Designed to be called in a loop over k-points, summing weighted contributions.
+
+`symmetry::KGridSymmetry` encodes which symmetries were used to reduce the k-point grid and
+selects how the real-space matrix is reconstructed (e.g. a time-reversal-folded grid
+reconstructs the `−k` partner via `real`, whereas a full grid keeps the complex contribution).
 
 Dispatches on `KeyedTrait` of both operators, same pattern as `fourier_transform_data!`.
 """
@@ -198,6 +202,7 @@ function inv_fourier_transform_data!(
     in_operator::OPᵢₙ,
     phases_k,
     weight,
+    symmetry::KGridSymmetry,
 ) where {
     OPₒᵤₜ<:AbstractOperator,
     OPᵢₙ<:AbstractOperator,
@@ -209,6 +214,7 @@ function inv_fourier_transform_data!(
         in_operator,
         phases_k,
         weight,
+        symmetry,
     )
 end
 
@@ -219,6 +225,7 @@ function inv_fourier_transform_data!(
     in_operator::OPᵢₙ,
     phases_k,
     weight,
+    symmetry::KGridSymmetry,
 ) where {
     OPₒᵤₜ<:AbstractOperator,
     OPᵢₙ<:AbstractOperator,
@@ -228,7 +235,7 @@ function inv_fourier_transform_data!(
     Dₒᵤₜ = op_data_type(Mₒᵤₜ)
     Dᵢₙ = op_data_type(Mᵢₙ)
     return inv_fourier_transform_data!(
-        Dₒᵤₜ, Dᵢₙ, out_operator, in_operator, phases_k, weight
+        Dₒᵤₜ, Dᵢₙ, out_operator, in_operator, phases_k, weight, symmetry
     )
 end
 
@@ -239,6 +246,7 @@ function inv_fourier_transform_data!(
     in_operator::OPᵢₙ,
     phases_k,
     weight,
+    symmetry::KGridSymmetry,
 ) where {
     OPₒᵤₜ<:AbstractOperator,
     OPᵢₙ<:AbstractOperator,
@@ -249,7 +257,7 @@ function inv_fourier_transform_data!(
     Dₒᵤₜ = op_data_type(Mₒᵤₜ)
     Dᵢₙ = op_data_type(Mᵢₙ)
     return inv_fourier_transform_data!(
-        KDₒᵤₜ, Dₒᵤₜ, Dᵢₙ, out_operator, in_operator, phases_k, weight
+        KDₒᵤₜ, Dₒᵤₜ, Dᵢₙ, out_operator, in_operator, phases_k, weight, symmetry
     )
 end
 
@@ -260,6 +268,7 @@ function inv_fourier_transform_data!(
     in_operator::OPᵢₙ,
     phases_k,
     weight,
+    symmetry::KGridSymmetry,
 ) where {
     OPₒᵤₜ<:AbstractOperator,
     OPᵢₙ<:AbstractOperator,
@@ -270,7 +279,7 @@ function inv_fourier_transform_data!(
     KDᵢₙ = op_keydata_type(Mᵢₙ)
     Dᵢₙ = op_data_type(Mᵢₙ)
     return inv_fourier_transform_data!(
-        Dₒᵤₜ, KDᵢₙ, Dᵢₙ, out_operator, in_operator, phases_k, weight
+        Dₒᵤₜ, KDᵢₙ, Dᵢₙ, out_operator, in_operator, phases_k, weight, symmetry
     )
 end
 
@@ -281,6 +290,7 @@ function inv_fourier_transform_data!(
     in_operator::OPᵢₙ,
     phases_k,
     weight,
+    symmetry::KGridSymmetry,
 ) where {
     OPₒᵤₜ<:AbstractOperator,
     OPᵢₙ<:AbstractOperator,
@@ -292,6 +302,6 @@ function inv_fourier_transform_data!(
     KDᵢₙ = op_keydata_type(Mᵢₙ)
     Dᵢₙ = op_data_type(Mᵢₙ)
     return inv_fourier_transform_data!(
-        KDₒᵤₜ, Dₒᵤₜ, KDᵢₙ, Dᵢₙ, out_operator, in_operator, phases_k, weight
+        KDₒᵤₜ, Dₒᵤₜ, KDᵢₙ, Dᵢₙ, out_operator, in_operator, phases_k, weight, symmetry
     )
 end

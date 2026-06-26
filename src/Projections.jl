@@ -14,6 +14,7 @@ using ..Quoll:
     KeyedTrait,
     SpinTrait,
     KGrid,
+    grid_symmetry,
     DenseRecipData,
     op_float_type,
     op_data_type,

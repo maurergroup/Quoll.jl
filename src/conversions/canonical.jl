@@ -131,6 +131,7 @@ function inv_fourier_transform_data!(
     out_operator::AbstractOperator, in_operator::AbstractOperator,
     phases_k,
     weight,
+    symmetry::KGridSymmetry,
 ) where {
     KDₒᵤₜ<:CanonicalBlockRealKeyData,
     Dₒᵤₜ<:CanonicalBlockRealData,
@@ -138,7 +139,7 @@ function inv_fourier_transform_data!(
     Dᵢₙ<:DenseRecipData,
 }
     return inv_fourier_transform_data!(
-        KDₒᵤₜ, Dₒᵤₜ, Dᵢₙ, out_operator, in_operator, phases_k, weight
+        KDₒᵤₜ, Dₒᵤₜ, Dᵢₙ, out_operator, in_operator, phases_k, weight, symmetry
     )
 end
 
@@ -147,6 +148,7 @@ function inv_fourier_transform_data!(
     out_operator::AbstractOperator, in_operator::AbstractOperator,
     phases_k,
     weight,
+    symmetry::KGridSymmetry,
 ) where {
     KDₒᵤₜ<:CanonicalBlockRealKeyData,
     Dₒᵤₜ<:CanonicalBlockRealData,
@@ -174,8 +176,27 @@ function inv_fourier_transform_data!(
         shconv_isidentity,
         phases_k,
         weight,
+        symmetry,
     )
 end
+
+# Select the per-k-point inverse-FT contribution based on the k-grid reduction symmetry and
+# the real-space output element type `Tₒᵤₜ`:
+# - Crystal symmetry would require Wigner-rotating orbital blocks to rebuild the star — not
+#   implemented.
+# - Time-reversal-folded grid: the −k partner is reconstructed via `real(...)`, which is only
+#   valid for a real real-space operator.
+# - Full (unreduced) grid: keep the complex value for a complex operator; `real(...)` is exact
+#   for a real one (the discarded imaginary part sums to zero over the explicit grid).
+inv_ft_value(::KGridSymmetry{TR,true}, ::Type, x) where {TR} = throw(
+    error("inverse Fourier transform with crystal symmetry is not implemented"),
+)
+inv_ft_value(::KGridSymmetry{true,false}, ::Type{<:Real}, x) = real(x)
+inv_ft_value(::KGridSymmetry{true,false}, ::Type{<:Complex}, x) = throw(
+    error("time-reversal symmetry reduction requires a real real-space operator"),
+)
+inv_ft_value(::KGridSymmetry{false,false}, ::Type{<:Complex}, x) = x
+inv_ft_value(::KGridSymmetry{false,false}, ::Type{<:Real}, x) = real(x)
 
 function inv_fourier_transform_data!(
     out_keydata::CanonicalBlockRealKeyData{Tₒᵤₜ},
@@ -187,6 +208,7 @@ function inv_fourier_transform_data!(
     shconv_isidentity::Val{isidentity},
     phases_k,
     weight,
+    symmetry::KGridSymmetry,
 ) where {Tₒᵤₜ,isidentity}
     out_keydata_body = unwrap_data(out_keydata)
     in_data_body = unwrap_data(in_data)
@@ -223,17 +245,8 @@ function inv_fourier_transform_data!(
                     ib_dense = ib + atom2offset_i
                     !isidentity && (ib_dense += shifts_zi[ib])
 
-                    if Tₒᵤₜ <: Complex
-                        contribution = (
-                            weight *
-                            real(in_data_body[ib_dense, jb_dense] * inv_phases_kij[iR])
-                        )
-                    elseif Tₒᵤₜ <: Real
-                        contribution = (
-                            weight *
-                            real(in_data_body[ib_dense, jb_dense] * inv_phases_kij[iR])
-                        )
-                    end
+                    raw = in_data_body[ib_dense, jb_dense] * inv_phases_kij[iR]
+                    contribution = weight * inv_ft_value(symmetry, Tₒᵤₜ, raw)
                     !isidentity && (contribution *= shphases_zizj[ib, jb])
 
                     out_block[ib, jb, iR] += contribution
