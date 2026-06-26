@@ -16,10 +16,6 @@ function recentre(atoms::AbstractSystem)
     wrapped_atom_frac_pos = atom_frac_pos .- 1e-8
     wrapped_atom_frac_pos = wrapped_atom_frac_pos .- round.(wrapped_atom_frac_pos) .+ 1e-8
 
-    # and shift back to [0.0, 1.0)
-    # center = SA[0.5, 0.5, 0.5]
-    # wrapped_atom_frac_pos .+= center
-
     # Remap fractional coordinates to atom positions
     wrapped_atom_pos = get_real_lattice(atoms) * wrapped_atom_frac_pos
 
