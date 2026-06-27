@@ -68,10 +68,11 @@ end
 
         images = Quoll.op_images(Quoll.op_sparsity(out_operator))
         phases_k = Quoll.precompute_phases([kpoint], images)[:, 1]
+        symmetry = Quoll.KGridSymmetry{true,false}()
         weight = 1.0
 
         # Dispatch: (HasKeydata, NoKeydata) → (KDₒᵤₜ, Dₒᵤₜ, Dᵢₙ)
-        Quoll.inv_fourier_transform_data!(out_operator, in_operator, phases_k, weight)
+        Quoll.inv_fourier_transform_data!(out_operator, in_operator, phases_k, weight, symmetry)
 
         @test Quoll.op_keydata(out_operator) isa Quoll.CanonicalBlockRealKeyData
 
@@ -188,9 +189,10 @@ end
 
         images = Quoll.op_images(Quoll.op_sparsity(out_operator))
         phases_k = Quoll.precompute_phases([kpoint], images)[:, 1]
+        symmetry = Quoll.KGridSymmetry{true,false}()
         weight = 1.0
 
-        Quoll.inv_fourier_transform_data!(out_operator, recip_op, phases_k, weight)
+        Quoll.inv_fourier_transform_data!(out_operator, recip_op, phases_k, weight, symmetry)
 
         # Structure should be preserved
         @test out_operator isa Quoll.KeyedOperator
