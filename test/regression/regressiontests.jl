@@ -15,3 +15,7 @@ end
 @safetestset "Bismuth telluride DeepHBlockSpin -> CanonicalBlockSpin -fourier,inv_fourier-> CanonicalBlockSpin -> DeepHBlockSpin" begin
     include("deeph_canon_recip_bismuthtelluride.jl")
 end
+
+@safetestset "Graphene DeepHBlock,FHIaimsCSC -> CanonicalBlock -zero_out-> CanonicalBlock" begin
+    include("deeph_canon_zeroout_graphene.jl")
+end
