@@ -278,10 +278,11 @@ function convert_data!(
     in_hermitian = op_hermicity(in_operator)
 
     herm_to_herm = in_hermitian && out_hermitian
-    # TODO: once we implement herm -> nonherm data conversion in DeepH->Canonical, modify this
-    # (although I'm not sure if the current implementation would work if in_hermitian = false.
-    # I think it would work because the loops would work in the same way, but I will not test it.
-    # Could give a warning instead. Also in that case need to do on-site stuff only when hermitian = true)
+    # TODO: Currently would not work if CSCRealSparsity is non-hermitian, e.g. current
+    # special on-site treatment would not be required down the line. As for out_hermitian,
+    # that could be implemented fairly easily by copying (i, j) data onto (j, i), but this
+    # is simply not implemented now. To fix this, one would pass hermiticity information
+    # into the next function and dispatch, with appropriate changes.
     if !herm_to_herm
         throw(
             error(
@@ -318,9 +319,6 @@ function convert_data!(
     )
 end
 
-# TODO:
-# - write outer function as for fourier_transform_data
-# - make sure this works for differing sparsities
 function convert_data!(
     out_keydata::CanonicalBlockRealKeyData,
     ::CanonicalBlockRealData,
@@ -381,8 +379,8 @@ function convert_data!(
 
                 # We had checked whether R is in out_images, whereas here we check whether
                 # R is in out_images_ij (and first whether ij is part of sparsity at all).
-                # This check alone here would be enough, but we can possibly
-                # save some additional time if we do the check outside the loop as well
+                # This check alone here would be enough, but we possibly save some
+                # additional time if we do the check outside the loop as well
                 iR_external_iR_local_ij = iexternal2ilocal_atomarray[iat, jat]
                 !(length(iR_external_iR_local_ij) == 0) || continue
                 iR_local = iR_external_iR_local_ij[iR]
@@ -402,12 +400,170 @@ function convert_data!(
     onsite_ilocal2imlocal = get_onsite_ilocal2imlocal(out_sparsity)
     species2nbasis = get_species2nbasis(in_basisset)
 
-    # Populating non-hermitian values of on-site blocks. This is because
-    # on-site BlockRealSparsity is always non-hermitian (even when hermitian = true).
-    # If this was not the case, we would still have to do this at least for
-    # R = (0, 0, 0) case, because CSCRealSparsity(hermitian = true) only stores
-    # the upper triangle of on-site R = (0, 0, 0) blocks
+    # Populating non-hermitian values of on-site blocks. This is because CSCRealSparsity,
+    # when in_hermitian = true, only stores the upper triangle elements for all on-site
+    # blocks for all Rs. 
+    for iat in 1:natoms
+        z = atom2species[iat]
+        nbasis = species2nbasis[z]
+        out_keydata_iat = out_keydata_atomarray[iat, iat]
 
+        for iR in axes(out_sparsity.ij2images[(iat, iat)], 1)
+            imR = onsite_ilocal2imlocal[iat][iR]
+
+            for jb in 1:nbasis
+                @inbounds for ib in 1:nbasis
+                    jb > ib || continue
+                    out_keydata_iat[jb, ib, imR] = conj(out_keydata_iat[ib, jb, iR])
+                end
+            end
+        end
+    end
+    # At this point, on-site blocks contain both R and -R, and if the output is Hermitian,
+    # one of them could technically be dropped. However, as per definition of hermiticity
+    # for BlockRealSparsity, we keep both R and -R for simplicity.
+end
+
+### ZEROING OUT ###
+
+function zero_out_data!(
+    ::Type{KDₒᵤₜ}, ::Type{Dₒᵤₜ}, ::Type{Sᵢₙ},
+    out_operator::AbstractOperator, in_metadata::AbstractMetadata,
+) where {
+    KDₒᵤₜ<:CanonicalBlockRealKeyData,
+    Dₒᵤₜ<:CanonicalBlockRealData,
+    Sᵢₙ<:CSCRealSparsity,
+}
+    out_hermitian = op_hermicity(out_operator)
+    in_hermitian = op_hermicity(in_metadata)
+
+    herm_to_herm = in_hermitian && out_hermitian
+    if !herm_to_herm
+        # Same comment as for `convert_data!` with analogous types.
+        throw(
+            error(
+                "only hermitian-to-hermitian zeroing out is implemented ",
+                "for this set of data types",
+            ),
+        )
+    end
+
+    out_keydata = op_keydata(out_operator)
+    out_data = op_data(out_operator)
+    out_sparsity = op_sparsity(out_operator)
+    out_basisset = op_basisset(out_operator)
+
+    in_sparsity = op_sparsity(in_metadata)
+    in_basisset = op_basisset(in_metadata)
+
+    out_shconv = op_shconv(out_operator)
+    in_shconv = op_shconv(in_metadata)
+    Δshconv = out_shconv ∘ inv(in_shconv)
+    shconv_isidentity = Val(isidentity(Δshconv))
+
+    return zero_out_data!(
+        out_keydata,
+        out_data,
+        out_sparsity,
+        out_basisset,
+        in_sparsity,
+        in_basisset,
+        Δshconv,
+        shconv_isidentity,
+    )
+end
+
+function zero_out_data!(
+    out_keydata::CanonicalBlockRealKeyData,
+    ::CanonicalBlockRealData{T},
+    out_sparsity::BlockRealSparsity,
+    out_basisset::BasisSetMetadata,
+    in_sparsity::CSCRealSparsity,
+    in_basisset::BasisSetMetadata,
+    Δshconv::SHConvention,
+    ::Val{isidentity},
+) where {T,isidentity}
+    out_keydata_body = unwrap_data(out_keydata)
+
+    rowval = in_sparsity.rowval
+    colcellptr = in_sparsity.colcellptr
+    in_images = in_sparsity.images
+    atom2species = in_basisset.atom2species
+    out_images = out_sparsity.images
+
+    atom2offset = get_atom2offset(in_basisset)
+    basis2atom = get_basis2atom(in_basisset)
+    iexternal2ilocal = get_iexternal2ilocal(in_images, out_sparsity)
+    natoms = length(atom2species)
+
+    if !isidentity # type2
+        orders = precompute_orders(out_basisset, inv(Δshconv))
+
+        # Convert from dictionaries to arrays for faster access
+        orders_atomarray = convert_to_atomarray(orders, atom2species)
+    end
+
+    # Convert from dictionaries to arrays for faster access
+    out_keydata_atomarray = convert_to_atomarray(out_keydata_body, natoms)
+    iexternal2ilocal_atomarray = convert_to_atomarray(iexternal2ilocal, natoms)
+
+    # Zero-out entire blocks if images are not present in the input sparsity (the case where
+    # the operator sparsity is denser than input sparsity; this is not covered by the loop
+    # over compressed sparsity). In this case, we could drop those images from
+    # BlockRealSparsity, but as per definition of the function, we only zero out values
+    # without changing metadata.
+    for ((iat, jat), out_images_ij) in pairs(out_sparsity.ij2images)
+        for (iR, R) in enumerate(out_images_ij)
+            if R ∉ in_images
+                out_keydata_atomarray[iat, jat][:, :, iR] .= zero(T)
+            end
+        end
+    end
+
+    for iR in axes(colcellptr, 2)
+        R = in_images[iR]
+
+        # out_sparsity could be sparser (e.g. generated with short radii).
+        R ∈ out_images || continue
+
+        for jb in axes(colcellptr, 3)
+            jat = basis2atom[jb]
+            jb_block = jb - atom2offset[jat]
+            jb_block2 = isidentity ? jb_block : orders_atomarray[jat][jb_block]
+
+            i_index_first = colcellptr[1, iR, jb]
+            i_index_last = colcellptr[2, iR, jb]
+
+            # Assuming 1-based indexing (no offsets)
+            rowval_nonzero = @view(rowval[i_index_first:i_index_last])
+            rowval_zero = setdiff(1:jb, rowval_nonzero)
+
+            @inbounds for ib in rowval_zero
+                iat = basis2atom[ib]
+                ib_block = ib - atom2offset[iat]
+                ib_block2 = isidentity ? ib_block : orders_atomarray[iat][ib_block]
+
+                # We had checked whether R is in out_images, whereas here we check whether
+                # R is in out_images_ij (and first whether ij is part of sparsity at all).
+                # This check alone here would be enough, but we possibly save some
+                # additional time if we do the check outside the loop as well
+                iR_external_iR_local_ij = iexternal2ilocal_atomarray[iat, jat]
+                !(length(iR_external_iR_local_ij) == 0) || continue
+                iR_local = iR_external_iR_local_ij[iR]
+                !isnothing(iR_local) || continue
+
+                out_keydata_atomarray[iat, jat][ib_block2, jb_block2, iR_local] = zero(T)
+            end
+        end
+    end
+
+    onsite_ilocal2imlocal = get_onsite_ilocal2imlocal(out_sparsity)
+    species2nbasis = get_species2nbasis(in_basisset)
+
+    # For off-site blocks, zeroing out is complete. However, for on-site blocks, we only
+    # zeroed out the elements in the upper triangle (more info can be found in
+    # `convert_data!` with analogous types). Hence, here we simply copy the upper triangle
+    # to the lower one to make then in sync, resulting in the lower part being zeroed out.
     for iat in 1:natoms
         z = atom2species[iat]
         nbasis = species2nbasis[z]
