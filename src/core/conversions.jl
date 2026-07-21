@@ -491,3 +491,68 @@ function convert_metadata_final(
 ) where {Mₒᵤₜ<:Union{<:RecipMetadata,<:SpinRecipMetadata}}
     return SpinRecipMetadata(out_basic_metadata, out_spins, out_kpoint)
 end
+
+### ZERO OUT DATA ###
+
+"""
+    zero_out_data!(out_operator, in_metadata)
+
+Zero out the data entries of `out_operator` whose sparsity is *not* contained in the sparsity
+of `in_metadata`, mutating `out_operator` in place. Entries of `out_operator` that fall under
+`in_metadata`'s sparsity keep their current values; every other entry is set to zero.
+
+Unlike [`convert_operator`](@ref) / [`convert_data!`](@ref), which build a new operator with a
+new (and therefore differently-typed) metadata, this routine changes only the data values and
+leaves the metadata — and hence the operator's type — untouched. This is useful for restricting
+an operator to a sparser support (e.g. a shorter-range neighbour pattern) without changing its
+type, so that all methods defined for that type remain applicable.
+
+Dispatches on the `KeyedTrait` of `out_operator`, then on the concrete output data type and the
+input sparsity type. Concrete methods are defined per format in `src/conversions/`.
+
+# Arguments
+- `out_operator`: the operator whose data is zeroed in place. Its metadata is not modified.
+- `in_metadata`: metadata whose sparsity determines which entries of `out_operator` are retained.
+"""
+function zero_out_data!(
+    out_operator::OPₒᵤₜ,
+    in_metadata::Mᵢₙ,
+) where {
+    OPₒᵤₜ<:AbstractOperator,
+    Mᵢₙ<:AbstractMetadata,
+}
+    return zero_out_data!(
+        trait(KeyedTrait, OPₒᵤₜ),
+        out_operator,
+        in_metadata,
+    )
+end
+
+function zero_out_data!(
+    ::NoKeydata,
+    out_operator::OPₒᵤₜ,
+    in_metadata::Mᵢₙ,
+) where {
+    OPₒᵤₜ<:AbstractOperator,
+    Mᵢₙ<:AbstractMetadata,
+}
+    Mₒᵤₜ = typeof(op_metadata(out_operator))
+    Dₒᵤₜ = op_data_type(Mₒᵤₜ)
+    Sᵢₙ = op_sparsity_type(Mᵢₙ)
+    return zero_out_data!(Dₒᵤₜ, Sᵢₙ, out_operator, in_metadata)
+end
+
+function zero_out_data!(
+    ::HasKeydata,
+    out_operator::OPₒᵤₜ,
+    in_metadata::Mᵢₙ,
+) where {
+    OPₒᵤₜ<:AbstractOperator,
+    Mᵢₙ<:AbstractMetadata,
+}
+    Mₒᵤₜ = typeof(op_metadata(out_operator))
+    KDₒᵤₜ = op_keydata_type(Mₒᵤₜ)
+    Dₒᵤₜ = op_data_type(Mₒᵤₜ)
+    Sᵢₙ = op_sparsity_type(Mᵢₙ)
+    return zero_out_data!(KDₒᵤₜ, Dₒᵤₜ, Sᵢₙ, out_operator, in_metadata)
+end

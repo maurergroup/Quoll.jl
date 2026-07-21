@@ -205,8 +205,7 @@ end
     @assert occursin("n_hamiltonian_matrix_size", line)
     nnz = parse(Int64, split(line)[end]) - 1
 
-    # Subtracting 1 to ignore the invalid
-    # [999999999  999999999  999999999] cell
+    # Subtracting 1 to ignore the invalid last dummy cell
     line = readline(f)
     @assert occursin("n_cells_in_hamiltonian", line)
     n_cells = parse(Int64, split(line)[end]) - 1
