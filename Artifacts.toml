@@ -1,7 +1,7 @@
 [test_data]
-git-tree-sha1 = "b3a187bc8512712268b469a342cab6ed445158c4"
+git-tree-sha1 = "edcbcf8c48f822c5f23d2c4170c148d7db991bbe"
 lazy = true
 
     [[test_data.download]]
-    sha256 = "f6d45a257818031a3cdf0c93fc3b1e902b2ad78a9239e20aed89566f48f9568e"
-    url = "https://github.com/maurergroup/Quoll.jl/releases/download/test-data-v0.3.0/test-data-v0.3.0.tar.gz"
+    sha256 = "0fc22ea2f1f81adae7cc0cf55926be8e2f527ebfe5bc7208da1e880fc4c0115d"
+    url = "https://github.com/maurergroup/Quoll.jl/releases/download/test-data-v0.4.0/test-data-v0.4.0.tar.gz"
