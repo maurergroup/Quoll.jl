@@ -87,3 +87,48 @@ function get_images(atoms)
     images = floor.(Int, frac_positions)
     return [SVector{3}(img) for img in eachcol(images)]
 end
+
+"""
+    get_centroid(coords) -> Matrix
+
+Return the centroid (mean position) of a `3 × N` coordinate matrix as a `3 × 1` matrix.
+"""
+function get_centroid(coords::AbstractMatrix)
+    norm = 1 / size(coords, 2)
+    return norm * sum(coords; dims=2)
+end
+
+"""
+    get_translation_invariant(coords) -> Matrix
+
+Return a translation-invariant version of a `3 × N` coordinate matrix by subtracting its
+[`get_centroid`](@ref). Two configurations that differ only by a rigid translation compare
+equal after this transformation.
+"""
+function get_translation_invariant(coords::AbstractMatrix)
+    centroid = get_centroid(coords)
+    return coords .- centroid
+end
+
+"""
+    same_atoms(atoms1, atoms2) -> Bool
+
+Return `true` if two atomic systems are equivalent for the purpose of shared atom indexing:
+same chemical species (in the same order), the same cell, and the same atom positions up to a
+rigid translation (absolute positions may differ, only the translation-invariant positions are
+compared). Positions and cell vectors are assumed to share a common length unit.
+"""
+function same_atoms(atoms1::AbstractSystem, atoms2::AbstractSystem)
+    # Same species in the same order (also catches a differing number of atoms).
+    species(atoms1, :) == species(atoms2, :) || return false
+
+    # Same cell.
+    cell1 = ustrip.(get_real_lattice(atoms1))
+    cell2 = ustrip.(get_real_lattice(atoms2))
+    isapprox(cell1, cell2) || return false
+
+    # Same atom positions up to a rigid translation.
+    pos1 = get_translation_invariant(ustrip.(stack(position(atoms1, :))))
+    pos2 = get_translation_invariant(ustrip.(stack(position(atoms2, :))))
+    return isapprox(pos1, pos2)
+end

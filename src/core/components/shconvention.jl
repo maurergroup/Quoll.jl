@@ -244,8 +244,12 @@ end
 """
     convert_speciesdict_shconv(dict, basis, shconv)
 
-Return a deep copy of `dict` with per-species vectors permuted according to the SH
-convention. The in-place variant `convert_speciesdict_shconv!` modifies `dict` directly.
+Return a deep copy of `dict` with per-species vectors permuted according to the SH convention.
+The permutation is computed from `basis` (via [`precompute_orders`](@ref)) and is purely
+positional — it depends only on the subblock `l`-structure, not on the current `m` ordering — so
+`shconv` must be the transformation *from `basis`'s current convention to the target* (the target
+directly when `basis` is wiki-ordered, or the delta `target ∘ inv(current)` otherwise). The
+in-place variant `convert_speciesdict_shconv!` modifies `dict` directly.
 """
 function convert_speciesdict_shconv(
     in_d::SpeciesAnyDict, basis::SpeciesAnyDict, shconv::SHConvention

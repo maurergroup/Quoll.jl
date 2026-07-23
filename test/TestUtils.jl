@@ -9,7 +9,6 @@ using MPI
 
 export create_temptree
 export populate_from_dict!
-export get_translation_invariant
 export setupteardown_tmp, with_nowarn_logger, mpiexec_quollapp
 
 """
@@ -92,18 +91,6 @@ function mpiexec_quollapp(inputfile; np, precompile = false, app_env = nothing)
     cmd_mpiexec = `$(mpiexec()) -n $np quoll $inputfile`
     push!(cmd_list, cmd_mpiexec)
     return cmd_list
-end
-
-# Assuming 3 x N matrix
-function get_translation_invariant(coords::AbstractMatrix)
-    centroid = get_centroid(coords)
-    return coords .- centroid
-end
-
-# Assuming 3 x N matrix -> 3 x 1 matrix
-function get_centroid(coords::AbstractMatrix)
-    norm = 1 / size(coords, 2)
-    return norm * sum(coords, dims = 2)
 end
 
 end

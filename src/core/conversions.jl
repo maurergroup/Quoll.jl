@@ -521,6 +521,21 @@ function zero_out_data!(
     OPₒᵤₜ<:AbstractOperator,
     Mᵢₙ<:AbstractMetadata,
 }
+    # The zeroing relies on `out_operator` and `in_metadata` sharing atom indexing and basis
+    # function indexing. Guard against silently wrong results when they are incompatible.
+    same_atoms(op_atoms(out_operator), op_atoms(in_metadata)) || throw(
+        ArgumentError(
+            "zero_out_data!: out_operator and in_metadata describe different atomic " *
+            "systems (species, cell, or positions differ)",
+        ),
+    )
+    same_basisset(op_basisset(out_operator), op_basisset(in_metadata)) || throw(
+        ArgumentError(
+            "zero_out_data!: out_operator and in_metadata have incompatible basis sets " *
+            "(they must match up to m ordering within each subblock)",
+        ),
+    )
+
     return zero_out_data!(
         trait(KeyedTrait, OPₒᵤₜ),
         out_operator,

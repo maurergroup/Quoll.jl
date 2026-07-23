@@ -341,3 +341,70 @@ end
         @test bfuncs == bfuncs_ref
     end
 end
+
+@testset "same_basisset" begin
+    a = ChemicalSpecies(:H1)
+    b = ChemicalSpecies(:H2)
+
+    # Same basis functions, but with the p (l=1) subblock reordered in m within each species.
+    basisset_reordered_m = Quoll.BasisSetMetadata(
+        dictionary([
+            a => [
+                Quoll.BasisMetadata(a, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 1, nothing)
+                Quoll.BasisMetadata(a, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 0, nothing)
+            ],
+            b => [
+                Quoll.BasisMetadata(b, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 1, 1, nothing)
+                Quoll.BasisMetadata(b, 2, 1, -1, nothing)
+            ],
+        ]),
+        [a, b, b, a],
+    )
+
+    # Same layout but a different angular momentum (l = 1 -> l = 2) in the H2 subblock.
+    basisset_diff_l = Quoll.BasisSetMetadata(
+        dictionary([
+            a => [
+                Quoll.BasisMetadata(a, 1, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, -1, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 0, nothing)
+                Quoll.BasisMetadata(a, 2, 1, 1, nothing)
+            ],
+            b => [
+                Quoll.BasisMetadata(b, 2, 0, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 2, -1, nothing)
+                Quoll.BasisMetadata(b, 2, 2, 0, nothing)
+                Quoll.BasisMetadata(b, 2, 2, 1, nothing)
+            ],
+        ]),
+        [a, b, b, a],
+    )
+
+    # Same basis, but a different atom -> species mapping.
+    basisset_diff_atoms = Quoll.BasisSetMetadata(basisset.basis, [a, b, a, b])
+
+    @testset "Equal to itself" begin
+        @test Quoll.same_basisset(basisset, basisset)
+    end
+
+    @testset "m reordering within a subblock is allowed" begin
+        @test Quoll.same_basisset(basisset, basisset_reordered_m)
+        @test Quoll.same_basisset(basisset_reordered_m, basisset)
+    end
+
+    @testset "Different quantum numbers / extras" begin
+        # basisset_degen differs in n, extras and number of functions.
+        @test !Quoll.same_basisset(basisset, basisset_degen)
+        @test !Quoll.same_basisset(basisset, basisset_diff_l)
+    end
+
+    @testset "Different atom2species" begin
+        @test !Quoll.same_basisset(basisset, basisset_diff_atoms)
+    end
+end
