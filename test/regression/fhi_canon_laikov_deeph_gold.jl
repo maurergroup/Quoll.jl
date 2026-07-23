@@ -2,6 +2,7 @@
 # and neighbourlist-based sparsity. This approach is used in the original MACE-H paper
 # (doi.org/10.1038/s41524-026-02020-1).
 
+using Quoll
 using DelimitedFiles
 using JSON
 using HDF5
@@ -139,7 +140,8 @@ setupteardown_tmp(tarballs = tarballs) do
     @testset "site_positions.dat" begin
         site_positions_ref = readdlm(joinpath(dir_ref, "site_positions.dat"))
         site_positions = readdlm(joinpath(dir, "site_positions.dat"))
-        @test get_translation_invariant(site_positions) ≈ get_translation_invariant(site_positions_ref)
+        @test Quoll.get_translation_invariant(site_positions) ≈
+            Quoll.get_translation_invariant(site_positions_ref)
     end
 
 end

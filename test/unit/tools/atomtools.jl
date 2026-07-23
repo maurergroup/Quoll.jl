@@ -114,3 +114,95 @@ end
     images_ref = [SA[1, 0, 0], SA[1, 1, 0]]
     @test Quoll.get_images(atoms) == images_ref
 end
+
+@testset "get_translation_invariant" begin
+    coords = [
+        0.0 1.0 2.0
+        0.0 0.0 0.0
+        0.0 0.0 0.0
+    ]
+    # Centroid is (1, 0, 0); subtracting it centres the coordinates.
+    ref = [
+        -1.0 0.0 1.0
+        0.0 0.0 0.0
+        0.0 0.0 0.0
+    ]
+    @test Quoll.get_translation_invariant(coords) ≈ ref
+    # A rigid shift leaves the translation-invariant coordinates unchanged.
+    shifted = coords .+ [5.0, -3.0, 2.0]
+    @test Quoll.get_translation_invariant(shifted) ≈ Quoll.get_translation_invariant(coords)
+end
+
+@testset "same_atoms" begin
+    cellvecs = SA[
+        SA[10.0, 0.0, 0.0],
+        SA[0.0, 10.0, 0.0],
+        SA[0.0, 0.0, 10.0],
+    ]u"Å"
+    atoms = periodic_system(
+        [
+            ChemicalSpecies(:H) => SA[0.00, 0.00, 0.00]u"Å",
+            ChemicalSpecies(:O) => SA[1.00, 0.00, 0.00]u"Å",
+            ChemicalSpecies(:H) => SA[2.00, 0.00, 0.00]u"Å",
+        ],
+        cellvecs,
+    )
+
+    @testset "Identical system" begin
+        @test Quoll.same_atoms(atoms, atoms)
+    end
+
+    @testset "Rigidly translated system" begin
+        shift = SA[3.00, 1.00, -2.00]u"Å"
+        atoms_shifted = periodic_system(
+            [
+                ChemicalSpecies(:H) => SA[0.00, 0.00, 0.00]u"Å" + shift,
+                ChemicalSpecies(:O) => SA[1.00, 0.00, 0.00]u"Å" + shift,
+                ChemicalSpecies(:H) => SA[2.00, 0.00, 0.00]u"Å" + shift,
+            ],
+            cellvecs,
+        )
+        @test Quoll.same_atoms(atoms, atoms_shifted)
+    end
+
+    @testset "Different species" begin
+        atoms_species = periodic_system(
+            [
+                ChemicalSpecies(:H) => SA[0.00, 0.00, 0.00]u"Å",
+                ChemicalSpecies(:N) => SA[1.00, 0.00, 0.00]u"Å",
+                ChemicalSpecies(:H) => SA[2.00, 0.00, 0.00]u"Å",
+            ],
+            cellvecs,
+        )
+        @test !Quoll.same_atoms(atoms, atoms_species)
+    end
+
+    @testset "Different cell" begin
+        cellvecs_other = SA[
+            SA[12.0, 0.0, 0.0],
+            SA[0.0, 10.0, 0.0],
+            SA[0.0, 0.0, 10.0],
+        ]u"Å"
+        atoms_cell = periodic_system(
+            [
+                ChemicalSpecies(:H) => SA[0.00, 0.00, 0.00]u"Å",
+                ChemicalSpecies(:O) => SA[1.00, 0.00, 0.00]u"Å",
+                ChemicalSpecies(:H) => SA[2.00, 0.00, 0.00]u"Å",
+            ],
+            cellvecs_other,
+        )
+        @test !Quoll.same_atoms(atoms, atoms_cell)
+    end
+
+    @testset "Non-rigidly perturbed positions" begin
+        atoms_perturbed = periodic_system(
+            [
+                ChemicalSpecies(:H) => SA[0.00, 0.00, 0.00]u"Å",
+                ChemicalSpecies(:O) => SA[1.00, 0.50, 0.00]u"Å",
+                ChemicalSpecies(:H) => SA[2.00, 0.00, 0.00]u"Å",
+            ],
+            cellvecs,
+        )
+        @test !Quoll.same_atoms(atoms, atoms_perturbed)
+    end
+end

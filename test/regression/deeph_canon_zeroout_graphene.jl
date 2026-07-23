@@ -102,6 +102,28 @@ setupteardown_tmp(tarballs = tarballs) do
     @test Quoll.op_metadata(H_deeph_canon) isa Quoll.CanonicalBlockNoSpinRealMetadata
     @test Quoll.op_metadata(H_fhi_canon) isa Quoll.CanonicalBlockNoSpinRealMetadata
 
+    # The FHI-aims and DeepH basis sets describe the same physical basis, but DeepH's dumped
+    # metadata loses the true principal quantum number n and the orbital-type `extras`, so the
+    # two BasisSetMetadata are not equal and `zero_out_data!`'s basis-set check would reject
+    # them. Since we know it is the same basis, swap in the (wiki-ordered) DeepH basis from the
+    # canonical operator, reordered into the FHI-aims metadata's own SH convention so it stays
+    # consistent with its (unchanged) shconv. This leaves the zeroing result unchanged.
+    deeph_basisset_fhi = Quoll.convert_basisset_shconv(
+        Quoll.op_basisset(H_deeph_canon), Quoll.op_shconv(fhi_csc_metadata)
+    )
+    common = Quoll.op_basic_metadata(fhi_csc_metadata)
+    fhi_csc_metadata = Quoll.RealMetadata(
+        Quoll.BasicMetadataContainer(
+            common.kind,
+            common.source,
+            common.sparsity,
+            deeph_basisset_fhi,
+            common.shconv,
+            common.atoms,
+        ),
+    )
+    @test fhi_csc_metadata isa Quoll.FHIaimsCSCNoSpinRealMetadata
+
     @info "Before zeroing out: the operators should differ (DeepH carries extra blocks)"
     @test !same_data(H_deeph_canon, H_fhi_canon; compare_kwargs...)
 

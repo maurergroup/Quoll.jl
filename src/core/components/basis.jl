@@ -147,6 +147,45 @@ function get_subblock_ranges(basis_z::AbstractVector{<:BasisMetadata})
 end
 
 """
+    same_basisset(bs1::BasisSetMetadata, bs2::BasisSetMetadata) -> Bool
+
+Return `true` if `bs1` and `bs2` describe the same set of basis functions, allowing only a
+difference in the ordering of the magnetic quantum numbers `m` *within* each angular momentum
+subblock. Such a difference is legitimate when the two basis sets use different spherical
+harmonics conventions. Requires matching `atom2species`, the same species, and — per species —
+the same subblock structure holding the same basis functions in each subblock.
+"""
+function same_basisset(bs1::BasisSetMetadata, bs2::BasisSetMetadata)
+    bs1.atom2species == bs2.atom2species || return false
+    Set(keys(bs1.basis)) == Set(keys(bs2.basis)) || return false
+    for z in keys(bs1.basis)
+        same_basis_species(basis_species(bs1, z), basis_species(bs2, z)) || return false
+    end
+    return true
+end
+
+# Compare two per-species basis vectors, allowing only a reordering of the magnetic quantum
+# number m within each angular momentum subblock. Subblock structure (and everything except m
+# ordering) must match exactly.
+function same_basis_species(
+    basis1::AbstractVector{<:BasisMetadata}, basis2::AbstractVector{<:BasisMetadata}
+)
+    length(basis1) == length(basis2) || return false
+
+    # SH convention reordering only permutes within a subblock, so subblock ranges must match.
+    ranges1 = get_subblock_ranges(basis1)
+    ranges2 = get_subblock_ranges(basis2)
+    ranges1 == ranges2 || return false
+
+    for r in ranges1
+        # Sorting each subblock by m before comparing accepts an m reordering but rejects any
+        # z / n / l / extras mismatch (via BasisMetadata's field-wise `==`).
+        sort(basis1[r]; by=b -> b.m) == sort(basis2[r]; by=b -> b.m) || return false
+    end
+    return true
+end
+
+"""
     get_indices_in_subblock(basisset::BasisSetMetadata)
     get_indices_in_subblock(basis_z::AbstractVector{<:BasisMetadata})
 
@@ -176,8 +215,12 @@ end
 """
     convert_basisset_shconv(basisset, shconv) -> BasisSetMetadata
 
-Reorder basis functions according to the spherical harmonics convention `shconv`. The input
-basis is assumed to be in the wiki (standard) convention.
+Reorder each species' basis functions by the positional permutation of `shconv`, applied per
+angular momentum subblock. The reordering is purely positional — it depends only on the
+subblock `l`-structure, not on the current `m` ordering — so `shconv` must be the transformation
+*from the input basis's current convention to the target*. Pass the target convention directly
+when the input is wiki-ordered (as the format loaders do), or the delta `target ∘ inv(current)`
+when the input is already in some convention (as `convert_metadata_basic` does).
 """
 function convert_basisset_shconv(basisset::BasisSetMetadata, shconv::SHConvention)
     in_basis = basisset.basis

@@ -1,5 +1,6 @@
 # Simple regression test for basic functionality through the input file
 
+using Quoll
 using DelimitedFiles
 using JSON
 using HDF5
@@ -116,7 +117,8 @@ setupteardown_tmp(tarballs = tarballs) do
     @testset "site_positions.dat" begin
         site_positions_ref = readdlm(joinpath(dir_ref, "site_positions.dat"))
         site_positions = readdlm(joinpath(dir, "site_positions.dat"))
-        @test get_translation_invariant(site_positions) ≈ get_translation_invariant(site_positions_ref)
+        @test Quoll.get_translation_invariant(site_positions) ≈
+            Quoll.get_translation_invariant(site_positions_ref)
     end
 
 end
